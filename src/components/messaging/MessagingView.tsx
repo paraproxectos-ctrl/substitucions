@@ -249,58 +249,72 @@ export const MessagingView: React.FC = () => {
     if (!newMessage.trim() || !selectedConversation || sendingMessage) return;
 
     setSendingMessage(true);
+    const messageContent = newMessage.trim();
+    setNewMessage(''); // Limpiar inmediatamente para mejor UX
+
     try {
+      let insertData: any = {
+        contido: messageContent,
+        remitente_id: user?.id,
+        asunto: selectedConversation === 'grupo' ? 'Chat grupal' : 'Mensaxe directa',
+      };
+
       if (selectedConversation === 'grupo') {
         // Mensaje grupal
-        const { error } = await supabase
-          .from('mensaxes')
-          .insert({
-            contido: newMessage.trim(),
-            remitente_id: user?.id,
-            is_grupo: true,
-            asunto: 'Chat grupal',
-          });
-
-        if (error) {
-          console.error('Error sending group message:', error);
-          toast({
-            title: "Error",
-            description: "Non se puido enviar a mensaxe",
-            variant: "destructive",
-          });
-          return;
-        }
+        insertData.is_grupo = true;
       } else {
         // Mensaje directo
         const [userId1, userId2] = selectedConversation.split('-');
         const destinatarioId = userId1 === user?.id ? userId2 : userId1;
-
-        const { error } = await supabase
-          .from('mensaxes')
-          .insert({
-            contido: newMessage.trim(),
-            remitente_id: user?.id,
-            destinatario_id: destinatarioId,
-            is_grupo: false,
-            asunto: 'Mensaxe directa',
-          });
-
-        if (error) {
-          console.error('Error sending direct message:', error);
-          toast({
-            title: "Error",
-            description: "Non se puido enviar a mensaxe",
-            variant: "destructive",
-          });
-          return;
-        }
+        
+        insertData.is_grupo = false;
+        insertData.destinatario_id = destinatarioId;
       }
 
-      setNewMessage('');
-      await fetchMessages(selectedConversation);
-      await fetchConversations();
+      const { data, error } = await supabase
+        .from('mensaxes')
+        .insert(insertData)
+        .select(`
+          id,
+          contido,
+          remitente_id,
+          destinatario_id,
+          is_grupo,
+          leido,
+          created_at,
+          profiles!mensaxes_remitente_id_fkey (nome, apelidos)
+        `);
+
+      if (error) {
+        console.error('Error sending message:', error);
+        setNewMessage(messageContent); // Restaurar mensaje si hay error
+        toast({
+          title: "Error",
+          description: "Non se puido enviar a mensaxe",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Añadir mensaje inmediatamente a la lista local
+      if (data && data[0]) {
+        setMessages(prev => [...prev, data[0] as any]);
+        scrollToBottom();
+      }
+
+      // Actualizar conversaciones (sin esperar)
+      setTimeout(() => {
+        fetchConversations();
+      }, 100);
+
     } catch (error) {
       console.error('Error in sendMessage:', error);
+      setNewMessage(messageContent); // Restaurar mensaje si hay error
+      toast({
+        title: "Error",
+        description: "Non se puido enviar a mensaxe",
+        variant: "destructive",
+      });
     } finally {
       setSendingMessage(false);
     }
