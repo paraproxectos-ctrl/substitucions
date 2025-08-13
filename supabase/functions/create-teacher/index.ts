@@ -81,26 +81,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('User created successfully:', authData.user.id);
 
-    // Wait a bit to ensure user is properly created
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait a bit to ensure trigger completes
+    await new Promise(resolve => setTimeout(resolve, 200));
 
-    // Create profile
+    // Update profile with complete data (the trigger creates a basic one)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        user_id: authData.user.id,
+      .update({
         nome,
         apelidos,
-        email,
         telefono: telefono || null
-      });
+      })
+      .eq('user_id', authData.user.id);
 
     if (profileError) {
-      console.error('Error creating profile:', profileError);
-      // Clean up auth user if profile fails
+      console.error('Error updating profile:', profileError);
+      // Clean up auth user if profile update fails
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       return new Response(
-        JSON.stringify({ success: false, error: `Error creando perfil: ${profileError.message}` }),
+        JSON.stringify({ success: false, error: `Error actualizando perfil: ${profileError.message}` }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
