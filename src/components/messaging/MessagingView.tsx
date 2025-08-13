@@ -8,20 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
-import EmojiPicker from 'emoji-picker-react';
 import { 
   MessageSquare, 
   Send, 
   Users, 
   User,
-  Plus,
-  Search,
-  Circle,
-  Smile,
-  ChevronDown
+  Plus
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { gl } from 'date-fns/locale';
@@ -61,13 +54,6 @@ interface Profile {
   email: string;
 }
 
-interface OnlineUser {
-  user_id: string;
-  nome: string;
-  apelidos: string;
-  online_at: string;
-}
-
 export const MessagingView: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -77,11 +63,8 @@ export const MessagingView: React.FC = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<Profile[]>([]);
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const { user, userRole, profile } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -257,14 +240,12 @@ export const MessagingView: React.FC = () => {
 
     setSendingMessage(true);
     const messageContent = newMessage.trim();
-    setNewMessage(''); // Limpiar inmediatamente para mejor UX
+    setNewMessage('');
 
     try {
-      console.log('Sending message:', { messageContent, selectedConversation, userId: user?.id });
-
       if (selectedConversation === 'grupo') {
         // Mensaje grupal
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('mensaxes')
           .insert({
             contido: messageContent,
@@ -272,29 +253,24 @@ export const MessagingView: React.FC = () => {
             is_grupo: true,
             asunto: 'Chat grupal',
             leido: false
-          })
-          .select();
+          });
 
         if (error) {
           console.error('Error sending group message:', error);
           setNewMessage(messageContent);
           toast({
             title: "Error",
-            description: `Non se puido enviar a mensaxe grupal: ${error.message}`,
+            description: "Non se puido enviar a mensaxe grupal",
             variant: "destructive",
           });
           return;
         }
-
-        console.log('Group message sent successfully:', data);
       } else {
         // Mensaje directo
         const [userId1, userId2] = selectedConversation.split('-');
         const destinatarioId = userId1 === user?.id ? userId2 : userId1;
 
-        console.log('Sending direct message to:', destinatarioId);
-
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('mensaxes')
           .insert({
             contido: messageContent,
@@ -303,21 +279,18 @@ export const MessagingView: React.FC = () => {
             is_grupo: false,
             asunto: 'Mensaxe directa',
             leido: false
-          })
-          .select();
+          });
 
         if (error) {
           console.error('Error sending direct message:', error);
           setNewMessage(messageContent);
           toast({
             title: "Error",
-            description: `Non se puido enviar a mensaxe directa: ${error.message}`,
+            description: "Non se puido enviar a mensaxe directa",
             variant: "destructive",
           });
           return;
         }
-
-        console.log('Direct message sent successfully:', data);
       }
 
       // Refresh messages and conversations
@@ -333,7 +306,7 @@ export const MessagingView: React.FC = () => {
       setNewMessage(messageContent);
       toast({
         title: "Error",
-        description: `Erro interno ao enviar mensaxe: ${error.message}`,
+        description: "Erro interno ao enviar mensaxe",
         variant: "destructive",
       });
     } finally {
@@ -344,8 +317,6 @@ export const MessagingView: React.FC = () => {
   // Cargar usuarios disponibles (todos los profesores)
   const fetchAvailableUsers = async () => {
     try {
-      console.log('Fetching available users...');
-      
       // Primero obtener todos los usuarios excepto el actual
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -356,8 +327,6 @@ export const MessagingView: React.FC = () => {
         console.error('Error fetching profiles:', profilesError);
         return;
       }
-
-      console.log('Profiles found:', profiles);
 
       // Luego obtener los roles
       const { data: roles, error: rolesError } = await supabase
@@ -370,14 +339,11 @@ export const MessagingView: React.FC = () => {
         return;
       }
 
-      console.log('Roles found:', roles);
-
       // Filtrar solo usuarios que son profesores o administradores
       const teachers = profiles?.filter(profile => 
         roles?.some(role => role.user_id === profile.user_id)
       ) || [];
 
-      console.log('Available teachers:', teachers);
       setAvailableUsers(teachers);
     } catch (error) {
       console.error('Error in fetchAvailableUsers:', error);
@@ -392,32 +358,6 @@ export const MessagingView: React.FC = () => {
     await fetchMessages(conversationId);
   };
 
-  // Verificar si un usuario está en línea
-  const isUserOnline = (userId: string) => {
-    return onlineUsers.some(onlineUser => onlineUser.user_id === userId);
-  };
-
-  // Función para añadir emoji al mensaje
-  const onEmojiClick = (emojiData: any) => {
-    setNewMessage(prev => prev + emojiData.emoji);
-    setShowEmojiPicker(false);
-  };
-
-  // Función para iniciar conversación desde el selector
-  const handleUserSelect = (userId: string) => {
-    if (userId === 'grupo') {
-      setSelectedConversation('grupo');
-      setSelectedUserId('');
-      return;
-    }
-    
-    const targetUser = availableUsers.find(u => u.user_id === userId);
-    if (targetUser) {
-      startConversationWith(targetUser);
-      setSelectedUserId('');
-    }
-  };
-
   useEffect(() => {
     fetchConversations();
     fetchAvailableUsers();
@@ -429,54 +369,7 @@ export const MessagingView: React.FC = () => {
     }
   }, [selectedConversation]);
 
-  // Configurar presencia de usuarios en tiempo real
-  useEffect(() => {
-    if (!user) return;
-
-    const presenceChannel = supabase.channel('online_users')
-      .on('presence', { event: 'sync' }, () => {
-        const state = presenceChannel.presenceState();
-        const onlineList: OnlineUser[] = [];
-        
-        Object.keys(state).forEach((key) => {
-          const presences = state[key];
-          presences.forEach((presence: any) => {
-            onlineList.push({
-              user_id: presence.user_id,
-              nome: presence.nome,
-              apelidos: presence.apelidos,
-              online_at: presence.online_at,
-            });
-          });
-        });
-        
-        setOnlineUsers(onlineList);
-      })
-      .on('presence', { event: 'join' }, ({ newPresences }) => {
-        console.log('User joined:', newPresences);
-      })
-      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-        console.log('User left:', leftPresences);
-      });
-
-    presenceChannel.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        // Enviar nuestro estado de presencia con datos del perfil
-        await presenceChannel.track({
-          user_id: user.id,
-          nome: profile?.nome || user.user_metadata?.nome || '',
-          apelidos: profile?.apelidos || user.user_metadata?.apelidos || '',
-          online_at: new Date().toISOString(),
-        });
-      }
-    });
-
-    return () => {
-      supabase.removeChannel(presenceChannel);
-    };
-  }, [user]);
-
-  // Configurar tempo real para mensajes
+  // Configurar tiempo real simple para mensajes
   useEffect(() => {
     const channel = supabase
       .channel('mensaxes-changes')
@@ -487,15 +380,12 @@ export const MessagingView: React.FC = () => {
           schema: 'public',
           table: 'mensaxes'
         },
-        (payload) => {
-          console.log('New message received:', payload);
-          // Actualizar mensajes si estamos en la conversación correcta
+        () => {
           if (selectedConversation) {
             setTimeout(() => {
               fetchMessages(selectedConversation);
             }, 100);
           }
-          // Actualizar lista de conversaciones
           setTimeout(() => {
             fetchConversations();
           }, 150);
@@ -527,78 +417,18 @@ export const MessagingView: React.FC = () => {
       <div className="w-80 border-r border-border">
         <Card className="h-full rounded-none border-0">
           <CardHeader className="border-b border-border">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center space-x-2">
-                  <MessageSquare className="h-5 w-5 text-primary" />
-                  <span>Mensaxería</span>
-                </CardTitle>
-                <Button
-                  size="sm"
-                  onClick={() => setShowNewChat(true)}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              {/* Selector desplegable de profesores - separado */}
-              <div className="w-full">
-                <Select value={selectedUserId} onValueChange={handleUserSelect}>
-                  <SelectTrigger className="w-full bg-background">
-                    <SelectValue placeholder="💬 Seleccionar profesor para conversar" />
-                  </SelectTrigger>
-                  <SelectContent className="z-50 bg-background border shadow-lg max-h-60">
-                    {/* Chat grupal */}
-                    <SelectItem value="grupo" className="hover:bg-accent cursor-pointer">
-                      <div className="flex items-center space-x-2 w-full">
-                        <Users className="h-4 w-4 text-primary" />
-                        <span className="font-medium">Chat do claustro</span>
-                        <Badge variant="secondary" className="ml-auto text-xs">
-                          Grupal
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                    <Separator className="my-1" />
-                    {/* Profesores */}
-                    {availableUsers.length > 0 ? (
-                      availableUsers.map((targetUser) => {
-                        const isOnline = isUserOnline(targetUser.user_id);
-                        return (
-                          <SelectItem 
-                            key={targetUser.user_id} 
-                            value={targetUser.user_id} 
-                            className="hover:bg-accent cursor-pointer"
-                          >
-                            <div className="flex items-center justify-between w-full">
-                              <div className="flex items-center space-x-2">
-                                <div className="relative">
-                                  <User className="h-4 w-4" />
-                                  <div className={`absolute -bottom-1 -right-1 h-2 w-2 rounded-full border border-background ${
-                                    isOnline ? 'bg-green-500' : 'bg-gray-400'
-                                  }`} />
-                                </div>
-                                <span className="font-medium">
-                                  {targetUser.nome} {targetUser.apelidos}
-                                </span>
-                              </div>
-                              {isOnline && (
-                                <Badge variant="outline" className="text-xs ml-2 text-green-600 border-green-600">
-                                  En liña
-                                </Badge>
-                              )}
-                            </div>
-                          </SelectItem>
-                        );
-                      })
-                    ) : (
-                      <SelectItem value="no-users" disabled>
-                        <span className="text-muted-foreground">Non hai profesores dispoñibles</span>
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center space-x-2">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                <span>Mensaxería</span>
+              </CardTitle>
+              <Button
+                size="sm"
+                onClick={() => setShowNewChat(true)}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -681,27 +511,6 @@ export const MessagingView: React.FC = () => {
                         : 'Conversación'
                     }
                   </h3>
-                  <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                    {selectedConversation === 'grupo' ? (
-                      <>
-                        <Circle className="h-2 w-2 fill-green-500 text-green-500" />
-                        <span>{onlineUsers.length} usuario{onlineUsers.length !== 1 ? 's' : ''} en liña</span>
-                      </>
-                    ) : (
-                      conversations.find(c => c.id === selectedConversation)?.participant?.id && 
-                      isUserOnline(conversations.find(c => c.id === selectedConversation)!.participant!.id) ? (
-                        <>
-                          <Circle className="h-2 w-2 fill-green-500 text-green-500" />
-                          <span>En liña</span>
-                        </>
-                      ) : (
-                        <>
-                          <Circle className="h-2 w-2 fill-gray-400 text-gray-400" />
-                          <span>Desconectado</span>
-                        </>
-                      )
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
@@ -740,28 +549,16 @@ export const MessagingView: React.FC = () => {
               </div>
             </ScrollArea>
 
-            {/* Input de mensagem con emojis */}
+            {/* Input de mensagem */}
             <div className="border-t border-border p-4">
               <div className="flex space-x-2">
-                <div className="flex-1 relative">
-                  <Input
-                    placeholder="Escribe unha mensaxe..."
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
-                    className="pr-10"
-                  />
-                </div>
-                <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="icon">
-                      <Smile className="h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="p-0 w-auto border-0 shadow-lg">
-                    <EmojiPicker onEmojiClick={onEmojiClick} />
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  placeholder="Escribe unha mensaxe..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                  className="flex-1"
+                />
                 <Button
                   onClick={sendMessage}
                   disabled={!newMessage.trim() || sendingMessage}
@@ -799,7 +596,7 @@ export const MessagingView: React.FC = () => {
             <CardContent className="space-y-4">
               <div>
                 <Input
-                  placeholder="Buscar usuarios..."
+                  placeholder="Buscar profesores..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full"
@@ -826,43 +623,34 @@ export const MessagingView: React.FC = () => {
                     </div>
                   </div>
                   <Separator />
-                  {/* Usuarios individuales */}
-                  {filteredUsers.map((targetUser) => {
-                    const isOnline = isUserOnline(targetUser.user_id);
-                    return (
+                  {/* Profesores */}
+                  {filteredUsers.length > 0 ? (
+                    filteredUsers.map((targetUser) => (
                       <div
                         key={targetUser.user_id}
                         className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
                         onClick={() => startConversationWith(targetUser)}
                       >
-                        <div className="relative">
-                          <Avatar>
-                            <AvatarFallback>
-                              <User className="h-4 w-4" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-background ${
-                            isOnline ? 'bg-green-500' : 'bg-gray-400'
-                          }`} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <p className="font-medium">
-                              {targetUser.nome} {targetUser.apelidos}
-                            </p>
-                            {isOnline && (
-                              <Badge variant="secondary" className="text-xs">
-                                En liña
-                              </Badge>
-                            )}
-                          </div>
+                        <Avatar>
+                          <AvatarFallback>
+                            <User className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">
+                            {targetUser.nome} {targetUser.apelidos}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             {targetUser.email}
                           </p>
                         </div>
                       </div>
-                    );
-                  })}
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-muted-foreground">
+                      <p>Non se atoparon profesores</p>
+                    </div>
+                  )}
                 </div>
               </ScrollArea>
               <div className="flex justify-end space-x-2">
