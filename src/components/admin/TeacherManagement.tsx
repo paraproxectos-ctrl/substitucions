@@ -76,13 +76,33 @@ export const TeacherManagement: React.FC = () => {
   const fetchTeachers = async () => {
     try {
       setLoading(true);
+      // First get users with profesor role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'profesor');
+
+      if (roleError) {
+        console.error('Error fetching teacher roles:', roleError);
+        toast({
+          title: "Error",
+          description: "Non se puido cargar os roles do profesorado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!roleData || roleData.length === 0) {
+        setTeachers([]);
+        return;
+      }
+
+      // Then get profiles for those users
+      const userIds = roleData.map(role => role.user_id);
       const { data, error } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          user_roles!inner(role)
-        `)
-        .eq('user_roles.role', 'profesor')
+        .select('*')
+        .in('user_id', userIds)
         .order('nome');
 
       if (error) {
@@ -120,14 +140,15 @@ export const TeacherManagement: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // Crear usuario en Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      // Crear usuario en Supabase Auth usando service role
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        email_confirm: true,
-        user_metadata: {
-          nome: formData.nome,
-          apelidos: formData.apelidos
+        options: {
+          data: {
+            nome: formData.nome,
+            apelidos: formData.apelidos
+          }
         }
       });
 

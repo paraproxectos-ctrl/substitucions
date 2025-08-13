@@ -11,8 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [adminUser, setAdminUser] = useState('admin');
-  const [adminPassword, setAdminPassword] = useState('Lacl7777melm@@@@');
+  const [adminUser, setAdminUser] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
@@ -137,7 +137,7 @@ export default function Auth() {
                     <Input
                       id="adminUser"
                       type="text"
-                      placeholder="admin"
+                      placeholder="Usuario administrador"
                       value={adminUser}
                       onChange={(e) => setAdminUser(e.target.value)}
                       required
@@ -150,7 +150,7 @@ export default function Auth() {
                     <Input
                       id="adminPassword"
                       type="password"
-                      placeholder="Lacl7777melm@@@@"
+                      placeholder="Contrasinal administrador"
                       value={adminPassword}
                       onChange={(e) => setAdminPassword(e.target.value)}
                       required
