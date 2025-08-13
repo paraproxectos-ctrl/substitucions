@@ -244,47 +244,43 @@ export const MessagingView: React.FC = () => {
   // Cargar usuarios disponibles (solo profesores y administradores)
   const fetchAvailableUsers = async () => {
     console.log('=== STARTING fetchAvailableUsers ===');
-    console.log('Current user:', user);
-    console.log('Current user ID:', user?.id);
-
     try {
-      // Get current user's role first
-      const { data: currentUserRole } = await supabase
+      // Step 1: Get all user roles for teachers and admins
+      const { data: teacherAdminRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select('role')
-        .eq('user_id', user?.id)
-        .single();
+        .select('user_id')
+        .in('role', ['profesor', 'admin'])
+        .neq('user_id', user?.id);
 
-      console.log('👤 Current user role:', currentUserRole);
+      console.log('Teacher/Admin roles:', { data: teacherAdminRoles, error: rolesError });
 
-      if (!currentUserRole || !['profesor', 'admin'].includes(currentUserRole.role)) {
-        console.log('❌ User is not a teacher or admin');
+      if (rolesError) {
+        console.error('ERROR fetching roles:', rolesError);
+        return;
+      }
+
+      if (!teacherAdminRoles || teacherAdminRoles.length === 0) {
+        console.log('No teacher/admin roles found');
         setAvailableUsers([]);
         return;
       }
 
-      // Get profiles joined with roles for teachers/admins only
-      const { data: teachersAndAdmins, error } = await supabase
+      // Step 2: Get profiles for those users
+      const userIds = teacherAdminRoles.map(role => role.user_id);
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          user_id,
-          nome,
-          apelidos,
-          email,
-          user_roles!inner(role)
-        `)
-        .in('user_roles.role', ['profesor', 'admin'])
-        .neq('user_id', user?.id);
+        .select('user_id, nome, apelidos, email')
+        .in('user_id', userIds);
 
-      console.log('Teachers and admins result:', { data: teachersAndAdmins, error });
+      console.log('Profiles for teachers/admins:', { data: profiles, error: profilesError });
 
-      if (error) {
-        console.error('ERROR fetching teachers and admins:', error);
+      if (profilesError) {
+        console.error('ERROR fetching profiles:', profilesError);
         return;
       }
 
-      console.log('Setting availableUsers to:', teachersAndAdmins || []);
-      setAvailableUsers(teachersAndAdmins || []);
+      console.log('Setting availableUsers to:', profiles || []);
+      setAvailableUsers(profiles || []);
       console.log('=== END fetchAvailableUsers ===');
 
     } catch (error) {
