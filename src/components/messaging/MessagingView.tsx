@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   MessageSquare, 
   Send, 
@@ -63,7 +64,7 @@ export const MessagingView: React.FC = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<Profile[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
   const { user } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -331,11 +332,14 @@ export const MessagingView: React.FC = () => {
     };
   }, [selectedConversation]);
 
-  const filteredUsers = availableUsers.filter(user =>
-    user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.apelidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Handle teacher selection from dropdown
+  const handleTeacherSelect = (userId: string) => {
+    const selectedUser = availableUsers.find(user => user.user_id === userId);
+    if (selectedUser) {
+      startConversationWith(selectedUser);
+      setSelectedUserId('');
+    }
+  };
 
   const getConversationName = (conversation: Conversation) => {
     return `${conversation.participant?.nome} ${conversation.participant?.apelidos}`;
@@ -512,46 +516,35 @@ export const MessagingView: React.FC = () => {
               <CardTitle>Nova conversación</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <Input
-                  placeholder="Buscar profesores..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
-                />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Selecciona un profesor:</label>
+                <Select value={selectedUserId} onValueChange={handleTeacherSelect}>
+                  <SelectTrigger className="w-full bg-background border border-border">
+                    <SelectValue placeholder="Escolle un profesor ou administrador..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background border border-border z-50">
+                    {availableUsers.map((targetUser) => (
+                      <SelectItem 
+                        key={targetUser.user_id} 
+                        value={targetUser.user_id}
+                        className="cursor-pointer hover:bg-accent"
+                      >
+                        <div className="flex items-center space-x-2 w-full">
+                          <User className="h-4 w-4" />
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {targetUser.nome} {targetUser.apelidos}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {targetUser.email}
+                            </span>
+                          </div>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-               <ScrollArea className="h-60">
-                 <div className="space-y-2">
-                   {/* Solo profesores */}
-                   {filteredUsers.length > 0 ? (
-                     filteredUsers.map((targetUser) => (
-                       <div
-                         key={targetUser.user_id}
-                         className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
-                         onClick={() => startConversationWith(targetUser)}
-                       >
-                         <Avatar>
-                           <AvatarFallback>
-                             <User className="h-4 w-4" />
-                           </AvatarFallback>
-                         </Avatar>
-                         <div>
-                           <p className="font-medium">
-                             {targetUser.nome} {targetUser.apelidos}
-                           </p>
-                           <p className="text-xs text-muted-foreground">
-                             {targetUser.email}
-                           </p>
-                         </div>
-                       </div>
-                     ))
-                   ) : (
-                     <div className="p-4 text-center text-muted-foreground">
-                       <p>Non se atoparon profesores</p>
-                     </div>
-                   )}
-                 </div>
-               </ScrollArea>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setShowNewChat(false)}>
                   Cancelar
