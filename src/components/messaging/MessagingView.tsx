@@ -243,80 +243,60 @@ export const MessagingView: React.FC = () => {
 
   // Cargar usuarios disponibles (todos los profesores y administradores)
   const fetchAvailableUsers = async () => {
+    console.log('=== STARTING fetchAvailableUsers ===');
+    console.log('Current user:', user);
+    console.log('Current user ID:', user?.id);
+
     try {
-      console.log('Fetching available users...');
-      
-      // Obtener perfiles con sus roles en una sola consulta
-      const { data: teachersAndAdmins, error } = await supabase
+      // Método simple: obtener TODOS los perfiles primero
+      console.log('Step 1: Fetching ALL profiles...');
+      const { data: allProfiles, error: allProfilesError } = await supabase
         .from('profiles')
-        .select(`
-          user_id,
-          nome,
-          apelidos,
-          email,
-          user_roles!inner(role)
-        `)
-        .neq('user_id', user?.id)
-        .in('user_roles.role', ['profesor', 'admin']);
+        .select('user_id, nome, apelidos, email');
 
-      console.log('Teachers and admins fetched:', teachersAndAdmins);
+      console.log('All profiles result:', { data: allProfiles, error: allProfilesError });
 
-      if (error) {
-        console.error('Error fetching teachers and admins:', error);
-        // Fallback: Try the old method if the join fails
-        await fetchAvailableUsersFallback();
+      if (allProfilesError) {
+        console.error('ERROR fetching all profiles:', allProfilesError);
         return;
       }
 
-      setAvailableUsers(teachersAndAdmins || []);
-    } catch (error) {
-      console.error('Error in fetchAvailableUsers:', error);
-      // Fallback method
-      await fetchAvailableUsersFallback();
-    }
-  };
-
-  // Método alternativo si la consulta con join falla
-  const fetchAvailableUsersFallback = async () => {
-    try {
-      console.log('Using fallback method for fetching users...');
-      
-      // Obtener primero los user_ids con roles de profesor/admin
-      const { data: userRoles, error: rolesError } = await supabase
+      // Obtener TODOS los roles
+      console.log('Step 2: Fetching ALL user roles...');
+      const { data: allRoles, error: allRolesError } = await supabase
         .from('user_roles')
-        .select('user_id')
-        .in('role', ['profesor', 'admin']);
+        .select('user_id, role');
 
-      if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
+      console.log('All roles result:', { data: allRoles, error: allRolesError });
+
+      if (allRolesError) {
+        console.error('ERROR fetching all roles:', allRolesError);
         return;
       }
 
-      if (!userRoles || userRoles.length === 0) {
-        console.log('No teachers or admins found');
-        setAvailableUsers([]);
-        return;
-      }
+      // Filtrar manualmente
+      console.log('Step 3: Manual filtering...');
+      const teacherAdminRoles = allRoles?.filter(role => 
+        role.role === 'profesor' || role.role === 'admin'
+      ) || [];
+      
+      console.log('Teacher/Admin roles found:', teacherAdminRoles);
 
-      const userIds = userRoles.map(role => role.user_id);
-      console.log('Found user IDs with teacher/admin roles:', userIds);
+      const teacherAdminUserIds = teacherAdminRoles.map(role => role.user_id);
+      console.log('Teacher/Admin user IDs:', teacherAdminUserIds);
 
-      // Obtener perfiles para esos user_ids
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, nome, apelidos, email')
-        .in('user_id', userIds)
-        .neq('user_id', user?.id);
+      const teachersAndAdmins = allProfiles?.filter(profile => 
+        teacherAdminUserIds.includes(profile.user_id) && profile.user_id !== user?.id
+      ) || [];
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        return;
-      }
+      console.log('Final filtered teachers and admins:', teachersAndAdmins);
+      console.log('Setting availableUsers to:', teachersAndAdmins);
+      
+      setAvailableUsers(teachersAndAdmins);
+      console.log('=== END fetchAvailableUsers ===');
 
-      console.log('Final teachers and admins:', profiles);
-      setAvailableUsers(profiles || []);
     } catch (error) {
-      console.error('Error in fetchAvailableUsersFallback:', error);
+      console.error('CRITICAL ERROR in fetchAvailableUsers:', error);
     }
   };
 
@@ -559,6 +539,16 @@ export const MessagingView: React.FC = () => {
                     <SelectValue placeholder="Escolle un profesor ou administrador..." />
                   </SelectTrigger>
                   <SelectContent className="bg-background border border-border z-50">
+                    {/* Debug: rendering dropdown */}
+                    {(() => {
+                      console.log('RENDERING DROPDOWN - availableUsers:', availableUsers);
+                      return null;
+                    })()}
+                    {availableUsers.length === 0 && (
+                      <div className="p-2 text-center text-muted-foreground text-sm">
+                        Non se atoparon profesores
+                      </div>
+                    )}
                     {availableUsers.map((targetUser) => (
                       <SelectItem 
                         key={targetUser.user_id} 
