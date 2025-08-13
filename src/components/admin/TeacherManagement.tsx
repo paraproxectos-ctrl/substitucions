@@ -140,14 +140,16 @@ export const TeacherManagement: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // Crear usuario en Supabase Auth - el trigger handle_new_user() creará el perfil automáticamente
+      // Crear usuario en Supabase Auth con confirmación de email automática
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/`,
           data: {
             nome: formData.nome,
-            apelidos: formData.apelidos
+            apelidos: formData.apelidos,
+            email_confirmed: true
           }
         }
       });
