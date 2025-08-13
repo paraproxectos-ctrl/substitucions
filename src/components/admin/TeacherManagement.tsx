@@ -32,8 +32,10 @@ import {
   Mail,
   Phone,
   Save,
-  X
+  X,
+  KeyRound
 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Teacher {
   id: string;
@@ -55,7 +57,8 @@ export const TeacherManagement: React.FC = () => {
     apelidos: '',
     email: '',
     telefono: '',
-    password: 'ProfesorValle2024'
+    password: 'ProfesorValle2024',
+    sendPasswordReset: false
   });
   const [submitting, setSubmitting] = useState(false);
   const { userRole } = useAuth();
@@ -182,10 +185,43 @@ export const TeacherManagement: React.FC = () => {
         }
       }
 
-      toast({
-        title: "Éxito",
-        description: `Profesor/a ${formData.nome} ${formData.apelidos} creado correctamente`,
-      });
+      // Si se marcó la opción de envío de email de cambio de contraseña
+      if (formData.sendPasswordReset) {
+        try {
+          const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+            formData.email,
+            {
+              redirectTo: `${window.location.origin}/auth?tab=reset-password`
+            }
+          );
+          
+          if (resetError) {
+            console.warn('Error enviando email de cambio de contraseña:', resetError);
+            toast({
+              title: "Aviso",
+              description: `Profesor creado pero non se puido enviar o email de cambio de contraseña: ${resetError.message}`,
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Éxito",
+              description: `Profesor/a ${formData.nome} ${formData.apelidos} creado correctamente. Email de cambio de contraseña enviado.`,
+            });
+          }
+        } catch (emailError) {
+          console.warn('Error enviando email:', emailError);
+          toast({
+            title: "Aviso",
+            description: `Profesor creado pero non se puido enviar o email de cambio de contraseña`,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Éxito",
+          description: `Profesor/a ${formData.nome} ${formData.apelidos} creado correctamente`,
+        });
+      }
 
       // Resetear formulario e recargar lista
       setFormData({
@@ -193,7 +229,8 @@ export const TeacherManagement: React.FC = () => {
         apelidos: '',
         email: '',
         telefono: '',
-        password: 'ProfesorValle2024'
+        password: 'ProfesorValle2024',
+        sendPasswordReset: false
       });
       setShowAddDialog(false);
       await fetchTeachers();
@@ -254,7 +291,8 @@ export const TeacherManagement: React.FC = () => {
         apelidos: '',
         email: '',
         telefono: '',
-        password: 'ProfesorValle2024'
+        password: 'ProfesorValle2024',
+        sendPasswordReset: false
       });
       await fetchTeachers();
 
@@ -321,7 +359,8 @@ export const TeacherManagement: React.FC = () => {
       apelidos: teacher.apelidos,
       email: teacher.email,
       telefono: teacher.telefono || '',
-      password: 'ProfesorValle2024'
+      password: 'ProfesorValle2024',
+      sendPasswordReset: false
     });
   };
 
@@ -403,6 +442,22 @@ export const TeacherManagement: React.FC = () => {
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   placeholder="Contrasinal temporal"
                 />
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="sendPasswordReset"
+                  checked={formData.sendPasswordReset}
+                  onCheckedChange={(checked) => 
+                    setFormData({...formData, sendPasswordReset: !!checked})
+                  }
+                />
+                <Label htmlFor="sendPasswordReset" className="text-sm cursor-pointer">
+                  <div className="flex items-center space-x-2">
+                    <KeyRound className="h-4 w-4" />
+                    <span>Enviar enlace para cambiar contraseña</span>
+                  </div>
+                </Label>
               </div>
             </div>
             
