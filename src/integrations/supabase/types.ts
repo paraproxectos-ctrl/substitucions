@@ -14,16 +14,190 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      grupos_educativos: {
+        Row: {
+          created_at: string
+          id: string
+          nivel: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nivel: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nivel?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      mensaxes: {
+        Row: {
+          asunto: string
+          contido: string
+          created_at: string
+          destinatario_id: string | null
+          id: string
+          is_grupo: boolean
+          leido: boolean
+          remitente_id: string
+        }
+        Insert: {
+          asunto: string
+          contido: string
+          created_at?: string
+          destinatario_id?: string | null
+          id?: string
+          is_grupo?: boolean
+          leido?: boolean
+          remitente_id: string
+        }
+        Update: {
+          asunto?: string
+          contido?: string
+          created_at?: string
+          destinatario_id?: string | null
+          id?: string
+          is_grupo?: boolean
+          leido?: boolean
+          remitente_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          apelidos: string
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          telefono: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          apelidos: string
+          created_at?: string
+          email: string
+          id?: string
+          nome: string
+          telefono?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          apelidos?: string
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          telefono?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      substitucions: {
+        Row: {
+          created_at: string
+          created_by: string
+          data: string
+          grupo_id: string
+          hora_fin: string
+          hora_inicio: string
+          id: string
+          motivo: Database["public"]["Enums"]["motivo_sustitucion"]
+          motivo_outro: string | null
+          observacions: string | null
+          profesor_asignado_id: string
+          updated_at: string
+          vista: boolean
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          data: string
+          grupo_id: string
+          hora_fin: string
+          hora_inicio: string
+          id?: string
+          motivo: Database["public"]["Enums"]["motivo_sustitucion"]
+          motivo_outro?: string | null
+          observacions?: string | null
+          profesor_asignado_id: string
+          updated_at?: string
+          vista?: boolean
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          data?: string
+          grupo_id?: string
+          hora_fin?: string
+          hora_inicio?: string
+          id?: string
+          motivo?: Database["public"]["Enums"]["motivo_sustitucion"]
+          motivo_outro?: string | null
+          observacions?: string | null
+          profesor_asignado_id?: string
+          updated_at?: string
+          vista?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "substitucions_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_educativos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "profesor"
+      motivo_sustitucion:
+        | "ausencia_imprevista"
+        | "enfermidade"
+        | "asuntos_propios"
+        | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +324,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "profesor"],
+      motivo_sustitucion: [
+        "ausencia_imprevista",
+        "enfermidade",
+        "asuntos_propios",
+        "outro",
+      ],
+    },
   },
 } as const
