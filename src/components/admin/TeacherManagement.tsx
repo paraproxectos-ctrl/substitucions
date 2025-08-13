@@ -143,47 +143,37 @@ export const TeacherManagement: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // Usar función de base de datos para crear profesor con email confirmado
-      const { data: result, error: dbError } = await supabase
-        .rpc('create_teacher_user', {
-          user_email: formData.email,
-          user_password: formData.password,
-          user_nome: formData.nome,
-          user_apelidos: formData.apelidos
-        });
-
-      if (dbError) {
-        console.error('Error en función create_teacher_user:', dbError);
-        toast({
-          title: "Error",
-          description: `Error ao crear profesor: ${dbError.message}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const resultData = result as { success: boolean; error?: string; user_id?: string };
-      
-      if (!resultData?.success) {
-        toast({
-          title: "Error",
-          description: `Error ao crear profesor: ${resultData?.error || 'Error descoñecido'}`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Si hay teléfono, actualizar el perfil
-      if (formData.telefono && resultData.user_id) {
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ telefono: formData.telefono })
-          .eq('user_id', resultData.user_id);
-        
-        if (updateError) {
-          console.warn('Error actualizando teléfono:', updateError);
+      // Usar edge function para crear profesor
+      const { data: result, error: functionError } = await supabase.functions.invoke('create-teacher', {
+        body: {
+          email: formData.email,
+          password: formData.password,
+          nome: formData.nome,
+          apelidos: formData.apelidos,
+          telefono: formData.telefono
         }
+      });
+
+      if (functionError) {
+        console.error('Error calling create-teacher function:', functionError);
+        toast({
+          title: "Error",
+          description: `Error ao crear profesor: ${functionError.message}`,
+          variant: "destructive",
+        });
+        return;
       }
+
+      if (!result?.success) {
+        toast({
+          title: "Error",
+          description: `Error ao crear profesor: ${result?.error || 'Error descoñecido'}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Teléfono ya se incluye en la creación del perfil
 
       // Si se marcó la opción de envío de email de cambio de contraseña
       if (formData.sendPasswordReset) {
