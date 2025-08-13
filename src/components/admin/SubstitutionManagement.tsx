@@ -93,7 +93,8 @@ export const SubstitutionManagement: React.FC = () => {
     hora_inicio: '',
     hora_fin: '',
     grupo_id: '',
-    profesor_asignado_id: '',
+    profesor_sustituido_id: '', // Profesor que hay que sustituir
+    profesor_asignado_id: '',   // Profesor que cubre la sustitución
     motivo: 'ausencia_imprevista',
     motivo_outro: '',
     observacions: ''
@@ -156,22 +157,28 @@ export const SubstitutionManagement: React.FC = () => {
         setSubstitutions([]);
       }
 
-      // Cargar profesores
-      const { data: teachersData, error: teachersError } = await supabase
-        .from('profiles')
-        .select(`
-          user_id,
-          nome,
-          apelidos,
-          email,
-          user_roles!inner(role)
-        `)
-        .eq('user_roles.role', 'profesor');
+      // Cargar profesores - usar el mismo método que en TeacherManagement
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'profesor');
 
-      if (teachersError) {
-        console.error('Error fetching teachers:', teachersError);
+      if (roleError) {
+        console.error('Error fetching teacher roles:', roleError);
+      } else if (roleData && roleData.length > 0) {
+        const userIds = roleData.map(role => role.user_id);
+        const { data: teachersData, error: teachersError } = await supabase
+          .from('profiles')
+          .select('user_id, nome, apelidos, email')
+          .in('user_id', userIds);
+
+        if (teachersError) {
+          console.error('Error fetching teachers:', teachersError);
+        } else {
+          setTeachers(teachersData || []);
+        }
       } else {
-        setTeachers(teachersData || []);
+        setTeachers([]);
       }
 
       // Cargar grupos
@@ -199,7 +206,7 @@ export const SubstitutionManagement: React.FC = () => {
 
   // Crear nova substitución
   const createSubstitution = async () => {
-    if (!formData.data || !formData.hora_inicio || !formData.hora_fin || !formData.grupo_id || !formData.profesor_asignado_id) {
+    if (!formData.data || !formData.hora_inicio || !formData.hora_fin || !formData.grupo_id || !formData.profesor_sustituido_id || !formData.profesor_asignado_id) {
       toast({
         title: "Error",
         description: "Todos os campos obrigatorios deben estar relleados",
@@ -245,6 +252,7 @@ export const SubstitutionManagement: React.FC = () => {
         hora_inicio: '',
         hora_fin: '',
         grupo_id: '',
+        profesor_sustituido_id: '',
         profesor_asignado_id: '',
         motivo: 'ausencia_imprevista',
         motivo_outro: '',
@@ -313,6 +321,7 @@ export const SubstitutionManagement: React.FC = () => {
         hora_inicio: '',
         hora_fin: '',
         grupo_id: '',
+        profesor_sustituido_id: '',
         profesor_asignado_id: '',
         motivo: 'ausencia_imprevista',
         motivo_outro: '',
@@ -369,6 +378,7 @@ export const SubstitutionManagement: React.FC = () => {
       hora_inicio: substitution.hora_inicio,
       hora_fin: substitution.hora_fin,
       grupo_id: substitution.grupos_educativos?.nome || '',
+      profesor_sustituido_id: '', // This would need to be added to the Substitution interface and database
       profesor_asignado_id: substitution.profesor_asignado_id,
       motivo: substitution.motivo,
       motivo_outro: substitution.motivo_outro || '',
@@ -458,17 +468,35 @@ export const SubstitutionManagement: React.FC = () => {
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="grupo">Grupo *</Label>
                   <Select value={formData.grupo_id} onValueChange={(value) => setFormData({...formData, grupo_id: value})}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Selecciona un grupo" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-background border border-border z-50">
                       {groups.map((group) => (
                         <SelectItem key={group.id} value={group.id}>
-                          {group.nome}
+                          {group.nome} - {group.nivel}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="profesor_sustituido">Profesor/a a sustituír *</Label>
+                  <Select value={formData.profesor_sustituido_id} onValueChange={(value) => setFormData({...formData, profesor_sustituido_id: value})}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Profesor/a que falta" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {teachers.map((teacher) => (
+                        <SelectItem key={teacher.user_id} value={teacher.user_id}>
+                          {teacher.nome} {teacher.apelidos}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -476,12 +504,12 @@ export const SubstitutionManagement: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="profesor">Profesor/a *</Label>
+                  <Label htmlFor="profesor_asignado">Profesor/a que cubre *</Label>
                   <Select value={formData.profesor_asignado_id} onValueChange={(value) => setFormData({...formData, profesor_asignado_id: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un profesor/a" />
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Profesor/a sustituto/a" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-background border border-border z-50">
                       {teachers.map((teacher) => (
                         <SelectItem key={teacher.user_id} value={teacher.user_id}>
                           {teacher.nome} {teacher.apelidos}
