@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [adminUser, setAdminUser] = useState('admin');
+  const [adminPassword, setAdminPassword] = useState('Lacl7777melm@@@@');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [isAdminLogin, setIsAdminLogin] = useState(false);
@@ -22,9 +24,9 @@ export default function Auth() {
     setLoading(true);
     setError('');
 
-    // Credenciais especiais para o administrador
-    const finalEmail = isAdminLogin ? 'admin@vallinclan.edu.es' : email;
-    const finalPassword = isAdminLogin ? 'Lacl7777melm@@@@' : password;
+    // Credenciais para o administrador
+    const finalEmail = isAdminLogin ? `${adminUser}@vallinclan.edu.es` : email;
+    const finalPassword = isAdminLogin ? adminPassword : password;
 
     const { error } = await signIn(finalEmail, finalPassword);
     
@@ -129,11 +131,39 @@ export default function Auth() {
               )}
 
               {isAdminLogin && (
-                <div className="text-center p-4 bg-accent/20 rounded-lg">
-                  <p className="text-sm text-muted-foreground">
-                    Acceso como administrador do sistema
-                  </p>
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="adminUser">Usuario administrador</Label>
+                    <Input
+                      id="adminUser"
+                      type="text"
+                      placeholder="admin"
+                      value={adminUser}
+                      onChange={(e) => setAdminUser(e.target.value)}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="adminPassword">Contrasinal administrador</Label>
+                    <Input
+                      id="adminPassword"
+                      type="password"
+                      placeholder="Lacl7777melm@@@@"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="text-center p-3 bg-accent/20 rounded-lg">
+                    <p className="text-xs text-muted-foreground">
+                      Email: {adminUser}@vallinclan.edu.es
+                    </p>
+                  </div>
+                </>
               )}
 
               {error && (
@@ -145,7 +175,7 @@ export default function Auth() {
               <Button 
                 type="submit" 
                 className="w-full bg-primary hover:bg-primary/90"
-                disabled={loading || (!isAdminLogin && (!email || !password))}
+                disabled={loading || (!isAdminLogin && (!email || !password)) || (isAdminLogin && (!adminUser || !adminPassword))}
               >
                 {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
               </Button>
