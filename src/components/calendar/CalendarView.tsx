@@ -42,19 +42,19 @@ export const CalendarView: React.FC = () => {
       const startDate = startOfDay(selectedDate);
       const endDate = endOfDay(selectedDate);
 
-      const { data, error } = await supabase
+      // Primeiro obter as substitucións
+      const { data: substitutionsData, error: substitutionsError } = await supabase
         .from('substitucions')
         .select(`
           *,
-          grupos_educativos (nome, nivel),
-          profiles!substitucions_profesor_asignado_id_fkey (nome, apelidos)
+          grupos_educativos (nome, nivel)
         `)
         .gte('data', format(startDate, 'yyyy-MM-dd'))
         .lte('data', format(endDate, 'yyyy-MM-dd'))
         .order('hora_inicio');
 
-      if (error) {
-        console.error('Error fetching substitutions:', error);
+      if (substitutionsError) {
+        console.error('Error fetching substitutions:', substitutionsError);
         toast({
           title: "Error",
           description: "Non se puideron cargar as substitucións",
@@ -63,7 +63,29 @@ export const CalendarView: React.FC = () => {
         return;
       }
 
-      setSubstitucions((data as any) || []);
+      // Se hai substitucións, obter os perfís dos profesores
+      if (substitutionsData && substitutionsData.length > 0) {
+        const professorIds = substitutionsData.map(sub => sub.profesor_asignado_id);
+        
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, nome, apelidos')
+          .in('user_id', professorIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+        }
+
+        // Combinar datos
+        const enrichedSubstitutions = substitutionsData.map(sub => ({
+          ...sub,
+          profiles: profilesData?.find(profile => profile.user_id === sub.profesor_asignado_id) || null
+        }));
+
+        setSubstitucions(enrichedSubstitutions as any);
+      } else {
+        setSubstitucions([]);
+      }
     } catch (error) {
       console.error('Error in fetchSubstitucions:', error);
     } finally {
