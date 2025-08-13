@@ -240,37 +240,44 @@ export const MessagingView: React.FC = () => {
     }
   };
 
-  // Cargar usuarios disponibles (todos los profesores)
+  // Cargar usuarios disponibles (todos los profesores y administradores)
   const fetchAvailableUsers = async () => {
     try {
-      // Primero obtener todos los usuarios excepto el actual
+      console.log('Fetching available users...');
+      
+      // Primero obtener todos los perfiles excepto el actual
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, nome, apelidos, email')
         .neq('user_id', user?.id);
+
+      console.log('Profiles fetched:', profiles);
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
         return;
       }
 
-      // Luego obtener los roles
+      // Luego obtener los roles de profesores y administradores
       const { data: roles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id, role')
         .in('role', ['profesor', 'admin']);
+
+      console.log('Roles fetched:', roles);
 
       if (rolesError) {
         console.error('Error fetching roles:', rolesError);
         return;
       }
 
-      // Filtrar solo usuarios que son profesores o administradores
-      const teachers = profiles?.filter(profile => 
+      // Filtrar usuarios que son profesores o administradores
+      const teachersAndAdmins = profiles?.filter(profile => 
         roles?.some(role => role.user_id === profile.user_id)
       ) || [];
 
-      setAvailableUsers(teachers);
+      console.log('Filtered teachers and admins:', teachersAndAdmins);
+      setAvailableUsers(teachersAndAdmins);
     } catch (error) {
       console.error('Error in fetchAvailableUsers:', error);
     }
@@ -347,7 +354,10 @@ export const MessagingView: React.FC = () => {
               </CardTitle>
               <Button
                 size="sm"
-                onClick={() => setShowNewChat(true)}
+                onClick={() => {
+                  setShowNewChat(true);
+                  fetchAvailableUsers(); // Refrescar lista al abrir modal
+                }}
                 className="bg-primary hover:bg-primary/90"
               >
                 <Plus className="h-4 w-4" />
