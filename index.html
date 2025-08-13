@@ -1,24 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="gl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>valente-substitucions</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <title>Substitucións Valle Inclán - Sistema de Xestión Educativa</title>
+    <meta name="description" content="Sistema de xestión de substitucións escolares do CEIP Valle Inclán. Plataforma segura e eficiente para o control de substitucións do profesorado." />
+    <meta name="keywords" content="substitucións, profesorado, educación, xestión escolar, Valle Inclán" />
+    <meta name="author" content="CEIP Valle Inclán" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="/" />
 
-    <meta property="og:title" content="valente-substitucions" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:url" content="/" />
+    <meta property="og:title" content="Substitucións Valle Inclán - Sistema de Xestión Educativa" />
+    <meta property="og:description" content="Sistema de xestión de substitucións escolares do CEIP Valle Inclán. Plataforma segura e eficiente para o control de substitucións do profesorado." />
+    <meta property="og:locale" content="gl_ES" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="/" />
+    <meta property="twitter:title" content="Substitucións Valle Inclán - Sistema de Xestión Educativa" />
+    <meta property="twitter:description" content="Sistema de xestión de substitucións escolares do CEIP Valle Inclán. Plataforma segura e eficiente para o control de substitucións do profesorado." />
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="preload" href="/src/index.css" as="style" />
+    
+    <!-- Ensure app loads even in poor connections -->
+    <style>
+      /* Critical CSS for loading state */
+      #root {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, hsl(220 100% 60% / 0.1), hsl(190 100% 95% / 0.3));
+      }
+      
+      .loading-fallback {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        color: hsl(220 100% 30%);
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      
+      .loading-spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 3px solid hsl(220 100% 60% / 0.2);
+        border-top: 3px solid hsl(220 100% 60%);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Hide fallback once React loads */
+      .app-loaded .loading-fallback {
+        display: none;
+      }
+    </style>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fallback content shown while JS loads -->
+      <div class="loading-fallback">
+        <div class="loading-spinner"></div>
+        <h1>Substitucións Valle Inclán</h1>
+        <p>Cargando sistema de xestión...</p>
+        <noscript>
+          <p style="color: red; margin-top: 1rem;">
+            Este aplicativo require JavaScript para funcionar. Por favor, activa JavaScript no teu navegador.
+          </p>
+        </noscript>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Mark app as loaded when React takes over -->
+    <script>
+      window.addEventListener('load', function() {
+        const root = document.getElementById('root');
+        if (root && root.children.length > 1) {
+          root.classList.add('app-loaded');
+        }
+      });
+    </script>
   </body>
 </html>

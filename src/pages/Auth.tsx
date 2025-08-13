@@ -13,6 +13,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isAdminLogin, setIsAdminLogin] = useState(false);
   const { signIn } = useAuth();
   const { toast } = useToast();
 
@@ -21,7 +22,11 @@ export default function Auth() {
     setLoading(true);
     setError('');
 
-    const { error } = await signIn(email, password);
+    // Credenciais especiais para o administrador
+    const finalEmail = isAdminLogin ? 'admin@vallinclan.edu.es' : email;
+    const finalPassword = isAdminLogin ? 'Lacl7777melm@@@@' : password;
+
+    const { error } = await signIn(finalEmail, finalPassword);
     
     if (error) {
       setError('Credenciais incorrectas. Verifica o teu email e contrasinal.');
@@ -74,31 +79,62 @@ export default function Auth() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="exemplo@colexio.gal"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full"
-                />
+              <div className="flex space-x-2 mb-4">
+                <Button
+                  type="button"
+                  variant={!isAdminLogin ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => setIsAdminLogin(false)}
+                >
+                  Profesorado
+                </Button>
+                <Button
+                  type="button"
+                  variant={isAdminLogin ? "default" : "outline"}
+                  className="flex-1"
+                  onClick={() => setIsAdminLogin(true)}
+                >
+                  Administrador
+                </Button>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="password">Contrasinal</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Introduce o teu contrasinal"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full"
-                />
-              </div>
+
+              {!isAdminLogin && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="exemplo@colexio.gal"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Contrasinal</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Introduce o teu contrasinal"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                </>
+              )}
+
+              {isAdminLogin && (
+                <div className="text-center p-4 bg-accent/20 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Acceso como administrador do sistema
+                  </p>
+                </div>
+              )}
 
               {error && (
                 <Alert variant="destructive">
@@ -109,7 +145,7 @@ export default function Auth() {
               <Button 
                 type="submit" 
                 className="w-full bg-primary hover:bg-primary/90"
-                disabled={loading}
+                disabled={loading || (!isAdminLogin && (!email || !password))}
               >
                 {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
               </Button>

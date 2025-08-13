@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      conversacion_participantes: {
+        Row: {
+          conversacion_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          conversacion_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          conversacion_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversacion_participantes_conversacion_id_fkey"
+            columns: ["conversacion_id"]
+            isOneToOne: false
+            referencedRelation: "conversacions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversacions: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_grupo: boolean
+          nome: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          is_grupo?: boolean
+          nome?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_grupo?: boolean
+          nome?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       grupos_educativos: {
         Row: {
           created_at: string
@@ -39,6 +95,7 @@ export type Database = {
         Row: {
           asunto: string
           contido: string
+          conversacion_id: string | null
           created_at: string
           destinatario_id: string | null
           id: string
@@ -49,6 +106,7 @@ export type Database = {
         Insert: {
           asunto: string
           contido: string
+          conversacion_id?: string | null
           created_at?: string
           destinatario_id?: string | null
           id?: string
@@ -59,6 +117,7 @@ export type Database = {
         Update: {
           asunto?: string
           contido?: string
+          conversacion_id?: string | null
           created_at?: string
           destinatario_id?: string | null
           id?: string
@@ -66,7 +125,15 @@ export type Database = {
           leido?: boolean
           remitente_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "mensaxes_conversacion_id_fkey"
+            columns: ["conversacion_id"]
+            isOneToOne: false
+            referencedRelation: "conversacions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -183,6 +250,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_admin_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _user_id: string
