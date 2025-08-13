@@ -23,11 +23,28 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, password, nome, apelidos, telefono }: CreateTeacherRequest = await req.json();
 
+    console.log('Creating teacher with email:', email);
+
     // Create Supabase admin client
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
+    const userExists = existingUser?.users?.find(user => user.email === email);
+
+    if (userExists) {
+      console.log('User already exists:', email);
+      return new Response(
+        JSON.stringify({ success: false, error: 'Ya existe un usuario con este email' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
 
     // Create the user with admin client
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -43,7 +60,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (authError) {
       console.error('Error creating auth user:', authError);
       return new Response(
-        JSON.stringify({ success: false, error: authError.message }),
+        JSON.stringify({ success: false, error: `Error creando usuario: ${authError.message}` }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -52,8 +69,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!authData.user) {
+      console.error('No user returned from creation');
       return new Response(
-        JSON.stringify({ success: false, error: 'No user created' }),
+        JSON.stringify({ success: false, error: 'No se creó el usuario' }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -61,25 +79,28 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create or update profile (use upsert in case trigger already created it)
+    console.log('User created successfully:', authData.user.id);
+
+    // Wait a bit to ensure user is properly created
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Create profile
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .upsert({
+      .insert({
         user_id: authData.user.id,
         nome,
         apelidos,
         email,
         telefono: telefono || null
-      }, {
-        onConflict: 'user_id'
       });
 
     if (profileError) {
-      console.error('Error creating/updating profile:', profileError);
-      // If profile creation fails, try to clean up the auth user
+      console.error('Error creating profile:', profileError);
+      // Clean up auth user if profile fails
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       return new Response(
-        JSON.stringify({ success: false, error: 'Error creating profile: ' + profileError.message }),
+        JSON.stringify({ success: false, error: `Error creando perfil: ${profileError.message}` }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -87,26 +108,28 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Assign profesor role (use upsert to avoid conflicts)
+    console.log('Profile created successfully');
+
+    // Assign profesor role
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .upsert({
+      .insert({
         user_id: authData.user.id,
         role: 'profesor'
-      }, {
-        onConflict: 'user_id,role'
       });
 
     if (roleError) {
       console.error('Error assigning role:', roleError);
       return new Response(
-        JSON.stringify({ success: false, error: 'Error assigning role: ' + roleError.message }),
+        JSON.stringify({ success: false, error: `Error asignando rol: ${roleError.message}` }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         }
       );
     }
+
+    console.log('Role assigned successfully');
 
     return new Response(
       JSON.stringify({ 
@@ -123,7 +146,7 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error) {
     console.error('Error in create-teacher function:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: `Error interno: ${error.message}` }),
       {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
