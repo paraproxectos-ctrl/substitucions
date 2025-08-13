@@ -140,79 +140,46 @@ export const TeacherManagement: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // Crear usuario en Supabase Auth con confirmación de email automática
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            nome: formData.nome,
-            apelidos: formData.apelidos,
-            email_confirmed: true
-          }
+      // Usar función de base de datos para crear profesor con email confirmado
+      const { data: result, error: dbError } = await supabase
+        .rpc('create_teacher_user', {
+          user_email: formData.email,
+          user_password: formData.password,
+          user_nome: formData.nome,
+          user_apelidos: formData.apelidos
+        });
+
+      if (dbError) {
+        console.error('Error en función create_teacher_user:', dbError);
+        toast({
+          title: "Error",
+          description: `Error ao crear profesor: ${dbError.message}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const resultData = result as { success: boolean; error?: string; user_id?: string };
+      
+      if (!resultData?.success) {
+        toast({
+          title: "Error",
+          description: `Error ao crear profesor: ${resultData?.error || 'Error descoñecido'}`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Si hay teléfono, actualizar el perfil
+      if (formData.telefono && resultData.user_id) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ telefono: formData.telefono })
+          .eq('user_id', resultData.user_id);
+        
+        if (updateError) {
+          console.warn('Error actualizando teléfono:', updateError);
         }
-      });
-
-      if (authError) {
-        console.error('Error creating auth user:', authError);
-        toast({
-          title: "Error",
-          description: authError.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (!authData.user) {
-        toast({
-          title: "Error",
-          description: "Non se puido crear o usuario",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Esperar un momento para que el trigger cree el perfil
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Actualizar el perfil con la información completa
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          nome: formData.nome,
-          apelidos: formData.apelidos,
-          email: formData.email,
-          telefono: formData.telefono || null
-        })
-        .eq('user_id', authData.user.id);
-
-      if (profileError) {
-        console.error('Error updating profile:', profileError);
-        toast({
-          title: "Error",
-          description: "Non se puido actualizar o perfil",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Asignar rol de profesor
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: 'profesor'
-        });
-
-      if (roleError) {
-        console.error('Error assigning role:', roleError);
-        toast({
-          title: "Error",
-          description: "Non se puido asignar o rol",
-          variant: "destructive",
-        });
-        return;
       }
 
       toast({

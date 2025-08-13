@@ -257,6 +257,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      create_teacher_user: {
+        Args: {
+          user_email: string
+          user_password: string
+          user_nome: string
+          user_apelidos: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _user_id: string
