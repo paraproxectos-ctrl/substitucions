@@ -260,6 +260,8 @@ export const MessagingView: React.FC = () => {
     setNewMessage(''); // Limpiar inmediatamente para mejor UX
 
     try {
+      console.log('Sending message:', { messageContent, selectedConversation, userId: user?.id });
+
       if (selectedConversation === 'grupo') {
         // Mensaje grupal
         const { data, error } = await supabase
@@ -269,6 +271,7 @@ export const MessagingView: React.FC = () => {
             remitente_id: user?.id,
             is_grupo: true,
             asunto: 'Chat grupal',
+            leido: false
           })
           .select();
 
@@ -277,7 +280,7 @@ export const MessagingView: React.FC = () => {
           setNewMessage(messageContent);
           toast({
             title: "Error",
-            description: "Non se puido enviar a mensaxe grupal",
+            description: `Non se puido enviar a mensaxe grupal: ${error.message}`,
             variant: "destructive",
           });
           return;
@@ -289,6 +292,8 @@ export const MessagingView: React.FC = () => {
         const [userId1, userId2] = selectedConversation.split('-');
         const destinatarioId = userId1 === user?.id ? userId2 : userId1;
 
+        console.log('Sending direct message to:', destinatarioId);
+
         const { data, error } = await supabase
           .from('mensaxes')
           .insert({
@@ -297,6 +302,7 @@ export const MessagingView: React.FC = () => {
             destinatario_id: destinatarioId,
             is_grupo: false,
             asunto: 'Mensaxe directa',
+            leido: false
           })
           .select();
 
@@ -305,7 +311,7 @@ export const MessagingView: React.FC = () => {
           setNewMessage(messageContent);
           toast({
             title: "Error",
-            description: "Non se puido enviar a mensaxe directa",
+            description: `Non se puido enviar a mensaxe directa: ${error.message}`,
             variant: "destructive",
           });
           return;
@@ -320,14 +326,14 @@ export const MessagingView: React.FC = () => {
           fetchMessages(selectedConversation);
         }
         fetchConversations();
-      }, 100);
+      }, 200);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in sendMessage:', error);
       setNewMessage(messageContent);
       toast({
         title: "Error",
-        description: "Erro interno ao enviar mensaxe",
+        description: `Erro interno ao enviar mensaxe: ${error.message}`,
         variant: "destructive",
       });
     } finally {
@@ -338,6 +344,8 @@ export const MessagingView: React.FC = () => {
   // Cargar usuarios disponibles (todos los profesores)
   const fetchAvailableUsers = async () => {
     try {
+      console.log('Fetching available users...');
+      
       // Primero obtener todos los usuarios excepto el actual
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -348,6 +356,8 @@ export const MessagingView: React.FC = () => {
         console.error('Error fetching profiles:', profilesError);
         return;
       }
+
+      console.log('Profiles found:', profiles);
 
       // Luego obtener los roles
       const { data: roles, error: rolesError } = await supabase
@@ -360,11 +370,14 @@ export const MessagingView: React.FC = () => {
         return;
       }
 
+      console.log('Roles found:', roles);
+
       // Filtrar solo usuarios que son profesores o administradores
       const teachers = profiles?.filter(profile => 
         roles?.some(role => role.user_id === profile.user_id)
       ) || [];
 
+      console.log('Available teachers:', teachers);
       setAvailableUsers(teachers);
     } catch (error) {
       console.error('Error in fetchAvailableUsers:', error);
@@ -514,52 +527,12 @@ export const MessagingView: React.FC = () => {
       <div className="w-80 border-r border-border">
         <Card className="h-full rounded-none border-0">
           <CardHeader className="border-b border-border">
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center space-x-2">
-                <MessageSquare className="h-5 w-5 text-primary" />
-                <span>Mensaxería</span>
-              </CardTitle>
-              <div className="flex items-center space-x-2">
-                {/* Selector desplegable de usuarios */}
-                <Select value={selectedUserId} onValueChange={handleUserSelect}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Seleccionar profesor" />
-                  </SelectTrigger>
-                  <SelectContent className="z-50 bg-background border shadow-md">
-                    {/* Chat grupal */}
-                    <SelectItem value="grupo" className="hover:bg-accent">
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-4 w-4" />
-                        <span>Chat do claustro</span>
-                      </div>
-                    </SelectItem>
-                    <Separator />
-                    {/* Profesores */}
-                    {availableUsers.map((targetUser) => {
-                      const isOnline = isUserOnline(targetUser.user_id);
-                      return (
-                        <SelectItem key={targetUser.user_id} value={targetUser.user_id} className="hover:bg-accent">
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center space-x-2">
-                              <div className="relative">
-                                <User className="h-4 w-4" />
-                                <div className={`absolute -bottom-1 -right-1 h-2 w-2 rounded-full ${
-                                  isOnline ? 'bg-green-500' : 'bg-gray-400'
-                                }`} />
-                              </div>
-                              <span>{targetUser.nome} {targetUser.apelidos}</span>
-                            </div>
-                            {isOnline && (
-                              <Badge variant="secondary" className="text-xs ml-2">
-                                En liña
-                              </Badge>
-                            )}
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center space-x-2">
+                  <MessageSquare className="h-5 w-5 text-primary" />
+                  <span>Mensaxería</span>
+                </CardTitle>
                 <Button
                   size="sm"
                   onClick={() => setShowNewChat(true)}
@@ -567,6 +540,64 @@ export const MessagingView: React.FC = () => {
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
+              </div>
+              
+              {/* Selector desplegable de profesores - separado */}
+              <div className="w-full">
+                <Select value={selectedUserId} onValueChange={handleUserSelect}>
+                  <SelectTrigger className="w-full bg-background">
+                    <SelectValue placeholder="💬 Seleccionar profesor para conversar" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background border shadow-lg max-h-60">
+                    {/* Chat grupal */}
+                    <SelectItem value="grupo" className="hover:bg-accent cursor-pointer">
+                      <div className="flex items-center space-x-2 w-full">
+                        <Users className="h-4 w-4 text-primary" />
+                        <span className="font-medium">Chat do claustro</span>
+                        <Badge variant="secondary" className="ml-auto text-xs">
+                          Grupal
+                        </Badge>
+                      </div>
+                    </SelectItem>
+                    <Separator className="my-1" />
+                    {/* Profesores */}
+                    {availableUsers.length > 0 ? (
+                      availableUsers.map((targetUser) => {
+                        const isOnline = isUserOnline(targetUser.user_id);
+                        return (
+                          <SelectItem 
+                            key={targetUser.user_id} 
+                            value={targetUser.user_id} 
+                            className="hover:bg-accent cursor-pointer"
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center space-x-2">
+                                <div className="relative">
+                                  <User className="h-4 w-4" />
+                                  <div className={`absolute -bottom-1 -right-1 h-2 w-2 rounded-full border border-background ${
+                                    isOnline ? 'bg-green-500' : 'bg-gray-400'
+                                  }`} />
+                                </div>
+                                <span className="font-medium">
+                                  {targetUser.nome} {targetUser.apelidos}
+                                </span>
+                              </div>
+                              {isOnline && (
+                                <Badge variant="outline" className="text-xs ml-2 text-green-600 border-green-600">
+                                  En liña
+                                </Badge>
+                              )}
+                            </div>
+                          </SelectItem>
+                        );
+                      })
+                    ) : (
+                      <SelectItem value="no-users" disabled>
+                        <span className="text-muted-foreground">Non hai profesores dispoñibles</span>
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </CardHeader>
