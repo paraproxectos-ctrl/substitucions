@@ -140,7 +140,7 @@ export const TeacherManagement: React.FC = () => {
 
     setSubmitting(true);
     try {
-      // Crear usuario en Supabase Auth usando service role
+      // Crear usuario en Supabase Auth - el trigger handle_new_user() creará el perfil automáticamente
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -171,22 +171,25 @@ export const TeacherManagement: React.FC = () => {
         return;
       }
 
-      // Crear perfil
+      // Esperar un momento para que el trigger cree el perfil
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Actualizar el perfil con la información completa
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
-          user_id: authData.user.id,
+        .update({
           nome: formData.nome,
           apelidos: formData.apelidos,
           email: formData.email,
           telefono: formData.telefono || null
-        });
+        })
+        .eq('user_id', authData.user.id);
 
       if (profileError) {
-        console.error('Error creating profile:', profileError);
+        console.error('Error updating profile:', profileError);
         toast({
           title: "Error",
-          description: "Non se puido crear o perfil",
+          description: "Non se puido actualizar o perfil",
           variant: "destructive",
         });
         return;
