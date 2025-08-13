@@ -241,58 +241,50 @@ export const MessagingView: React.FC = () => {
     }
   };
 
-  // Cargar usuarios disponibles (todos los profesores y administradores)
+  // Cargar usuarios disponibles (solo profesores y administradores)
   const fetchAvailableUsers = async () => {
     console.log('=== STARTING fetchAvailableUsers ===');
     console.log('Current user:', user);
     console.log('Current user ID:', user?.id);
 
     try {
-      // Método simple: obtener TODOS los perfiles primero
-      console.log('Step 1: Fetching ALL profiles...');
-      const { data: allProfiles, error: allProfilesError } = await supabase
-        .from('profiles')
-        .select('user_id, nome, apelidos, email');
-
-      console.log('All profiles result:', { data: allProfiles, error: allProfilesError });
-
-      if (allProfilesError) {
-        console.error('ERROR fetching all profiles:', allProfilesError);
-        return;
-      }
-
-      // Obtener TODOS los roles
-      console.log('Step 2: Fetching ALL user roles...');
-      const { data: allRoles, error: allRolesError } = await supabase
+      // Get current user's role first
+      const { data: currentUserRole } = await supabase
         .from('user_roles')
-        .select('user_id, role');
+        .select('role')
+        .eq('user_id', user?.id)
+        .single();
 
-      console.log('All roles result:', { data: allRoles, error: allRolesError });
+      console.log('👤 Current user role:', currentUserRole);
 
-      if (allRolesError) {
-        console.error('ERROR fetching all roles:', allRolesError);
+      if (!currentUserRole || !['profesor', 'admin'].includes(currentUserRole.role)) {
+        console.log('❌ User is not a teacher or admin');
+        setAvailableUsers([]);
         return;
       }
 
-      // Filtrar manualmente
-      console.log('Step 3: Manual filtering...');
-      const teacherAdminRoles = allRoles?.filter(role => 
-        role.role === 'profesor' || role.role === 'admin'
-      ) || [];
-      
-      console.log('Teacher/Admin roles found:', teacherAdminRoles);
+      // Get profiles joined with roles for teachers/admins only
+      const { data: teachersAndAdmins, error } = await supabase
+        .from('profiles')
+        .select(`
+          user_id,
+          nome,
+          apelidos,
+          email,
+          user_roles!inner(role)
+        `)
+        .in('user_roles.role', ['profesor', 'admin'])
+        .neq('user_id', user?.id);
 
-      const teacherAdminUserIds = teacherAdminRoles.map(role => role.user_id);
-      console.log('Teacher/Admin user IDs:', teacherAdminUserIds);
+      console.log('Teachers and admins result:', { data: teachersAndAdmins, error });
 
-      const teachersAndAdmins = allProfiles?.filter(profile => 
-        teacherAdminUserIds.includes(profile.user_id) && profile.user_id !== user?.id
-      ) || [];
+      if (error) {
+        console.error('ERROR fetching teachers and admins:', error);
+        return;
+      }
 
-      console.log('Final filtered teachers and admins:', teachersAndAdmins);
-      console.log('Setting availableUsers to:', teachersAndAdmins);
-      
-      setAvailableUsers(teachersAndAdmins);
+      console.log('Setting availableUsers to:', teachersAndAdmins || []);
+      setAvailableUsers(teachersAndAdmins || []);
       console.log('=== END fetchAvailableUsers ===');
 
     } catch (error) {
