@@ -80,7 +80,7 @@ export const MessagingView: React.FC = () => {
   // Cargar conversaciones
   const fetchConversations = async () => {
     try {
-      // Buscar conversaciones directas SOLO
+      // Buscar conversaciones directas SOLO - sin joins problemáticos
       const { data: directMessages, error: directError } = await supabase
         .from('mensaxes')
         .select(`
@@ -90,8 +90,7 @@ export const MessagingView: React.FC = () => {
           contido,
           created_at,
           is_grupo,
-          leido,
-          profiles!mensaxes_remitente_id_fkey (user_id, nome, apelidos)
+          leido
         `)
         .or(`remitente_id.eq.${user?.id},destinatario_id.eq.${user?.id}`)
         .eq('is_grupo', false)
@@ -101,6 +100,24 @@ export const MessagingView: React.FC = () => {
         console.error('Error fetching direct messages:', directError);
         return;
       }
+
+      if (!directMessages || directMessages.length === 0) {
+        setConversations([]);
+        return;
+      }
+
+      // Get unique user IDs to fetch their profiles
+      const userIds = Array.from(new Set(
+        directMessages.flatMap(msg => [msg.remitente_id, msg.destinatario_id])
+          .filter(id => id && id !== user?.id)
+      ));
+
+      const { data: userProfiles } = await supabase
+        .from('profiles')
+        .select('user_id, nome, apelidos')
+        .in('user_id', userIds);
+
+      const profileMap = new Map(userProfiles?.map(p => [p.user_id, p]) || []);
 
       // Agrupar por conversación
       const conversationMap = new Map<string, Conversation>();
@@ -112,19 +129,18 @@ export const MessagingView: React.FC = () => {
         const conversationKey = [user?.id, otherUserId].sort().join('-');
         
         if (!conversationMap.has(conversationKey)) {
-          const isFromMe = msg.remitente_id === user?.id;
-          const otherUserProfile = !isFromMe ? (msg.profiles as any) : null;
+          const otherUserProfile = profileMap.get(otherUserId);
           
           conversationMap.set(conversationKey, {
             id: conversationKey,
             is_grupo: false,
             participant: {
               id: otherUserId,
-              nome: isFromMe ? 'Tu' : otherUserProfile?.nome || '',
-              apelidos: isFromMe ? '' : otherUserProfile?.apelidos || '',
+              nome: otherUserProfile?.nome || 'Usuario',
+              apelidos: otherUserProfile?.apelidos || '',
             },
             lastMessage: msg.contido,
-            unreadCount: (!isFromMe && !msg.leido) ? 1 : 0,
+            unreadCount: (msg.remitente_id !== user?.id && !msg.leido) ? 1 : 0,
             updated_at: msg.created_at,
           });
         } else {
@@ -148,7 +164,7 @@ export const MessagingView: React.FC = () => {
   // Cargar mensajes de una conversación
   const fetchMessages = async (conversationId: string) => {
     try {
-      // Solo mensajes directos
+      // Solo mensajes directos - sin joins problemáticos
       const [userId1, userId2] = conversationId.split('-');
       const { data, error } = await supabase
         .from('mensaxes')
@@ -159,8 +175,7 @@ export const MessagingView: React.FC = () => {
           destinatario_id,
           is_grupo,
           leido,
-          created_at,
-          profiles!mensaxes_remitente_id_fkey (nome, apelidos)
+          created_at
         `)
         .eq('is_grupo', false)
         .or(`and(remitente_id.eq.${userId1},destinatario_id.eq.${userId2}),and(remitente_id.eq.${userId2},destinatario_id.eq.${userId1})`)
@@ -171,7 +186,13 @@ export const MessagingView: React.FC = () => {
         return;
       }
 
-      setMessages((data as any) || []);
+      // Crear mensajes con estructura compatible
+      const messagesWithProfiles = data?.map(msg => ({
+        ...msg,
+        profiles: null // Ya no necesitamos esto
+      })) || [];
+
+      setMessages(messagesWithProfiles as any);
 
       // Marcar mensajes como leídos
       await supabase
