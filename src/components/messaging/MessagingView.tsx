@@ -56,6 +56,13 @@ interface Profile {
   email: string;
 }
 
+interface OnlineUser {
+  user_id: string;
+  nome: string;
+  apelidos: string;
+  online_at: string;
+}
+
 export const MessagingView: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -65,6 +72,7 @@ export const MessagingView: React.FC = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
   const [showNewChat, setShowNewChat] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<Profile[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const { user, userRole } = useAuth();
   const { toast } = useToast();
@@ -298,20 +306,37 @@ export const MessagingView: React.FC = () => {
     }
   };
 
-  // Cargar usuarios disponibles
+  // Cargar usuarios disponibles (todos los profesores)
   const fetchAvailableUsers = async () => {
     try {
-      const { data, error } = await supabase
+      // Primero obtener todos los usuarios excepto el actual
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, nome, apelidos, email')
         .neq('user_id', user?.id);
 
-      if (error) {
-        console.error('Error fetching users:', error);
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
         return;
       }
 
-      setAvailableUsers(data || []);
+      // Luego obtener los roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('role', ['profesor', 'admin']);
+
+      if (rolesError) {
+        console.error('Error fetching roles:', rolesError);
+        return;
+      }
+
+      // Filtrar solo usuarios que son profesores o administradores
+      const teachers = profiles?.filter(profile => 
+        roles?.some(role => role.user_id === profile.user_id)
+      ) || [];
+
+      setAvailableUsers(teachers);
     } catch (error) {
       console.error('Error in fetchAvailableUsers:', error);
     }
@@ -325,6 +350,11 @@ export const MessagingView: React.FC = () => {
     await fetchMessages(conversationId);
   };
 
+  // Verificar si un usuario está en línea
+  const isUserOnline = (userId: string) => {
+    return onlineUsers.some(onlineUser => onlineUser.user_id === userId);
+  };
+
   useEffect(() => {
     fetchConversations();
     fetchAvailableUsers();
@@ -336,7 +366,54 @@ export const MessagingView: React.FC = () => {
     }
   }, [selectedConversation]);
 
-  // Configurar tempo real
+  // Configurar presencia de usuarios en tiempo real
+  useEffect(() => {
+    if (!user) return;
+
+    const presenceChannel = supabase.channel('online_users')
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        const onlineList: OnlineUser[] = [];
+        
+        Object.keys(state).forEach((key) => {
+          const presences = state[key];
+          presences.forEach((presence: any) => {
+            onlineList.push({
+              user_id: presence.user_id,
+              nome: presence.nome,
+              apelidos: presence.apelidos,
+              online_at: presence.online_at,
+            });
+          });
+        });
+        
+        setOnlineUsers(onlineList);
+      })
+      .on('presence', { event: 'join' }, ({ newPresences }) => {
+        console.log('User joined:', newPresences);
+      })
+      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        console.log('User left:', leftPresences);
+      });
+
+    presenceChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        // Enviar nuestro estado de presencia
+        await presenceChannel.track({
+          user_id: user.id,
+          nome: user.user_metadata?.nome || '',
+          apelidos: user.user_metadata?.apelidos || '',
+          online_at: new Date().toISOString(),
+        });
+      }
+    });
+
+    return () => {
+      supabase.removeChannel(presenceChannel);
+    };
+  }, [user]);
+
+  // Configurar tempo real para mensajes
   useEffect(() => {
     const channel = supabase
       .channel('mensaxes-changes')
@@ -348,11 +425,17 @@ export const MessagingView: React.FC = () => {
           table: 'mensaxes'
         },
         (payload) => {
-          console.log('New message:', payload);
+          console.log('New message received:', payload);
+          // Actualizar mensajes si estamos en la conversación correcta
           if (selectedConversation) {
-            fetchMessages(selectedConversation);
+            setTimeout(() => {
+              fetchMessages(selectedConversation);
+            }, 100);
           }
-          fetchConversations();
+          // Actualizar lista de conversaciones
+          setTimeout(() => {
+            fetchConversations();
+          }, 150);
         }
       )
       .subscribe();
@@ -476,8 +559,25 @@ export const MessagingView: React.FC = () => {
                     }
                   </h3>
                   <div className="flex items-center space-x-1 text-xs text-muted-foreground">
-                    <Circle className="h-2 w-2 fill-green-500 text-green-500" />
-                    <span>En liña</span>
+                    {selectedConversation === 'grupo' ? (
+                      <>
+                        <Circle className="h-2 w-2 fill-green-500 text-green-500" />
+                        <span>{onlineUsers.length} usuario{onlineUsers.length !== 1 ? 's' : ''} en liña</span>
+                      </>
+                    ) : (
+                      conversations.find(c => c.id === selectedConversation)?.participant?.id && 
+                      isUserOnline(conversations.find(c => c.id === selectedConversation)!.participant!.id) ? (
+                        <>
+                          <Circle className="h-2 w-2 fill-green-500 text-green-500" />
+                          <span>En liña</span>
+                        </>
+                      ) : (
+                        <>
+                          <Circle className="h-2 w-2 fill-gray-400 text-gray-400" />
+                          <span>Desconectado</span>
+                        </>
+                      )
+                    )}
                   </div>
                 </div>
               </div>
@@ -592,27 +692,42 @@ export const MessagingView: React.FC = () => {
                   </div>
                   <Separator />
                   {/* Usuarios individuales */}
-                  {filteredUsers.map((targetUser) => (
-                    <div
-                      key={targetUser.user_id}
-                      className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
-                      onClick={() => startConversationWith(targetUser)}
-                    >
-                      <Avatar>
-                        <AvatarFallback>
-                          <User className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">
-                          {targetUser.nome} {targetUser.apelidos}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {targetUser.email}
-                        </p>
+                  {filteredUsers.map((targetUser) => {
+                    const isOnline = isUserOnline(targetUser.user_id);
+                    return (
+                      <div
+                        key={targetUser.user_id}
+                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
+                        onClick={() => startConversationWith(targetUser)}
+                      >
+                        <div className="relative">
+                          <Avatar>
+                            <AvatarFallback>
+                              <User className="h-4 w-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className={`absolute -bottom-1 -right-1 h-3 w-3 rounded-full border-2 border-background ${
+                            isOnline ? 'bg-green-500' : 'bg-gray-400'
+                          }`} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium">
+                              {targetUser.nome} {targetUser.apelidos}
+                            </p>
+                            {isOnline && (
+                              <Badge variant="secondary" className="text-xs">
+                                En liña
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {targetUser.email}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </ScrollArea>
               <div className="flex justify-end space-x-2">
