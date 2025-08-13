@@ -61,19 +61,21 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create profile
+    // Create or update profile (use upsert in case trigger already created it)
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
+      .upsert({
         user_id: authData.user.id,
         nome,
         apelidos,
         email,
         telefono: telefono || null
+      }, {
+        onConflict: 'user_id'
       });
 
     if (profileError) {
-      console.error('Error creating profile:', profileError);
+      console.error('Error creating/updating profile:', profileError);
       // If profile creation fails, try to clean up the auth user
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       return new Response(
@@ -85,12 +87,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Assign profesor role
+    // Assign profesor role (use upsert to avoid conflicts)
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .insert({
+      .upsert({
         user_id: authData.user.id,
         role: 'profesor'
+      }, {
+        onConflict: 'user_id,role'
       });
 
     if (roleError) {
