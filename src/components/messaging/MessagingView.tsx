@@ -8,7 +8,10 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
+import EmojiPicker from 'emoji-picker-react';
 import { 
   MessageSquare, 
   Send, 
@@ -16,7 +19,9 @@ import {
   User,
   Plus,
   Search,
-  Circle
+  Circle,
+  Smile,
+  ChevronDown
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { gl } from 'date-fns/locale';
@@ -74,7 +79,9 @@ export const MessagingView: React.FC = () => {
   const [availableUsers, setAvailableUsers] = useState<Profile[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const { user, userRole } = useAuth();
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const { user, userRole, profile } = useAuth();
   const { toast } = useToast();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -253,66 +260,74 @@ export const MessagingView: React.FC = () => {
     setNewMessage(''); // Limpiar inmediatamente para mejor UX
 
     try {
-      let insertData: any = {
-        contido: messageContent,
-        remitente_id: user?.id,
-        asunto: selectedConversation === 'grupo' ? 'Chat grupal' : 'Mensaxe directa',
-      };
-
       if (selectedConversation === 'grupo') {
         // Mensaje grupal
-        insertData.is_grupo = true;
+        const { data, error } = await supabase
+          .from('mensaxes')
+          .insert({
+            contido: messageContent,
+            remitente_id: user?.id,
+            is_grupo: true,
+            asunto: 'Chat grupal',
+          })
+          .select();
+
+        if (error) {
+          console.error('Error sending group message:', error);
+          setNewMessage(messageContent);
+          toast({
+            title: "Error",
+            description: "Non se puido enviar a mensaxe grupal",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log('Group message sent successfully:', data);
       } else {
         // Mensaje directo
         const [userId1, userId2] = selectedConversation.split('-');
         const destinatarioId = userId1 === user?.id ? userId2 : userId1;
-        
-        insertData.is_grupo = false;
-        insertData.destinatario_id = destinatarioId;
+
+        const { data, error } = await supabase
+          .from('mensaxes')
+          .insert({
+            contido: messageContent,
+            remitente_id: user?.id,
+            destinatario_id: destinatarioId,
+            is_grupo: false,
+            asunto: 'Mensaxe directa',
+          })
+          .select();
+
+        if (error) {
+          console.error('Error sending direct message:', error);
+          setNewMessage(messageContent);
+          toast({
+            title: "Error",
+            description: "Non se puido enviar a mensaxe directa",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        console.log('Direct message sent successfully:', data);
       }
 
-      const { data, error } = await supabase
-        .from('mensaxes')
-        .insert(insertData)
-        .select(`
-          id,
-          contido,
-          remitente_id,
-          destinatario_id,
-          is_grupo,
-          leido,
-          created_at,
-          profiles!mensaxes_remitente_id_fkey (nome, apelidos)
-        `);
-
-      if (error) {
-        console.error('Error sending message:', error);
-        setNewMessage(messageContent); // Restaurar mensaje si hay error
-        toast({
-          title: "Error",
-          description: "Non se puido enviar a mensaxe",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Añadir mensaje inmediatamente a la lista local
-      if (data && data[0]) {
-        setMessages(prev => [...prev, data[0] as any]);
-        scrollToBottom();
-      }
-
-      // Actualizar conversaciones (sin esperar)
+      // Refresh messages and conversations
       setTimeout(() => {
+        if (selectedConversation) {
+          fetchMessages(selectedConversation);
+        }
         fetchConversations();
       }, 100);
 
     } catch (error) {
       console.error('Error in sendMessage:', error);
-      setNewMessage(messageContent); // Restaurar mensaje si hay error
+      setNewMessage(messageContent);
       toast({
         title: "Error",
-        description: "Non se puido enviar a mensaxe",
+        description: "Erro interno ao enviar mensaxe",
         variant: "destructive",
       });
     } finally {
@@ -369,6 +384,27 @@ export const MessagingView: React.FC = () => {
     return onlineUsers.some(onlineUser => onlineUser.user_id === userId);
   };
 
+  // Función para añadir emoji al mensaje
+  const onEmojiClick = (emojiData: any) => {
+    setNewMessage(prev => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  // Función para iniciar conversación desde el selector
+  const handleUserSelect = (userId: string) => {
+    if (userId === 'grupo') {
+      setSelectedConversation('grupo');
+      setSelectedUserId('');
+      return;
+    }
+    
+    const targetUser = availableUsers.find(u => u.user_id === userId);
+    if (targetUser) {
+      startConversationWith(targetUser);
+      setSelectedUserId('');
+    }
+  };
+
   useEffect(() => {
     fetchConversations();
     fetchAvailableUsers();
@@ -412,11 +448,11 @@ export const MessagingView: React.FC = () => {
 
     presenceChannel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        // Enviar nuestro estado de presencia
+        // Enviar nuestro estado de presencia con datos del perfil
         await presenceChannel.track({
           user_id: user.id,
-          nome: user.user_metadata?.nome || '',
-          apelidos: user.user_metadata?.apelidos || '',
+          nome: profile?.nome || user.user_metadata?.nome || '',
+          apelidos: profile?.apelidos || user.user_metadata?.apelidos || '',
           online_at: new Date().toISOString(),
         });
       }
@@ -483,13 +519,55 @@ export const MessagingView: React.FC = () => {
                 <MessageSquare className="h-5 w-5 text-primary" />
                 <span>Mensaxería</span>
               </CardTitle>
-              <Button
-                size="sm"
-                onClick={() => setShowNewChat(true)}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center space-x-2">
+                {/* Selector desplegable de usuarios */}
+                <Select value={selectedUserId} onValueChange={handleUserSelect}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Seleccionar profesor" />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-background border shadow-md">
+                    {/* Chat grupal */}
+                    <SelectItem value="grupo" className="hover:bg-accent">
+                      <div className="flex items-center space-x-2">
+                        <Users className="h-4 w-4" />
+                        <span>Chat do claustro</span>
+                      </div>
+                    </SelectItem>
+                    <Separator />
+                    {/* Profesores */}
+                    {availableUsers.map((targetUser) => {
+                      const isOnline = isUserOnline(targetUser.user_id);
+                      return (
+                        <SelectItem key={targetUser.user_id} value={targetUser.user_id} className="hover:bg-accent">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center space-x-2">
+                              <div className="relative">
+                                <User className="h-4 w-4" />
+                                <div className={`absolute -bottom-1 -right-1 h-2 w-2 rounded-full ${
+                                  isOnline ? 'bg-green-500' : 'bg-gray-400'
+                                }`} />
+                              </div>
+                              <span>{targetUser.nome} {targetUser.apelidos}</span>
+                            </div>
+                            {isOnline && (
+                              <Badge variant="secondary" className="text-xs ml-2">
+                                En liña
+                              </Badge>
+                            )}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <Button
+                  size="sm"
+                  onClick={() => setShowNewChat(true)}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -631,16 +709,28 @@ export const MessagingView: React.FC = () => {
               </div>
             </ScrollArea>
 
-            {/* Input de mensagem */}
+            {/* Input de mensagem con emojis */}
             <div className="border-t border-border p-4">
               <div className="flex space-x-2">
-                <Input
-                  placeholder="Escribe unha mensaxe..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                  className="flex-1"
-                />
+                <div className="flex-1 relative">
+                  <Input
+                    placeholder="Escribe unha mensaxe..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                    className="pr-10"
+                  />
+                </div>
+                <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="icon">
+                      <Smile className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-auto border-0 shadow-lg">
+                    <EmojiPicker onEmojiClick={onEmojiClick} />
+                  </PopoverContent>
+                </Popover>
                 <Button
                   onClick={sendMessage}
                   disabled={!newMessage.trim() || sendingMessage}
