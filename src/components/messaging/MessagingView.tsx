@@ -79,7 +79,7 @@ export const MessagingView: React.FC = () => {
   // Cargar conversaciones
   const fetchConversations = async () => {
     try {
-      // Buscar conversaciones directas
+      // Buscar conversaciones directas SOLO
       const { data: directMessages, error: directError } = await supabase
         .from('mensaxes')
         .select(`
@@ -134,32 +134,6 @@ export const MessagingView: React.FC = () => {
         }
       });
 
-      // Añadir conversación grupal si es necesario
-      const { data: groupMessages, error: groupError } = await supabase
-        .from('mensaxes')
-        .select('id, contido, created_at, leido, remitente_id')
-        .eq('is_grupo', true)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (!groupError && groupMessages?.length > 0) {
-        const { data: groupUnreadCount } = await supabase
-          .from('mensaxes')
-          .select('id')
-          .eq('is_grupo', true)
-          .neq('remitente_id', user?.id)
-          .eq('leido', false);
-
-        conversationMap.set('grupo', {
-          id: 'grupo',
-          nome: 'Chat do claustro',
-          is_grupo: true,
-          lastMessage: groupMessages[0].contido,
-          unreadCount: groupUnreadCount?.length || 0,
-          updated_at: groupMessages[0].created_at,
-        });
-      }
-
       setConversations(Array.from(conversationMap.values()).sort((a, b) => 
         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       ));
@@ -173,62 +147,38 @@ export const MessagingView: React.FC = () => {
   // Cargar mensajes de una conversación
   const fetchMessages = async (conversationId: string) => {
     try {
-      if (conversationId === 'grupo') {
-        // Mensajes grupales
-        const { data, error } = await supabase
-          .from('mensaxes')
-          .select(`
-            id,
-            contido,
-            remitente_id,
-            is_grupo,
-            leido,
-            created_at,
-            profiles!mensaxes_remitente_id_fkey (nome, apelidos)
-          `)
-          .eq('is_grupo', true)
-          .order('created_at', { ascending: true });
+      // Solo mensajes directos
+      const [userId1, userId2] = conversationId.split('-');
+      const { data, error } = await supabase
+        .from('mensaxes')
+        .select(`
+          id,
+          contido,
+          remitente_id,
+          destinatario_id,
+          is_grupo,
+          leido,
+          created_at,
+          profiles!mensaxes_remitente_id_fkey (nome, apelidos)
+        `)
+        .eq('is_grupo', false)
+        .or(`and(remitente_id.eq.${userId1},destinatario_id.eq.${userId2}),and(remitente_id.eq.${userId2},destinatario_id.eq.${userId1})`)
+        .order('created_at', { ascending: true });
 
-        if (error) {
-          console.error('Error fetching group messages:', error);
-          return;
-        }
-
-        setMessages((data as any) || []);
-      } else {
-        // Mensajes directos
-        const [userId1, userId2] = conversationId.split('-');
-        const { data, error } = await supabase
-          .from('mensaxes')
-          .select(`
-            id,
-            contido,
-            remitente_id,
-            destinatario_id,
-            is_grupo,
-            leido,
-            created_at,
-            profiles!mensaxes_remitente_id_fkey (nome, apelidos)
-          `)
-          .eq('is_grupo', false)
-          .or(`and(remitente_id.eq.${userId1},destinatario_id.eq.${userId2}),and(remitente_id.eq.${userId2},destinatario_id.eq.${userId1})`)
-          .order('created_at', { ascending: true });
-
-        if (error) {
-          console.error('Error fetching direct messages:', error);
-          return;
-        }
-
-        setMessages((data as any) || []);
-
-        // Marcar mensajes como leídos
-        await supabase
-          .from('mensaxes')
-          .update({ leido: true })
-          .eq('destinatario_id', user?.id)
-          .eq('leido', false)
-          .or(`and(remitente_id.eq.${userId1},destinatario_id.eq.${userId2}),and(remitente_id.eq.${userId2},destinatario_id.eq.${userId1})`);
+      if (error) {
+        console.error('Error fetching direct messages:', error);
+        return;
       }
+
+      setMessages((data as any) || []);
+
+      // Marcar mensajes como leídos
+      await supabase
+        .from('mensaxes')
+        .update({ leido: true })
+        .eq('destinatario_id', user?.id)
+        .eq('leido', false)
+        .or(`and(remitente_id.eq.${userId1},destinatario_id.eq.${userId2}),and(remitente_id.eq.${userId2},destinatario_id.eq.${userId1})`);
     } catch (error) {
       console.error('Error in fetchMessages:', error);
     }
@@ -243,54 +193,30 @@ export const MessagingView: React.FC = () => {
     setNewMessage('');
 
     try {
-      if (selectedConversation === 'grupo') {
-        // Mensaje grupal
-        const { error } = await supabase
-          .from('mensaxes')
-          .insert({
-            contido: messageContent,
-            remitente_id: user?.id,
-            is_grupo: true,
-            asunto: 'Chat grupal',
-            leido: false
-          });
+      // Solo mensaje directo
+      const [userId1, userId2] = selectedConversation.split('-');
+      const destinatarioId = userId1 === user?.id ? userId2 : userId1;
 
-        if (error) {
-          console.error('Error sending group message:', error);
-          setNewMessage(messageContent);
-          toast({
-            title: "Error",
-            description: "Non se puido enviar a mensaxe grupal",
-            variant: "destructive",
-          });
-          return;
-        }
-      } else {
-        // Mensaje directo
-        const [userId1, userId2] = selectedConversation.split('-');
-        const destinatarioId = userId1 === user?.id ? userId2 : userId1;
+      const { error } = await supabase
+        .from('mensaxes')
+        .insert({
+          contido: messageContent,
+          remitente_id: user?.id,
+          destinatario_id: destinatarioId,
+          is_grupo: false,
+          asunto: 'Mensaxe directa',
+          leido: false
+        });
 
-        const { error } = await supabase
-          .from('mensaxes')
-          .insert({
-            contido: messageContent,
-            remitente_id: user?.id,
-            destinatario_id: destinatarioId,
-            is_grupo: false,
-            asunto: 'Mensaxe directa',
-            leido: false
-          });
-
-        if (error) {
-          console.error('Error sending direct message:', error);
-          setNewMessage(messageContent);
-          toast({
-            title: "Error",
-            description: "Non se puido enviar a mensaxe directa",
-            variant: "destructive",
-          });
-          return;
-        }
+      if (error) {
+        console.error('Error sending direct message:', error);
+        setNewMessage(messageContent);
+        toast({
+          title: "Error",
+          description: "Non se puido enviar a mensaxe directa",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Refresh messages and conversations
@@ -405,9 +331,6 @@ export const MessagingView: React.FC = () => {
   );
 
   const getConversationName = (conversation: Conversation) => {
-    if (conversation.is_grupo) {
-      return conversation.nome || 'Chat do claustro';
-    }
     return `${conversation.participant?.nome} ${conversation.participant?.apelidos}`;
   };
 
@@ -453,15 +376,11 @@ export const MessagingView: React.FC = () => {
                     onClick={() => setSelectedConversation(conversation.id)}
                   >
                     <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarFallback>
-                          {conversation.is_grupo ? (
-                            <Users className="h-4 w-4" />
-                          ) : (
-                            <User className="h-4 w-4" />
-                          )}
-                        </AvatarFallback>
-                      </Avatar>
+                       <Avatar>
+                         <AvatarFallback>
+                           <User className="h-4 w-4" />
+                         </AvatarFallback>
+                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p className="font-medium text-sm truncate">
@@ -492,27 +411,21 @@ export const MessagingView: React.FC = () => {
           <>
             {/* Header do chat */}
             <div className="border-b border-border p-4">
-              <div className="flex items-center space-x-3">
-                <Avatar>
-                  <AvatarFallback>
-                    {selectedConversation === 'grupo' ? (
-                      <Users className="h-4 w-4" />
-                    ) : (
-                      <User className="h-4 w-4" />
-                    )}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-medium">
-                    {selectedConversation === 'grupo' 
-                      ? 'Chat do claustro' 
-                      : conversations.find(c => c.id === selectedConversation)
-                        ? getConversationName(conversations.find(c => c.id === selectedConversation)!)
-                        : 'Conversación'
-                    }
-                  </h3>
-                </div>
-              </div>
+               <div className="flex items-center space-x-3">
+                 <Avatar>
+                   <AvatarFallback>
+                     <User className="h-4 w-4" />
+                   </AvatarFallback>
+                 </Avatar>
+                 <div>
+                   <h3 className="font-medium">
+                     {conversations.find(c => c.id === selectedConversation)
+                       ? getConversationName(conversations.find(c => c.id === selectedConversation)!)
+                       : 'Conversación'
+                     }
+                   </h3>
+                 </div>
+               </div>
             </div>
 
             {/* Mensajes */}
@@ -530,11 +443,6 @@ export const MessagingView: React.FC = () => {
                           ? 'bg-primary text-primary-foreground' 
                           : 'bg-accent text-accent-foreground'
                       }`}>
-                        {!isFromMe && selectedConversation === 'grupo' && (
-                          <p className="text-xs font-medium mb-1">
-                            {(message.profiles as any)?.nome} {(message.profiles as any)?.apelidos}
-                          </p>
-                        )}
                         <p className="text-sm">{message.contido}</p>
                         <p className={`text-xs mt-1 ${
                           isFromMe ? 'text-primary-foreground/70' : 'text-muted-foreground'
@@ -602,57 +510,38 @@ export const MessagingView: React.FC = () => {
                   className="w-full"
                 />
               </div>
-              <ScrollArea className="h-60">
-                <div className="space-y-2">
-                  {/* Chat grupal */}
-                  <div
-                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
-                    onClick={() => {
-                      setSelectedConversation('grupo');
-                      setShowNewChat(false);
-                    }}
-                  >
-                    <Avatar>
-                      <AvatarFallback>
-                        <Users className="h-4 w-4" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">Chat do claustro</p>
-                      <p className="text-xs text-muted-foreground">Mensaxe grupal</p>
-                    </div>
-                  </div>
-                  <Separator />
-                  {/* Profesores */}
-                  {filteredUsers.length > 0 ? (
-                    filteredUsers.map((targetUser) => (
-                      <div
-                        key={targetUser.user_id}
-                        className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
-                        onClick={() => startConversationWith(targetUser)}
-                      >
-                        <Avatar>
-                          <AvatarFallback>
-                            <User className="h-4 w-4" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">
-                            {targetUser.nome} {targetUser.apelidos}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {targetUser.email}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-4 text-center text-muted-foreground">
-                      <p>Non se atoparon profesores</p>
-                    </div>
-                  )}
-                </div>
-              </ScrollArea>
+               <ScrollArea className="h-60">
+                 <div className="space-y-2">
+                   {/* Solo profesores */}
+                   {filteredUsers.length > 0 ? (
+                     filteredUsers.map((targetUser) => (
+                       <div
+                         key={targetUser.user_id}
+                         className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent cursor-pointer"
+                         onClick={() => startConversationWith(targetUser)}
+                       >
+                         <Avatar>
+                           <AvatarFallback>
+                             <User className="h-4 w-4" />
+                           </AvatarFallback>
+                         </Avatar>
+                         <div>
+                           <p className="font-medium">
+                             {targetUser.nome} {targetUser.apelidos}
+                           </p>
+                           <p className="text-xs text-muted-foreground">
+                             {targetUser.email}
+                           </p>
+                         </div>
+                       </div>
+                     ))
+                   ) : (
+                     <div className="p-4 text-center text-muted-foreground">
+                       <p>Non se atoparon profesores</p>
+                     </div>
+                   )}
+                 </div>
+               </ScrollArea>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setShowNewChat(false)}>
                   Cancelar
