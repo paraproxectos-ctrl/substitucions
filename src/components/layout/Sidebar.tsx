@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
+import { UserProfile } from '@/components/profile/UserProfile';
 import { 
   Calendar, 
   Users, 
@@ -104,8 +105,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
           })}
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-border">
+      {/* Profile and Logout */}
+      <div className="p-4 border-t border-border space-y-2">
+        <UserProfile />
         <Button
           variant="ghost"
           className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
