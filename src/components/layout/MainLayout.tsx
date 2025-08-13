@@ -3,6 +3,8 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { Sidebar } from './Sidebar';
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { MessagingView } from '@/components/messaging/MessagingView';
+import { TeacherManagement } from '@/components/admin/TeacherManagement';
+import { SubstitutionManagement } from '@/components/admin/SubstitutionManagement';
 import Auth from '@/pages/Auth';
 
 export const MainLayout: React.FC = () => {
@@ -33,9 +35,9 @@ export const MainLayout: React.FC = () => {
       case 'weekly':
         return <div className="p-6">Vista semanal - Proximamente</div>;
       case 'substitutions':
-        return <div className="p-6">Xestión de substitucións - Proximamente</div>;
+        return <SubstitutionManagement />;
       case 'teachers':
-        return <div className="p-6">Xestión de profesorado - Proximamente</div>;
+        return <TeacherManagement />;
       default:
         return <CalendarView />;
     }
@@ -47,6 +49,10 @@ export const MainLayout: React.FC = () => {
       <main className="flex-1 overflow-auto">
         {activeView === 'messages' ? (
           <div className="h-[calc(100vh-0px)]">
+            {renderMainContent()}
+          </div>
+        ) : (activeView === 'substitutions' || activeView === 'teachers') ? (
+          <div className="p-6">
             {renderMainContent()}
           </div>
         ) : (
