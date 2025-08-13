@@ -246,41 +246,77 @@ export const MessagingView: React.FC = () => {
     try {
       console.log('Fetching available users...');
       
-      // Primero obtener todos los perfiles excepto el actual
+      // Obtener perfiles con sus roles en una sola consulta
+      const { data: teachersAndAdmins, error } = await supabase
+        .from('profiles')
+        .select(`
+          user_id,
+          nome,
+          apelidos,
+          email,
+          user_roles!inner(role)
+        `)
+        .neq('user_id', user?.id)
+        .in('user_roles.role', ['profesor', 'admin']);
+
+      console.log('Teachers and admins fetched:', teachersAndAdmins);
+
+      if (error) {
+        console.error('Error fetching teachers and admins:', error);
+        // Fallback: Try the old method if the join fails
+        await fetchAvailableUsersFallback();
+        return;
+      }
+
+      setAvailableUsers(teachersAndAdmins || []);
+    } catch (error) {
+      console.error('Error in fetchAvailableUsers:', error);
+      // Fallback method
+      await fetchAvailableUsersFallback();
+    }
+  };
+
+  // Método alternativo si la consulta con join falla
+  const fetchAvailableUsersFallback = async () => {
+    try {
+      console.log('Using fallback method for fetching users...');
+      
+      // Obtener primero los user_ids con roles de profesor/admin
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['profesor', 'admin']);
+
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
+        return;
+      }
+
+      if (!userRoles || userRoles.length === 0) {
+        console.log('No teachers or admins found');
+        setAvailableUsers([]);
+        return;
+      }
+
+      const userIds = userRoles.map(role => role.user_id);
+      console.log('Found user IDs with teacher/admin roles:', userIds);
+
+      // Obtener perfiles para esos user_ids
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('user_id, nome, apelidos, email')
+        .in('user_id', userIds)
         .neq('user_id', user?.id);
-
-      console.log('Profiles fetched:', profiles);
 
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
         return;
       }
 
-      // Luego obtener los roles de profesores y administradores
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role')
-        .in('role', ['profesor', 'admin']);
-
-      console.log('Roles fetched:', roles);
-
-      if (rolesError) {
-        console.error('Error fetching roles:', rolesError);
-        return;
-      }
-
-      // Filtrar usuarios que son profesores o administradores
-      const teachersAndAdmins = profiles?.filter(profile => 
-        roles?.some(role => role.user_id === profile.user_id)
-      ) || [];
-
-      console.log('Filtered teachers and admins:', teachersAndAdmins);
-      setAvailableUsers(teachersAndAdmins);
+      console.log('Final teachers and admins:', profiles);
+      setAvailableUsers(profiles || []);
     } catch (error) {
-      console.error('Error in fetchAvailableUsers:', error);
+      console.error('Error in fetchAvailableUsersFallback:', error);
     }
   };
 
@@ -358,9 +394,9 @@ export const MessagingView: React.FC = () => {
               </CardTitle>
               <Button
                 size="sm"
-                onClick={() => {
+                onClick={async () => {
                   setShowNewChat(true);
-                  fetchAvailableUsers(); // Refrescar lista al abrir modal
+                  await fetchAvailableUsers(); // Cargar usuarios al abrir modal
                 }}
                 className="bg-primary hover:bg-primary/90"
               >
