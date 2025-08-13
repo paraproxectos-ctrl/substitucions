@@ -93,7 +93,7 @@ export const SubstitutionManagement: React.FC = () => {
     hora_inicio: '',
     hora_fin: '',
     grupo_id: '',
-    profesor_sustituido_id: '', // Profesor que hay que sustituir
+    profesor_ausente_id: '',    // Profesor que está ausente
     profesor_asignado_id: '',   // Profesor que cubre la sustitución
     motivo: 'ausencia_imprevista',
     motivo_outro: '',
@@ -206,7 +206,7 @@ export const SubstitutionManagement: React.FC = () => {
 
   // Crear nova substitución
   const createSubstitution = async () => {
-    if (!formData.data || !formData.hora_inicio || !formData.hora_fin || !formData.grupo_id || !formData.profesor_sustituido_id || !formData.profesor_asignado_id) {
+    if (!formData.data || !formData.hora_inicio || !formData.hora_fin || !formData.grupo_id || !formData.profesor_ausente_id || !formData.profesor_asignado_id) {
       toast({
         title: "Error",
         description: "Todos os campos obrigatorios deben estar relleados",
@@ -224,6 +224,7 @@ export const SubstitutionManagement: React.FC = () => {
           hora_inicio: formData.hora_inicio,
           hora_fin: formData.hora_fin,
           grupo_id: formData.grupo_id,
+          profesor_ausente_id: formData.profesor_ausente_id,
           profesor_asignado_id: formData.profesor_asignado_id,
           motivo: formData.motivo as any,
           motivo_outro: formData.motivo === 'outro' ? formData.motivo_outro : null,
@@ -252,7 +253,7 @@ export const SubstitutionManagement: React.FC = () => {
         hora_inicio: '',
         hora_fin: '',
         grupo_id: '',
-        profesor_sustituido_id: '',
+        profesor_ausente_id: '',
         profesor_asignado_id: '',
         motivo: 'ausencia_imprevista',
         motivo_outro: '',
@@ -321,7 +322,7 @@ export const SubstitutionManagement: React.FC = () => {
         hora_inicio: '',
         hora_fin: '',
         grupo_id: '',
-        profesor_sustituido_id: '',
+        profesor_ausente_id: '',
         profesor_asignado_id: '',
         motivo: 'ausencia_imprevista',
         motivo_outro: '',
@@ -378,7 +379,7 @@ export const SubstitutionManagement: React.FC = () => {
       hora_inicio: substitution.hora_inicio,
       hora_fin: substitution.hora_fin,
       grupo_id: substitution.grupos_educativos?.nome || '',
-      profesor_sustituido_id: '', // This would need to be added to the Substitution interface and database
+      profesor_ausente_id: '', // Este campo será agregado más tarde
       profesor_asignado_id: substitution.profesor_asignado_id,
       motivo: substitution.motivo,
       motivo_outro: substitution.motivo_outro || '',
@@ -488,14 +489,14 @@ export const SubstitutionManagement: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="profesor_sustituido">Profesor/a a sustituír *</Label>
-                  <Select value={formData.profesor_sustituido_id} onValueChange={(value) => setFormData({...formData, profesor_sustituido_id: value})}>
-                    <SelectTrigger className="bg-background">
+                  <Label htmlFor="profesor_ausente">Profesor/a ausente *</Label>
+                  <Select value={formData.profesor_ausente_id} onValueChange={(value) => setFormData({...formData, profesor_ausente_id: value})}>
+                    <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Profesor/a que falta" />
                     </SelectTrigger>
-                    <SelectContent className="bg-background border border-border z-50">
+                    <SelectContent className="bg-background border border-border z-50 max-h-60">
                       {teachers.map((teacher) => (
-                        <SelectItem key={teacher.user_id} value={teacher.user_id}>
+                        <SelectItem key={`ausente-${teacher.user_id}`} value={teacher.user_id}>
                           {teacher.nome} {teacher.apelidos}
                         </SelectItem>
                       ))}
@@ -504,14 +505,14 @@ export const SubstitutionManagement: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="profesor_asignado">Profesor/a que cubre *</Label>
+                  <Label htmlFor="profesor_sustituto">Profesor/a sustituto/a *</Label>
                   <Select value={formData.profesor_asignado_id} onValueChange={(value) => setFormData({...formData, profesor_asignado_id: value})}>
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Profesor/a sustituto/a" />
+                    <SelectTrigger className="bg-background border-border">
+                      <SelectValue placeholder="Profesor/a que cubre" />
                     </SelectTrigger>
-                    <SelectContent className="bg-background border border-border z-50">
+                    <SelectContent className="bg-background border border-border z-50 max-h-60">
                       {teachers.map((teacher) => (
-                        <SelectItem key={teacher.user_id} value={teacher.user_id}>
+                        <SelectItem key={`sustituto-${teacher.user_id}`} value={teacher.user_id}>
                           {teacher.nome} {teacher.apelidos}
                         </SelectItem>
                       ))}

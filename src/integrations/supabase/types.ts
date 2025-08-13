@@ -181,6 +181,7 @@ export type Database = {
           motivo_outro: string | null
           observacions: string | null
           profesor_asignado_id: string
+          profesor_ausente_id: string | null
           updated_at: string
           vista: boolean
         }
@@ -196,6 +197,7 @@ export type Database = {
           motivo_outro?: string | null
           observacions?: string | null
           profesor_asignado_id: string
+          profesor_ausente_id?: string | null
           updated_at?: string
           vista?: boolean
         }
@@ -211,6 +213,7 @@ export type Database = {
           motivo_outro?: string | null
           observacions?: string | null
           profesor_asignado_id?: string
+          profesor_ausente_id?: string | null
           updated_at?: string
           vista?: boolean
         }
