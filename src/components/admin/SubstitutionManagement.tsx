@@ -97,7 +97,9 @@ export const SubstitutionManagement: React.FC = () => {
     profesor_asignado_id: '',   // Profesor que cubre la sustitución
     motivo: 'ausencia_imprevista',
     motivo_outro: '',
-    observacions: ''
+    observacions: '',
+    sesion: '',
+    guardia_transporte: 'ningun'
   });
   const [submitting, setSubmitting] = useState(false);
   const { userRole, user } = useAuth();
@@ -229,6 +231,8 @@ export const SubstitutionManagement: React.FC = () => {
           motivo: formData.motivo as any,
           motivo_outro: formData.motivo === 'outro' ? formData.motivo_outro : null,
           observacions: formData.observacions || null,
+          sesion: formData.sesion ? formData.sesion as any : null,
+          guardia_transporte: formData.guardia_transporte as any,
           created_by: user?.id
         });
 
@@ -257,7 +261,9 @@ export const SubstitutionManagement: React.FC = () => {
         profesor_asignado_id: '',
         motivo: 'ausencia_imprevista',
         motivo_outro: '',
-        observacions: ''
+        observacions: '',
+        sesion: '',
+        guardia_transporte: 'ningun'
       });
       setShowAddDialog(false);
       await fetchData();
@@ -326,7 +332,9 @@ export const SubstitutionManagement: React.FC = () => {
         profesor_asignado_id: '',
         motivo: 'ausencia_imprevista',
         motivo_outro: '',
-        observacions: ''
+        observacions: '',
+        sesion: '',
+        guardia_transporte: 'ningun'
       });
       await fetchData();
 
@@ -383,7 +391,9 @@ export const SubstitutionManagement: React.FC = () => {
       profesor_asignado_id: substitution.profesor_asignado_id,
       motivo: substitution.motivo,
       motivo_outro: substitution.motivo_outro || '',
-      observacions: substitution.observacions || ''
+      observacions: substitution.observacions || '',
+      sesion: '',
+      guardia_transporte: 'ningun'
     });
   };
 
@@ -393,6 +403,24 @@ export const SubstitutionManagement: React.FC = () => {
     { value: 'enfermidade', label: 'Enfermidade' },
     { value: 'asuntos_propios', label: 'Asuntos propios' },
     { value: 'outro', label: 'Outro' }
+  ];
+
+  // Opcións de sesión
+  const sesionOptions = [
+    { value: 'primeira', label: '1ª sesión' },
+    { value: 'segunda', label: '2ª sesión' },
+    { value: 'terceira', label: '3ª sesión' },
+    { value: 'cuarta', label: '4ª sesión' },
+    { value: 'quinta', label: '5ª sesión' },
+    { value: 'recreo', label: 'Recreo' },
+    { value: 'hora_lectura', label: 'Hora de lectura' }
+  ];
+
+  // Opcións de guardia de transporte
+  const guardiaTransporteOptions = [
+    { value: 'ningun', label: 'Ningún' },
+    { value: 'entrada', label: 'Guardia de transporte de entrada' },
+    { value: 'saida', label: 'Guardia de transporte de saída' }
   ];
 
   // Obter etiqueta do motivo
@@ -558,6 +586,40 @@ export const SubstitutionManagement: React.FC = () => {
                   placeholder="Observacións adicionais..."
                   rows={3}
                 />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="sesion">Sesión</Label>
+                  <Select value={formData.sesion} onValueChange={(value) => setFormData({...formData, sesion: value})}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Selecciona unha sesión" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {sesionOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="guardia_transporte">Guardia de transporte</Label>
+                  <Select value={formData.guardia_transporte} onValueChange={(value) => setFormData({...formData, guardia_transporte: value})}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Selecciona guardia" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border border-border z-50">
+                      {guardiaTransporteOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
             

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -174,6 +174,9 @@ export type Database = {
           created_by: string
           data: string
           grupo_id: string
+          guardia_transporte:
+            | Database["public"]["Enums"]["guardia_transporte_tipo"]
+            | null
           hora_fin: string
           hora_inicio: string
           id: string
@@ -182,6 +185,7 @@ export type Database = {
           observacions: string | null
           profesor_asignado_id: string
           profesor_ausente_id: string | null
+          sesion: Database["public"]["Enums"]["sesion_tipo"] | null
           updated_at: string
           vista: boolean
         }
@@ -190,6 +194,9 @@ export type Database = {
           created_by: string
           data: string
           grupo_id: string
+          guardia_transporte?:
+            | Database["public"]["Enums"]["guardia_transporte_tipo"]
+            | null
           hora_fin: string
           hora_inicio: string
           id?: string
@@ -198,6 +205,7 @@ export type Database = {
           observacions?: string | null
           profesor_asignado_id: string
           profesor_ausente_id?: string | null
+          sesion?: Database["public"]["Enums"]["sesion_tipo"] | null
           updated_at?: string
           vista?: boolean
         }
@@ -206,6 +214,9 @@ export type Database = {
           created_by?: string
           data?: string
           grupo_id?: string
+          guardia_transporte?:
+            | Database["public"]["Enums"]["guardia_transporte_tipo"]
+            | null
           hora_fin?: string
           hora_inicio?: string
           id?: string
@@ -214,6 +225,7 @@ export type Database = {
           observacions?: string | null
           profesor_asignado_id?: string
           profesor_ausente_id?: string | null
+          sesion?: Database["public"]["Enums"]["sesion_tipo"] | null
           updated_at?: string
           vista?: boolean
         }
@@ -259,28 +271,37 @@ export type Database = {
       }
       create_teacher_user: {
         Args: {
-          user_email: string
-          user_password: string
-          user_nome: string
           user_apelidos: string
+          user_email: string
+          user_nome: string
+          user_password: string
         }
         Returns: Json
       }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
         Returns: boolean
       }
     }
     Enums: {
       app_role: "admin" | "profesor"
+      guardia_transporte_tipo: "entrada" | "saida" | "ningun"
       motivo_sustitucion:
         | "ausencia_imprevista"
         | "enfermidade"
         | "asuntos_propios"
         | "outro"
+      sesion_tipo:
+        | "primeira"
+        | "segunda"
+        | "terceira"
+        | "cuarta"
+        | "quinta"
+        | "recreo"
+        | "hora_lectura"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -409,11 +430,21 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "profesor"],
+      guardia_transporte_tipo: ["entrada", "saida", "ningun"],
       motivo_sustitucion: [
         "ausencia_imprevista",
         "enfermidade",
         "asuntos_propios",
         "outro",
+      ],
+      sesion_tipo: [
+        "primeira",
+        "segunda",
+        "terceira",
+        "cuarta",
+        "quinta",
+        "recreo",
+        "hora_lectura",
       ],
     },
   },
