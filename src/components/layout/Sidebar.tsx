@@ -96,7 +96,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                   "w-full justify-start",
                   activeView === item.id && "bg-secondary text-secondary-foreground"
                 )}
-                onClick={() => onViewChange(item.id)}
+                onClick={() => {
+                  console.log(`Clicking menu item: ${item.id}, available: ${item.available}, isAdmin: ${isAdmin}`);
+                  onViewChange(item.id);
+                }}
               >
                 <Icon className="mr-2 h-4 w-4" />
                 {item.label}
