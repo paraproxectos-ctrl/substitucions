@@ -62,14 +62,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .limit(1);
 
       if (roleError) {
         console.error('Error fetching role:', roleError);
         return;
       }
 
-      setUserRole(roleData);
+      // Si hay múltiples roles, tomar el primero (priorizando admin)
+      const roles = roleData || [];
+      console.log('User roles found:', roles);
+      
+      let selectedRole: UserRole | null = null;
+      if (roles.length > 0) {
+        // Priorizar admin si existe
+        const adminRole = roles.find(r => r.role === 'admin');
+        selectedRole = adminRole || roles[0];
+      }
+      
+      console.log('Selected role:', selectedRole);
+      setUserRole(selectedRole);
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
     }
