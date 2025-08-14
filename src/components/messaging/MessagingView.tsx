@@ -541,44 +541,39 @@ export const MessagingView: React.FC = () => {
               <CardTitle>Nova conversación</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Selecciona un profesor:</label>
-                <Select value={selectedUserId} onValueChange={handleTeacherSelect}>
-                  <SelectTrigger className="w-full bg-background border border-border">
-                    <SelectValue placeholder="Escolle un profesor ou administrador..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-background border border-border z-50">
-                    {/* Debug: rendering dropdown */}
-                    {(() => {
-                      console.log('RENDERING DROPDOWN - availableUsers:', availableUsers);
-                      return null;
-                    })()}
-                    {availableUsers.length === 0 && (
-                      <div className="p-2 text-center text-muted-foreground text-sm">
-                        Non se atoparon profesores
-                      </div>
-                    )}
-                    {availableUsers.map((targetUser) => (
-                      <SelectItem 
-                        key={targetUser.user_id} 
-                        value={targetUser.user_id}
-                        className="cursor-pointer hover:bg-accent"
-                      >
-                        <div className="flex items-center space-x-2 w-full">
-                          <User className="h-4 w-4" />
-                          <div className="flex flex-col">
-                            <span className="font-medium">
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Profesores e administradores:</label>
+                <ScrollArea className="max-h-60">
+                  {availableUsers.length === 0 ? (
+                    <div className="p-4 text-center text-muted-foreground text-sm">
+                      Non se atoparon profesores
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {availableUsers.map((targetUser) => (
+                        <div
+                          key={targetUser.user_id}
+                          onClick={() => startConversationWith(targetUser)}
+                          className="flex items-center space-x-3 p-3 rounded-lg border border-border hover:bg-accent cursor-pointer transition-colors"
+                        >
+                          <Avatar>
+                            <AvatarFallback>
+                              <User className="h-4 w-4" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="font-medium text-sm">
                               {targetUser.nome} {targetUser.apelidos}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
+                            </p>
+                            <p className="text-xs text-muted-foreground">
                               {targetUser.email}
-                            </span>
+                            </p>
                           </div>
                         </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setShowNewChat(false)}>
