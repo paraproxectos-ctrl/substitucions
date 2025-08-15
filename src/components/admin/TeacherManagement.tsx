@@ -42,6 +42,9 @@ interface Teacher {
   apelidos: string;
   email: string;
   telefono?: string;
+  horas_libres_semanais: number;
+  sustitucions_realizadas_semana: number;
+  ultima_semana_reset?: string;
   created_at: string;
 }
 
@@ -55,7 +58,8 @@ export const TeacherManagement: React.FC = () => {
     apelidos: '',
     email: '',
     telefono: '',
-    password: 'ProfesorValle2024'
+    password: 'ProfesorValle2024',
+    horas_libres_semanais: 0
   });
   const [submitting, setSubmitting] = useState(false);
   const { userRole } = useAuth();
@@ -101,7 +105,7 @@ export const TeacherManagement: React.FC = () => {
       const userIds = roleData.map(role => role.user_id);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, user_id, nome, apelidos, email, telefono, horas_libres_semanais, sustitucions_realizadas_semana, ultima_semana_reset, created_at')
         .in('user_id', userIds)
         .order('nome');
 
@@ -151,6 +155,14 @@ export const TeacherManagement: React.FC = () => {
         }
       });
 
+      if (result?.success && result?.user_id) {
+        // Update the teacher's weekly hours
+        await supabase
+          .from('profiles')
+          .update({ horas_libres_semanais: formData.horas_libres_semanais })
+          .eq('user_id', result.user_id);
+      }
+
       if (functionError) {
         console.error('Error calling create-teacher function:', functionError);
         toast({
@@ -183,7 +195,8 @@ export const TeacherManagement: React.FC = () => {
         apelidos: '',
         email: '',
         telefono: '',
-        password: 'ProfesorValle2024'
+        password: 'ProfesorValle2024',
+        horas_libres_semanais: 0
       });
       setShowAddDialog(false);
       await fetchTeachers();
@@ -219,7 +232,8 @@ export const TeacherManagement: React.FC = () => {
           nome: formData.nome,
           apelidos: formData.apelidos,
           email: formData.email,
-          telefono: formData.telefono || null
+          telefono: formData.telefono || null,
+          horas_libres_semanais: formData.horas_libres_semanais
         })
         .eq('id', editingTeacher.id);
 
@@ -244,7 +258,8 @@ export const TeacherManagement: React.FC = () => {
         apelidos: '',
         email: '',
         telefono: '',
-        password: 'ProfesorValle2024'
+        password: 'ProfesorValle2024',
+        horas_libres_semanais: 0
       });
       await fetchTeachers();
 
@@ -311,7 +326,8 @@ export const TeacherManagement: React.FC = () => {
       apelidos: teacher.apelidos,
       email: teacher.email,
       telefono: teacher.telefono || '',
-      password: 'ProfesorValle2024'
+      password: 'ProfesorValle2024',
+      horas_libres_semanais: teacher.horas_libres_semanais
     });
   };
 
@@ -385,6 +401,18 @@ export const TeacherManagement: React.FC = () => {
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="horas_libres_semanais">Horas libres por semana</Label>
+                <Input
+                  id="horas_libres_semanais"
+                  type="number"
+                  min="0"
+                  value={formData.horas_libres_semanais}
+                  onChange={(e) => setFormData({...formData, horas_libres_semanais: parseInt(e.target.value) || 0})}
+                  placeholder="Número de horas libres semanais"
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="password">Contrasinal temporal</Label>
                 <Input
                   id="password"
@@ -441,6 +469,8 @@ export const TeacherManagement: React.FC = () => {
                   <TableHead>Nome Completo</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Teléfono</TableHead>
+                  <TableHead>Horas libres/semana</TableHead>
+                  <TableHead>Sustitucións/semana</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Accións</TableHead>
                 </TableRow>
@@ -466,6 +496,15 @@ export const TeacherManagement: React.FC = () => {
                       ) : (
                         <span className="text-muted-foreground">-</span>
                       )}
+                    </TableCell>
+                    <TableCell>{teacher.horas_libres_semanais}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {teacher.sustitucions_realizadas_semana}
+                        {teacher.sustitucions_realizadas_semana >= teacher.horas_libres_semanais && (
+                          <Badge variant="destructive" className="text-xs">Cupo completo</Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary">Activo</Badge>
@@ -548,6 +587,18 @@ export const TeacherManagement: React.FC = () => {
                   value={formData.telefono}
                   onChange={(e) => setFormData({...formData, telefono: e.target.value})}
                   placeholder="666 123 456"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-horas_libres_semanais">Horas libres por semana</Label>
+                <Input
+                  id="edit-horas_libres_semanais"
+                  type="number"
+                  min="0"
+                  value={formData.horas_libres_semanais}
+                  onChange={(e) => setFormData({...formData, horas_libres_semanais: parseInt(e.target.value) || 0})}
+                  placeholder="Número de horas libres semanais"
                 />
               </div>
             </div>

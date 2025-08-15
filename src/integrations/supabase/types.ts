@@ -140,9 +140,12 @@ export type Database = {
           apelidos: string
           created_at: string
           email: string
+          horas_libres_semanais: number
           id: string
           nome: string
+          sustitucions_realizadas_semana: number
           telefono: string | null
+          ultima_semana_reset: string | null
           updated_at: string
           user_id: string
         }
@@ -150,9 +153,12 @@ export type Database = {
           apelidos: string
           created_at?: string
           email: string
+          horas_libres_semanais?: number
           id?: string
           nome: string
+          sustitucions_realizadas_semana?: number
           telefono?: string | null
+          ultima_semana_reset?: string | null
           updated_at?: string
           user_id: string
         }
@@ -160,9 +166,12 @@ export type Database = {
           apelidos?: string
           created_at?: string
           email?: string
+          horas_libres_semanais?: number
           id?: string
           nome?: string
+          sustitucions_realizadas_semana?: number
           telefono?: string | null
+          ultima_semana_reset?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -278,12 +287,34 @@ export type Database = {
         }
         Returns: Json
       }
+      get_current_iso_week: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_recommended_teacher: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          apelidos: string
+          horas_libres_semanais: number
+          nome: string
+          sustitucions_realizadas_semana: number
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_teacher_substitution: {
+        Args: { teacher_id: string }
+        Returns: undefined
+      }
+      reset_weekly_counters: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
