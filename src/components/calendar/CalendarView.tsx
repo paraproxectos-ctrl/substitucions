@@ -71,8 +71,8 @@ export const CalendarView: React.FC = () => {
     observacions: '',
     grupo_id: '',
     profesor_asignado_id: '',
-    profesor_ausente_id: '',
-    sesion: '' as 'primeira' | 'segunda' | 'terceira' | 'cuarta' | 'quinta' | 'recreo' | 'hora_lectura' | '',
+    profesor_ausente_id: 'none',
+    sesion: 'none' as 'primeira' | 'segunda' | 'terceira' | 'cuarta' | 'quinta' | 'recreo' | 'hora_lectura' | 'none',
     guardia_transporte: 'ningun' as 'ningun' | 'entrada' | 'saida'
   });
   const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
@@ -286,14 +286,14 @@ export const CalendarView: React.FC = () => {
     setCreateFormData({
       hora_inicio: '',
       hora_fin: '',
-      motivo: '',
+      motivo: '' as typeof createFormData.motivo,
       motivo_outro: '',
       observacions: '',
       grupo_id: '',
       profesor_asignado_id: '',
-      profesor_ausente_id: '',
-      sesion: '',
-      guardia_transporte: 'ningun'
+      profesor_ausente_id: 'none',
+      sesion: 'none' as typeof createFormData.sesion,
+      guardia_transporte: 'ningun' as typeof createFormData.guardia_transporte
     });
     
     // Get recommended teacher
@@ -345,8 +345,8 @@ export const CalendarView: React.FC = () => {
         observacions: createFormData.observacions || null,
         grupo_id: createFormData.grupo_id,
         profesor_asignado_id: createFormData.profesor_asignado_id,
-        profesor_ausente_id: createFormData.profesor_ausente_id || null,
-        sesion: createFormData.sesion || null,
+        profesor_ausente_id: createFormData.profesor_ausente_id === 'none' ? null : createFormData.profesor_ausente_id || null,
+        sesion: createFormData.sesion === 'none' ? null : createFormData.sesion || null,
         guardia_transporte: createFormData.guardia_transporte as 'ningun' | 'entrada' | 'saida',
         created_by: user?.id,
         vista: false
@@ -890,7 +890,7 @@ export const CalendarView: React.FC = () => {
                   <SelectValue placeholder="Selecciona profesor ausente" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sen especificar</SelectItem>
+                  <SelectItem value="none">Sen especificar</SelectItem>
                   {profiles.map((profile) => (
                     <SelectItem key={profile.user_id} value={profile.user_id}>
                       {profile.nome} {profile.apelidos}
@@ -910,7 +910,7 @@ export const CalendarView: React.FC = () => {
                   <SelectValue placeholder="Selecciona sesión" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sen especificar</SelectItem>
+                  <SelectItem value="none">Sen especificar</SelectItem>
                   <SelectItem value="primeira">Primeira</SelectItem>
                   <SelectItem value="segunda">Segunda</SelectItem>
                   <SelectItem value="terceira">Terceira</SelectItem>
