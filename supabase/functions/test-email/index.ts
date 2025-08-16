@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     try {
       const emailResponse = await resend.emails.send({
-        from: 'Sistema de Sustituciones <onboarding@resend.dev>',
+        from: 'Sistema de Sustituciones <noreply@vallinclan.edu.es>',
         to: [teacherEmail],
         subject: subject,
         html: htmlContent,

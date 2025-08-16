@@ -126,9 +126,9 @@ const handler = async (req: Request): Promise<Response> => {
     const subject = `📋 Nueva Sustitución Asignada - ${fechaFormateada}`;
 
     try {
-      const emailResponse = await resend.emails.send({
-        from: 'Sistema de Sustituciones <onboarding@resend.dev>',
-        to: [teacherEmail],
+    const emailResponse = await resend.emails.send({
+      from: 'Sistema de Sustituciones <noreply@vallinclan.edu.es>',
+      to: [teacherEmail],
         subject: subject,
         html: htmlContent,
       });
