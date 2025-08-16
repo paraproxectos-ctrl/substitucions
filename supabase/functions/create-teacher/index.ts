@@ -36,7 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from('profiles')
       .select('user_id, nome, apelidos')
       .eq('email', email)
-      .single();
+      .maybeSingle();
 
     if (existingProfile && !profileCheckError) {
       console.log('Profile with email already exists, updating:', email);
@@ -90,6 +90,69 @@ const handler = async (req: Request): Promise<Response> => {
           user_id: existingProfile.user_id,
           email: email,
           message: 'Profesor actualizado exitosamente'
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        }
+      );
+    }
+
+    // Check if auth user exists without profile
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingAuthUser = existingUsers?.users?.find(user => user.email === email);
+
+    if (existingAuthUser) {
+      console.log('Auth user exists but no profile, creating profile:', email);
+      
+      // Create profile for existing auth user
+      const { error: profileInsertError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          user_id: existingAuthUser.id,
+          nome,
+          apelidos,
+          email,
+          telefono: telefono || null,
+          horas_libres_semanais: 3
+        });
+
+      if (profileInsertError) {
+        console.error('Error creating profile for existing auth user:', profileInsertError);
+        return new Response(
+          JSON.stringify({ success: false, error: `Error creando perfil: ${profileInsertError.message}` }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+
+      // Assign profesor role
+      const { error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .insert({
+          user_id: existingAuthUser.id,
+          role: 'profesor'
+        });
+
+      if (roleError) {
+        console.error('Error assigning role to existing auth user:', roleError);
+        return new Response(
+          JSON.stringify({ success: false, error: `Error asignando rol: ${roleError.message}` }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          user_id: existingAuthUser.id,
+          email: existingAuthUser.email,
+          message: 'Profesor creado exitosamente (usuario existente)'
         }),
         {
           status: 200,
