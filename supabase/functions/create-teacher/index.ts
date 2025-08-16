@@ -36,11 +36,61 @@ const handler = async (req: Request): Promise<Response> => {
     const userExists = existingUser?.users?.find(user => user.email === email);
 
     if (userExists) {
-      console.log('User already exists:', email);
+      console.log('User already exists, ensuring profile and role:', email);
+      
+      // Ensure profile exists for existing user
+      const { error: profileUpsertError } = await supabaseAdmin
+        .from('profiles')
+        .upsert({
+          user_id: userExists.id,
+          nome,
+          apelidos,
+          email,
+          telefono: telefono || null
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (profileUpsertError) {
+        console.error('Error upserting profile for existing user:', profileUpsertError);
+        return new Response(
+          JSON.stringify({ success: false, error: `Error actualizando perfil: ${profileUpsertError.message}` }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+
+      // Ensure profesor role exists
+      const { error: roleUpsertError } = await supabaseAdmin
+        .from('user_roles')
+        .upsert({
+          user_id: userExists.id,
+          role: 'profesor'
+        }, {
+          onConflict: 'user_id,role'
+        });
+
+      if (roleUpsertError) {
+        console.error('Error upserting role for existing user:', roleUpsertError);
+        return new Response(
+          JSON.stringify({ success: false, error: `Error asignando rol: ${roleUpsertError.message}` }),
+          {
+            status: 400,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders },
+          }
+        );
+      }
+
       return new Response(
-        JSON.stringify({ success: false, error: 'Ya existe un usuario con este email' }),
+        JSON.stringify({ 
+          success: true, 
+          user_id: userExists.id,
+          email: userExists.email 
+        }),
         {
-          status: 400,
+          status: 200,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         }
       );
