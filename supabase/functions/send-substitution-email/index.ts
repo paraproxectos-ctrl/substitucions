@@ -173,16 +173,14 @@ CEIP Valle-Inclán
       const decoder = new TextDecoder();
       
       try {
-        // Conectar via socket normal y luego usar STARTTLS
-        const conn = await Deno.connect({
+        // Conectar directamente con TLS en puerto 587
+        const conn = await Deno.connectTls({
           hostname: smtpConfig.hostname,
           port: smtpConfig.port,
         });
 
-        // Implementación SMTP básica con STARTTLS
+        // Implementación SMTP con TLS directo
         const commands = [
-          `EHLO ${smtpConfig.hostname}\r\n`,
-          `STARTTLS\r\n`,
           `EHLO ${smtpConfig.hostname}\r\n`,
           `AUTH LOGIN\r\n`,
           `${btoa(smtpConfig.username)}\r\n`,
@@ -200,11 +198,21 @@ CEIP Valle-Inclán
           `QUIT\r\n`
         ];
 
+        let lastResponse = '';
         for (const command of commands) {
           await conn.write(encoder.encode(command));
           const buffer = new Uint8Array(1024);
-          await conn.read(buffer);
-          console.log('SMTP Response:', decoder.decode(buffer));
+          const bytesRead = await conn.read(buffer);
+          if (bytesRead) {
+            const response = decoder.decode(buffer.subarray(0, bytesRead));
+            lastResponse = response;
+            console.log('SMTP Command:', command.trim(), 'Response:', response.trim());
+            
+            // Check for error responses
+            if (response.startsWith('5') || response.includes('reject')) {
+              throw new Error(`SMTP Error: ${response}`);
+            }
+          }
         }
 
         conn.close();
