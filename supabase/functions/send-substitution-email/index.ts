@@ -29,10 +29,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Enviando notificación por correo a:', teacherEmail);
 
-    // Configuración SMTP de Dynahosting
+    // Configuración SMTP de Dynahosting - usando puerto 587 con STARTTLS
     const smtpConfig = {
       hostname: 'ceipvalleinclan-org.correoseguro.dinaserver.com',
-      port: 465, // SMTPS
+      port: 587, // SMTP con STARTTLS
       username: 'sustitucions@ceipvalleinclan.org',
       password: Deno.env.get('SMTP_PASSWORD'),
     };
@@ -173,14 +173,16 @@ CEIP Valle-Inclán
       const decoder = new TextDecoder();
       
       try {
-        // Conectar via TLS socket
-        const conn = await Deno.connectTls({
+        // Conectar via socket normal y luego usar STARTTLS
+        const conn = await Deno.connect({
           hostname: smtpConfig.hostname,
           port: smtpConfig.port,
         });
 
-        // Implementación SMTP básica
+        // Implementación SMTP básica con STARTTLS
         const commands = [
+          `EHLO ${smtpConfig.hostname}\r\n`,
+          `STARTTLS\r\n`,
           `EHLO ${smtpConfig.hostname}\r\n`,
           `AUTH LOGIN\r\n`,
           `${btoa(smtpConfig.username)}\r\n`,

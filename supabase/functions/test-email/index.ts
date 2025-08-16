@@ -40,7 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Test real SMTP sending using the same config as send-substitution-email
     const smtpConfig = {
       hostname: 'ceipvalleinclan-org.correoseguro.dinaserver.com',
-      port: 465,
+      port: 587,
       username: 'sustitucions@ceipvalleinclan.org',
       password: smtpPassword,
     };
@@ -80,14 +80,16 @@ const handler = async (req: Request): Promise<Response> => {
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
       
-      // Conectar via TLS socket
-      const conn = await Deno.connectTls({
+      // Conectar via socket normal y luego usar STARTTLS  
+      const conn = await Deno.connect({
         hostname: smtpConfig.hostname,
         port: smtpConfig.port,
       });
 
-      // Implementación SMTP básica
+      // Implementación SMTP básica con STARTTLS
       const commands = [
+        `EHLO ${smtpConfig.hostname}\r\n`,
+        `STARTTLS\r\n`,
         `EHLO ${smtpConfig.hostname}\r\n`,
         `AUTH LOGIN\r\n`,
         `${btoa(smtpConfig.username)}\r\n`,
