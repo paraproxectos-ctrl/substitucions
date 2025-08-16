@@ -31,58 +31,125 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // First, delete any orphaned user from auth.users with this email
-    try {
-      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-      const existingAuthUser = existingUsers?.users?.find(user => user.email === email);
+    // Check if profile already exists
+    const { data: existingProfile, error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .select('user_id')
+      .eq('email', email)
+      .maybeSingle();
+
+    if (existingProfile) {
+      console.log('Profile exists, updating...');
       
-      if (existingAuthUser) {
-        console.log('Deleting existing auth user:', existingAuthUser.id);
-        await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id);
+      // Update existing profile
+      const { error: updateError } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          nome,
+          apelidos,
+          telefono: telefono || null,
+          horas_libres_semanais: 3
+        })
+        .eq('user_id', existingProfile.user_id);
+
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        return new Response(
+          JSON.stringify({ success: false, error: updateError.message }),
+          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
       }
-    } catch (error) {
-      console.log('Error or no existing user to delete:', error);
+
+      // Ensure profesor role
+      await supabaseAdmin
+        .from('user_roles')
+        .upsert({
+          user_id: existingProfile.user_id,
+          role: 'profesor'
+        }, { onConflict: 'user_id,role' });
+
+      return new Response(
+        JSON.stringify({ success: true, user_id: existingProfile.user_id, email }),
+        { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
     }
 
-    // Create new user
+    // Try to create new user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
-      user_metadata: {
-        nome,
-        apelidos
-      }
+      user_metadata: { nome, apelidos }
     });
 
     if (authError) {
-      console.error('Error creating auth user:', authError);
-      return new Response(
-        JSON.stringify({ success: false, error: `Error creando usuario: ${authError.message}` }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      console.error('Auth error:', authError);
+      
+      if (authError.message.includes('already been registered')) {
+        // User exists in auth but no profile - create profile only
+        console.log('User exists in auth, creating profile...');
+        
+        // Get user ID by trying to sign in (safer than listUsers)
+        const { data: signInData } = await supabaseAdmin.auth.admin.generateLink({
+          type: 'magiclink',
+          email: email
+        });
+
+        if (signInData?.user?.id) {
+          const userId = signInData.user.id;
+          
+          // Create profile
+          const { error: insertError } = await supabaseAdmin
+            .from('profiles')
+            .insert({
+              user_id: userId,
+              nome,
+              apelidos,
+              email,
+              telefono: telefono || null,
+              horas_libres_semanais: 3
+            });
+
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+            return new Response(
+              JSON.stringify({ success: false, error: insertError.message }),
+              { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+            );
+          }
+
+          // Add role
+          await supabaseAdmin
+            .from('user_roles')
+            .insert({ user_id: userId, role: 'profesor' });
+
+          return new Response(
+            JSON.stringify({ success: true, user_id: userId, email }),
+            { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+          );
         }
+      }
+      
+      return new Response(
+        JSON.stringify({ success: false, error: authError.message }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
     if (!authData.user) {
       return new Response(
-        JSON.stringify({ success: false, error: 'No se creó el usuario' }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
+        JSON.stringify({ success: false, error: 'No user created' }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    console.log('User created successfully:', authData.user.id);
+    console.log('New user created:', authData.user.id);
 
-    // Wait for trigger to complete
+    // Wait for trigger
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Update profile with complete data
-    const { error: profileError } = await supabaseAdmin
+    // Update profile
+    const { error: updateError } = await supabaseAdmin
       .from('profiles')
       .update({
         nome,
@@ -92,58 +159,29 @@ const handler = async (req: Request): Promise<Response> => {
       })
       .eq('user_id', authData.user.id);
 
-    if (profileError) {
-      console.error('Error updating profile:', profileError);
+    if (updateError) {
+      console.error('Error updating new profile:', updateError);
       return new Response(
-        JSON.stringify({ success: false, error: `Error actualizando perfil: ${profileError.message}` }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
+        JSON.stringify({ success: false, error: updateError.message }),
+        { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
       );
     }
 
-    // Assign profesor role
-    const { error: roleError } = await supabaseAdmin
+    // Add role
+    await supabaseAdmin
       .from('user_roles')
-      .insert({
-        user_id: authData.user.id,
-        role: 'profesor'
-      });
-
-    if (roleError) {
-      console.error('Error assigning role:', roleError);
-      return new Response(
-        JSON.stringify({ success: false, error: `Error asignando rol: ${roleError.message}` }),
-        {
-          status: 400,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
-    }
-
-    console.log('Teacher created successfully');
+      .insert({ user_id: authData.user.id, role: 'profesor' });
 
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        user_id: authData.user.id,
-        email: authData.user.email 
-      }),
-      {
-        status: 200,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      }
+      JSON.stringify({ success: true, user_id: authData.user.id, email }),
+      { status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
 
   } catch (error) {
-    console.error('Error in create-teacher function:', error);
+    console.error('Function error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: `Error interno: ${error.message}` }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      }
+      JSON.stringify({ success: false, error: error.message }),
+      { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
     );
   }
 };
