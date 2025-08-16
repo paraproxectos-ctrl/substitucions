@@ -246,10 +246,53 @@ export const SubstitutionManagement: React.FC = () => {
         return;
       }
 
-      toast({
-        title: "Éxito",
-        description: "Substitución creada correctamente",
-      });
+      // Enviar notificación por correo al profesor asignado
+      try {
+        const assignedTeacher = teachers.find(t => t.user_id === formData.profesor_asignado_id);
+        const selectedGroup = groups.find(g => g.id === formData.grupo_id);
+        
+        if (assignedTeacher) {
+          const { error: emailError } = await supabase.functions.invoke('send-substitution-email', {
+            body: {
+              teacherEmail: assignedTeacher.email,
+              teacherName: `${assignedTeacher.nome} ${assignedTeacher.apelidos}`,
+              substitutionDetails: {
+                fecha: formData.data,
+                hora_inicio: formData.hora_inicio,
+                hora_fin: formData.hora_fin,
+                materia: selectedGroup ? `${selectedGroup.nome} - ${selectedGroup.nivel}` : undefined,
+                grupo: selectedGroup?.nome,
+                observaciones: formData.observacions
+              }
+            }
+          });
+
+          if (emailError) {
+            console.error('Error enviando notificación:', emailError);
+            toast({
+              title: "Aviso",
+              description: "Substitución creada pero erro ao enviar notificación por correo",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Éxito",
+              description: "Substitución creada e notificación enviada por correo",
+            });
+          }
+        } else {
+          toast({
+            title: "Éxito",
+            description: "Substitución creada correctamente",
+          });
+        }
+      } catch (emailError) {
+        console.error('Error enviando notificación:', emailError);
+        toast({
+          title: "Éxito",
+          description: "Substitución creada correctamente",
+        });
+      }
 
       // Resetear formulario e recargar lista
       setFormData({
