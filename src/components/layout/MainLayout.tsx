@@ -42,18 +42,14 @@ export const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
-      <main className="flex-1 overflow-auto">
-        {(activeView === 'substitutions' || activeView === 'teachers' || activeView === 'reports') ? (
-          <div className="p-6">
-            {renderMainContent()}
-          </div>
-        ) : (
-          <div className="p-6">
-            {renderMainContent()}
-          </div>
-        )}
+    <div className="flex h-screen bg-background w-full">
+      <div className="flex-shrink-0">
+        <Sidebar activeView={activeView} onViewChange={setActiveView} />
+      </div>
+      <main className="flex-1 overflow-auto min-w-0">
+        <div className="p-6 w-full">
+          {renderMainContent()}
+        </div>
       </main>
     </div>
   );

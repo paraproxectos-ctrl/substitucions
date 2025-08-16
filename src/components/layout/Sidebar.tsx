@@ -52,7 +52,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   ];
 
   return (
-    <div className="w-64 bg-card border-r border-border h-screen flex flex-col">
+    <div className="w-64 bg-card border-r border-border h-screen flex flex-col shrink-0">
       {/* Header */}
       <div className="p-6 border-b border-border">
         <div className="flex items-center space-x-2">
