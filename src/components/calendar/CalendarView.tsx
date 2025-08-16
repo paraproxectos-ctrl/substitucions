@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, User, Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, Eye, EyeOff, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -56,6 +61,21 @@ export const CalendarView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [grupos, setGrupos] = useState<any[]>([]);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createFormDate, setCreateFormDate] = useState<Date | null>(null);
+  const [createFormData, setCreateFormData] = useState({
+    hora_inicio: '',
+    hora_fin: '',
+    motivo: '' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro' | '',
+    motivo_outro: '',
+    observacions: '',
+    grupo_id: '',
+    profesor_asignado_id: '',
+    profesor_ausente_id: '',
+    sesion: '' as 'primeira' | 'segunda' | 'terceira' | 'cuarta' | 'quinta' | 'recreo' | 'hora_lectura' | '',
+    guardia_transporte: 'ningun' as 'ningun' | 'entrada' | 'saida'
+  });
+  const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
   const { user, userRole } = useAuth();
   const { toast } = useToast();
 
@@ -254,6 +274,126 @@ export const CalendarView: React.FC = () => {
     return substitucions.filter(sub => isSameDay(parseISO(sub.data), date));
   };
 
+  const handleDayClick = (date: Date) => {
+    setSelectedDate(date);
+    if (userRole?.role === 'admin') {
+      openCreateDialog(date);
+    }
+  };
+
+  const openCreateDialog = async (date: Date) => {
+    setCreateFormDate(date);
+    setCreateFormData({
+      hora_inicio: '',
+      hora_fin: '',
+      motivo: '',
+      motivo_outro: '',
+      observacions: '',
+      grupo_id: '',
+      profesor_asignado_id: '',
+      profesor_ausente_id: '',
+      sesion: '',
+      guardia_transporte: 'ningun'
+    });
+    
+    // Get recommended teacher
+    try {
+      const { data, error } = await supabase.rpc('get_recommended_teacher');
+      if (error) {
+        console.error('Error getting recommended teacher:', error);
+      } else if (data && data.length > 0) {
+        setRecommendedTeacher(data[0]);
+        setCreateFormData(prev => ({
+          ...prev,
+          profesor_asignado_id: data[0].user_id
+        }));
+      } else {
+        setRecommendedTeacher(null);
+        toast({
+          title: "Aviso",
+          description: "Non hai profesorado dispoñíbel dentro do cupo semanal",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error('Error in get_recommended_teacher:', error);
+    }
+    
+    setShowCreateDialog(true);
+  };
+
+  const handleCreateSubstitution = async () => {
+    if (!createFormDate) return;
+
+    // Basic validation
+    if (!createFormData.hora_inicio || !createFormData.hora_fin || !createFormData.motivo || !createFormData.grupo_id || !createFormData.profesor_asignado_id) {
+      toast({
+        title: "Error",
+        description: "Por favor, completa os campos obrigatorios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const substitutionData = {
+        data: format(createFormDate, 'yyyy-MM-dd'),
+        hora_inicio: createFormData.hora_inicio,
+        hora_fin: createFormData.hora_fin,
+        motivo: createFormData.motivo as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
+        motivo_outro: createFormData.motivo_outro || null,
+        observacions: createFormData.observacions || null,
+        grupo_id: createFormData.grupo_id,
+        profesor_asignado_id: createFormData.profesor_asignado_id,
+        profesor_ausente_id: createFormData.profesor_ausente_id || null,
+        sesion: createFormData.sesion || null,
+        guardia_transporte: createFormData.guardia_transporte as 'ningun' | 'entrada' | 'saida',
+        created_by: user?.id,
+        vista: false
+      };
+
+      const { error: insertError } = await supabase
+        .from('substitucions')
+        .insert([substitutionData]);
+
+      if (insertError) {
+        console.error('Error creating substitution:', insertError);
+        toast({
+          title: "Error",
+          description: "Non se puido crear a substitución",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Increment teacher substitution counter if teacher is assigned
+      if (createFormData.profesor_asignado_id) {
+        const { error: incrementError } = await supabase.rpc('increment_teacher_substitution', {
+          teacher_id: createFormData.profesor_asignado_id
+        });
+
+        if (incrementError) {
+          console.error('Error incrementing teacher substitution:', incrementError);
+        }
+      }
+
+      toast({
+        title: "Substitución creada",
+        description: "A substitución foi creada correctamente",
+      });
+
+      setShowCreateDialog(false);
+      fetchSubstitucions(); // Refresh the calendar
+    } catch (error) {
+      console.error('Error in handleCreateSubstitution:', error);
+      toast({
+        title: "Error",
+        description: "Ocorreu un erro inesperado",
+        variant: "destructive",
+      });
+    }
+  };
+
   const mySubstitutions = substitucions.filter(sub => sub.profesor_asignado_id === user?.id);
   const otherSubstitutions = substitucions.filter(sub => sub.profesor_asignado_id !== user?.id);
 
@@ -337,7 +477,7 @@ export const CalendarView: React.FC = () => {
               className={`min-h-[100px] p-1 border border-border/50 cursor-pointer hover:bg-accent/20 ${
                 !isCurrentMonth ? 'bg-muted/30 text-muted-foreground' : ''
               } ${isSelected ? 'ring-2 ring-primary' : ''} ${isDayToday ? 'bg-primary/5' : ''}`}
-              onClick={() => setSelectedDate(day)}
+              onClick={() => handleDayClick(day)}
             >
               <div className={`text-sm font-medium mb-1 ${isDayToday ? 'text-primary' : ''}`}>
                 {format(day, 'd')}
@@ -381,7 +521,7 @@ export const CalendarView: React.FC = () => {
               className={`cursor-pointer hover:shadow-md transition-shadow ${
                 isSelected ? 'ring-2 ring-primary' : ''
               } ${isDayToday ? 'border-primary' : ''}`}
-              onClick={() => setSelectedDate(day)}
+              onClick={() => handleDayClick(day)}
             >
               <CardHeader className="pb-2">
                 <CardTitle className={`text-center text-lg ${isDayToday ? 'text-primary' : ''}`}>
@@ -631,6 +771,196 @@ export const CalendarView: React.FC = () => {
           {view === 'day' && renderDayView()}
         </div>
       )}
+
+      {/* Create Substitution Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Crear substitución para {createFormDate && format(createFormDate, "d 'de' MMMM 'de' yyyy", { locale: gl })}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="hora_inicio">Hora inicio</Label>
+              <Input
+                id="hora_inicio"
+                type="time"
+                value={createFormData.hora_inicio}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, hora_inicio: e.target.value }))}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="hora_fin">Hora fin</Label>
+              <Input
+                id="hora_fin"
+                type="time"
+                value={createFormData.hora_fin}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, hora_fin: e.target.value }))}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="motivo">Motivo</Label>
+              <Select 
+                value={createFormData.motivo} 
+                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, motivo: value as typeof prev.motivo }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ausencia_imprevista">Ausencia imprevista</SelectItem>
+                  <SelectItem value="enfermidade">Enfermidade</SelectItem>
+                  <SelectItem value="asuntos_propios">Asuntos propios</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {createFormData.motivo === 'outro' && (
+              <div className="space-y-2">
+                <Label htmlFor="motivo_outro">Especificar motivo</Label>
+                <Input
+                  id="motivo_outro"
+                  value={createFormData.motivo_outro}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, motivo_outro: e.target.value }))}
+                  placeholder="Describe o motivo"
+                />
+              </div>
+            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="grupo_id">Grupo</Label>
+              <Select 
+                value={createFormData.grupo_id} 
+                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, grupo_id: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona grupo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {grupos.map((grupo) => (
+                    <SelectItem key={grupo.id} value={grupo.id}>
+                      {grupo.nivel} - {grupo.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="profesor_asignado_id">
+                Profesor asignado
+                {recommendedTeacher && (
+                  <span className="text-sm text-muted-foreground ml-2">
+                    (Recomendado: {recommendedTeacher.nome} {recommendedTeacher.apelidos})
+                  </span>
+                )}
+              </Label>
+              <Select 
+                value={createFormData.profesor_asignado_id} 
+                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, profesor_asignado_id: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona profesor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.user_id} value={profile.user_id}>
+                      {profile.nome} {profile.apelidos}
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({profile.sustitucions_realizadas_semana}/{profile.horas_libres_semanais})
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="profesor_ausente_id">Profesor ausente (opcional)</Label>
+              <Select 
+                value={createFormData.profesor_ausente_id} 
+                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, profesor_ausente_id: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona profesor ausente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sen especificar</SelectItem>
+                  {profiles.map((profile) => (
+                    <SelectItem key={profile.user_id} value={profile.user_id}>
+                      {profile.nome} {profile.apelidos}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="sesion">Sesión (opcional)</Label>
+              <Select 
+                value={createFormData.sesion} 
+                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, sesion: value as typeof prev.sesion }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona sesión" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Sen especificar</SelectItem>
+                  <SelectItem value="primeira">Primeira</SelectItem>
+                  <SelectItem value="segunda">Segunda</SelectItem>
+                  <SelectItem value="terceira">Terceira</SelectItem>
+                  <SelectItem value="cuarta">Cuarta</SelectItem>
+                  <SelectItem value="quinta">Quinta</SelectItem>
+                  <SelectItem value="recreo">Recreo</SelectItem>
+                  <SelectItem value="hora_lectura">Hora de lectura</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="guardia_transporte">Guardia transporte (opcional)</Label>
+              <Select 
+                value={createFormData.guardia_transporte} 
+                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, guardia_transporte: value as typeof prev.guardia_transporte }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona guardia" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ningun">Ningún</SelectItem>
+                  <SelectItem value="entrada">Entrada</SelectItem>
+                  <SelectItem value="saida">Saída</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="observacions">Observacións (opcional)</Label>
+              <Textarea
+                id="observacions"
+                value={createFormData.observacions}
+                onChange={(e) => setCreateFormData(prev => ({ ...prev, observacions: e.target.value }))}
+                placeholder="Observacións adicionais..."
+                rows={3}
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateSubstitution}>
+              Crear substitución
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
