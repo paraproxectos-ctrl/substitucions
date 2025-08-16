@@ -31,141 +31,24 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Check if profile already exists with this email
-    const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
-      .from('profiles')
-      .select('user_id, nome, apelidos')
-      .eq('email', email)
-      .maybeSingle();
-
-    if (existingProfile && !profileCheckError) {
-      console.log('Profile with email already exists, updating:', email);
+    // First, delete any orphaned user from auth.users with this email
+    try {
+      const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+      const existingAuthUser = existingUsers?.users?.find(user => user.email === email);
       
-      // Update existing profile
-      const { error: profileUpdateError } = await supabaseAdmin
-        .from('profiles')
-        .update({
-          nome,
-          apelidos,
-          telefono: telefono || null,
-          horas_libres_semanais: 3 // Asegurar que tenga horas disponibles
-        })
-        .eq('user_id', existingProfile.user_id);
-
-      if (profileUpdateError) {
-        console.error('Error updating existing profile:', profileUpdateError);
-        return new Response(
-          JSON.stringify({ success: false, error: `Error actualizando perfil: ${profileUpdateError.message}` }),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
+      if (existingAuthUser) {
+        console.log('Deleting existing auth user:', existingAuthUser.id);
+        await supabaseAdmin.auth.admin.deleteUser(existingAuthUser.id);
       }
-
-      // Ensure profesor role exists
-      const { error: roleUpsertError } = await supabaseAdmin
-        .from('user_roles')
-        .upsert({
-          user_id: existingProfile.user_id,
-          role: 'profesor'
-        }, {
-          onConflict: 'user_id,role'
-        });
-
-      if (roleUpsertError) {
-        console.error('Error upserting role for existing user:', roleUpsertError);
-        return new Response(
-          JSON.stringify({ success: false, error: `Error asignando rol: ${roleUpsertError.message}` }),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          user_id: existingProfile.user_id,
-          email: email,
-          message: 'Profesor actualizado exitosamente'
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
+    } catch (error) {
+      console.log('Error or no existing user to delete:', error);
     }
 
-    // Check if auth user exists without profile
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingAuthUser = existingUsers?.users?.find(user => user.email === email);
-
-    if (existingAuthUser) {
-      console.log('Auth user exists but no profile, creating profile:', email);
-      
-      // Create profile for existing auth user
-      const { error: profileInsertError } = await supabaseAdmin
-        .from('profiles')
-        .insert({
-          user_id: existingAuthUser.id,
-          nome,
-          apelidos,
-          email,
-          telefono: telefono || null,
-          horas_libres_semanais: 3
-        });
-
-      if (profileInsertError) {
-        console.error('Error creating profile for existing auth user:', profileInsertError);
-        return new Response(
-          JSON.stringify({ success: false, error: `Error creando perfil: ${profileInsertError.message}` }),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-
-      // Assign profesor role
-      const { error: roleError } = await supabaseAdmin
-        .from('user_roles')
-        .insert({
-          user_id: existingAuthUser.id,
-          role: 'profesor'
-        });
-
-      if (roleError) {
-        console.error('Error assigning role to existing auth user:', roleError);
-        return new Response(
-          JSON.stringify({ success: false, error: `Error asignando rol: ${roleError.message}` }),
-          {
-            status: 400,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          user_id: existingAuthUser.id,
-          email: existingAuthUser.email,
-          message: 'Profesor creado exitosamente (usuario existente)'
-        }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        }
-      );
-    }
-
-    // Create the user with admin client
+    // Create new user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Skip email confirmation
+      email_confirm: true,
       user_metadata: {
         nome,
         apelidos
@@ -184,7 +67,6 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     if (!authData.user) {
-      console.error('No user returned from creation');
       return new Response(
         JSON.stringify({ success: false, error: 'No se creó el usuario' }),
         {
@@ -196,24 +78,22 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('User created successfully:', authData.user.id);
 
-    // Wait a bit to ensure trigger completes
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Wait for trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Update profile with complete data (the trigger creates a basic one)
+    // Update profile with complete data
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .update({
         nome,
         apelidos,
         telefono: telefono || null,
-        horas_libres_semanais: 3 // Asegurar que tenga horas disponibles
+        horas_libres_semanais: 3
       })
       .eq('user_id', authData.user.id);
 
     if (profileError) {
       console.error('Error updating profile:', profileError);
-      // Clean up auth user if profile update fails
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       return new Response(
         JSON.stringify({ success: false, error: `Error actualizando perfil: ${profileError.message}` }),
         {
@@ -222,8 +102,6 @@ const handler = async (req: Request): Promise<Response> => {
         }
       );
     }
-
-    console.log('Profile created successfully');
 
     // Assign profesor role
     const { error: roleError } = await supabaseAdmin
@@ -244,7 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log('Role assigned successfully');
+    console.log('Teacher created successfully');
 
     return new Response(
       JSON.stringify({ 
