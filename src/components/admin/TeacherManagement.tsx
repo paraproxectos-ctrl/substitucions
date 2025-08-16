@@ -107,6 +107,8 @@ export const TeacherManagement: React.FC = () => {
         .from('profiles')
         .select('id, user_id, nome, apelidos, email, telefono, horas_libres_semanais, sustitucions_realizadas_semana, ultima_semana_reset, created_at')
         .in('user_id', userIds)
+        .neq('nome', '') // Filtrar perfiles sin nombre
+        .neq('apelidos', '') // Filtrar perfiles sin apellidos
         .order('nome');
 
       if (error) {
@@ -119,7 +121,13 @@ export const TeacherManagement: React.FC = () => {
         return;
       }
 
-      setTeachers(data || []);
+      // Solo incluir profesores con nombre y apellidos válidos
+      const validTeachers = data?.filter(teacher => 
+        teacher.nome && teacher.nome.trim() !== '' && 
+        teacher.apelidos && teacher.apelidos.trim() !== ''
+      ) || [];
+      
+      setTeachers(validTeachers);
     } catch (error) {
       console.error('Error in fetchTeachers:', error);
     } finally {

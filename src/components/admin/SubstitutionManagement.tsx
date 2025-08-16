@@ -171,13 +171,21 @@ export const SubstitutionManagement: React.FC = () => {
         const userIds = roleData.map(role => role.user_id);
         const { data: teachersData, error: teachersError } = await supabase
           .from('profiles')
-          .select('user_id, nome, apelidos, email')
-          .in('user_id', userIds);
+          .select('user_id, nome, apelidos, email, horas_libres_semanais, sustitucions_realizadas_semana')
+          .in('user_id', userIds)
+          .neq('nome', '') // Filtrar perfiles sin nombre
+          .neq('apelidos', '') // Filtrar perfiles sin apellidos
+          .order('nome');
 
         if (teachersError) {
           console.error('Error fetching teachers:', teachersError);
         } else {
-          setTeachers(teachersData || []);
+          // Solo incluir profesores con nombre y apellidos válidos
+          const validTeachers = teachersData?.filter(teacher => 
+            teacher.nome && teacher.nome.trim() !== '' && 
+            teacher.apelidos && teacher.apelidos.trim() !== ''
+          ) || [];
+          setTeachers(validTeachers);
         }
       } else {
         setTeachers([]);
