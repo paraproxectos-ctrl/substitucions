@@ -167,6 +167,7 @@ export const SubstitutionManagement: React.FC = () => {
 
       if (roleError) {
         console.error('Error fetching teacher roles:', roleError);
+        setTeachers([]);
       } else if (roleData && roleData.length > 0) {
         const userIds = roleData.map(role => role.user_id);
         const { data: teachersData, error: teachersError } = await supabase
@@ -179,6 +180,7 @@ export const SubstitutionManagement: React.FC = () => {
 
         if (teachersError) {
           console.error('Error fetching teachers:', teachersError);
+          setTeachers([]);
         } else {
           // Solo incluir profesores con nombre y apellidos válidos
           const validTeachers = teachersData?.filter(teacher => 
@@ -188,6 +190,7 @@ export const SubstitutionManagement: React.FC = () => {
           setTeachers(validTeachers);
         }
       } else {
+        console.log('No teacher roles found');
         setTeachers([]);
       }
 
@@ -216,6 +219,16 @@ export const SubstitutionManagement: React.FC = () => {
 
   // Crear nova substitución
   const createSubstitution = async () => {
+    // Verificar se hai profesores disponibles
+    if (teachers.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Non hai profesorado dispoñible. Primeiro debes engadir profesores ao sistema.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!formData.data || !formData.hora_inicio || !formData.hora_fin || !formData.grupo_id || !formData.profesor_ausente_id || !formData.profesor_asignado_id) {
       toast({
         title: "Error",
