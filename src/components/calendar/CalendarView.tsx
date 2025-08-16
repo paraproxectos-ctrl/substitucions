@@ -330,7 +330,7 @@ export const CalendarView: React.FC = () => {
         data: format(createFormDate, 'yyyy-MM-dd'),
         hora_inicio: createFormData.hora_inicio || '08:00', // Default time if empty
         hora_fin: createFormData.hora_fin || '09:00', // Default time if empty
-        motivo: createFormData.motivo || 'otro' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
+        motivo: createFormData.motivo || 'outro' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
         motivo_outro: createFormData.motivo_outro || null,
         observacions: createFormData.observacions || null,
         grupo_id: createFormData.grupo_id || null,
