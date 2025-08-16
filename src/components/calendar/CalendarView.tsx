@@ -54,6 +54,8 @@ export const CalendarView: React.FC = () => {
   const [view, setView] = useState<CalendarView>('month');
   const [substitucions, setSubstitucions] = useState<Substitucion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [grupos, setGrupos] = useState<any[]>([]);
   const { user, userRole } = useAuth();
   const { toast } = useToast();
 
@@ -131,9 +133,42 @@ export const CalendarView: React.FC = () => {
     }
   };
 
+  const fetchProfiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, nome, apelidos, horas_libres_semanais, sustitucions_realizadas_semana')
+        .order('nome');
+
+      if (error) throw error;
+      setProfiles(data || []);
+    } catch (error: any) {
+      console.error('Error fetching profiles:', error);
+    }
+  };
+
+  const fetchGrupos = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('grupos_educativos')
+        .select('*')
+        .order('nivel')
+        .order('nome');
+
+      if (error) throw error;
+      setGrupos(data || []);
+    } catch (error: any) {
+      console.error('Error fetching grupos:', error);
+    }
+  };
+
   useEffect(() => {
     fetchSubstitucions();
-  }, [selectedDate, view]);
+    if (userRole?.role === 'admin') {
+      fetchProfiles();
+      fetchGrupos();
+    }
+  }, [selectedDate, view, userRole]);
 
   const markAsViewed = async (substitutionId: string) => {
     try {

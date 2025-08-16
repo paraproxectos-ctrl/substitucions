@@ -32,12 +32,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
       available: true,
     },
     {
-      id: 'weekly',
-      label: 'Vista semanal',
-      icon: CalendarDays,
-      available: true,
-    },
-    {
       id: 'substitutions',
       label: 'Xestionar substitucións',
       icon: PlusCircle,
@@ -50,10 +44,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
       available: isAdmin,
     },
     {
-      id: 'messages',
-      label: 'Mensaxería',
-      icon: MessageSquare,
-      available: true,
+      id: 'reports',
+      label: 'Informes e estatísticas',
+      icon: Settings,
+      available: isAdmin,
     },
   ];
 
