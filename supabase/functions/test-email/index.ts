@@ -80,49 +80,72 @@ const handler = async (req: Request): Promise<Response> => {
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
       
-      // Conectar directamente con TLS en puerto 587 
-      const conn = await Deno.connectTls({
+      // Conectar con socket normal y usar STARTTLS
+      const conn = await Deno.connect({
         hostname: smtpConfig.hostname,
         port: smtpConfig.port,
       });
 
-      // Implementación SMTP con TLS directo
-      const commands = [
-        `EHLO ${smtpConfig.hostname}\r\n`,
-        `AUTH LOGIN\r\n`,
-        `${btoa(smtpConfig.username)}\r\n`,
-        `${btoa(smtpConfig.password!)}\r\n`,
-        `MAIL FROM:<${smtpConfig.username}>\r\n`,
-        `RCPT TO:<${teacherEmail}>\r\n`,
-        `DATA\r\n`,
-        `From: Sistema de Sustituciones <${smtpConfig.username}>\r\n`,
-        `To: ${teacherEmail}\r\n`,
-        `Subject: ${subject}\r\n`,
-        `Content-Type: text/html; charset=UTF-8\r\n`,
-        `\r\n`,
-        `${htmlContent}\r\n`,
-        `.\r\n`,
-        `QUIT\r\n`
-      ];
-
-      let lastResponse = '';
-      for (const command of commands) {
+      // Función helper para enviar comando y leer respuesta
+      const sendCommand = async (command: string) => {
         await conn.write(encoder.encode(command));
         const buffer = new Uint8Array(1024);
         const bytesRead = await conn.read(buffer);
         if (bytesRead) {
           const response = decoder.decode(buffer.subarray(0, bytesRead));
-          lastResponse = response;
-          console.log('SMTP Command:', command.trim(), 'Response:', response.trim());
-          
-          // Check for error responses
-          if (response.startsWith('5') || response.includes('reject')) {
+          console.log('SMTP:', command.trim(), '→', response.trim());
+          if (response.startsWith('4') || response.startsWith('5')) {
             throw new Error(`SMTP Error: ${response}`);
           }
+          return response;
         }
-      }
+        return '';
+      };
 
-      conn.close();
+      // Secuencia SMTP con STARTTLS
+      await sendCommand(`EHLO ${smtpConfig.hostname}\r\n`);
+      await sendCommand(`STARTTLS\r\n`);
+      
+      // Actualizar conexión a TLS
+      const tlsConn = await Deno.startTls(conn, { hostname: smtpConfig.hostname });
+      
+      // Continuar con comandos sobre conexión TLS
+      const sendTlsCommand = async (command: string) => {
+        await tlsConn.write(encoder.encode(command));
+        const buffer = new Uint8Array(1024);
+        const bytesRead = await tlsConn.read(buffer);
+        if (bytesRead) {
+          const response = decoder.decode(buffer.subarray(0, bytesRead));
+          console.log('TLS SMTP:', command.trim(), '→', response.trim());
+          if (response.startsWith('4') || response.startsWith('5')) {
+            throw new Error(`SMTP Error: ${response}`);
+          }
+          return response;
+        }
+        return '';
+      };
+
+      await sendTlsCommand(`EHLO ${smtpConfig.hostname}\r\n`);
+      await sendTlsCommand(`AUTH LOGIN\r\n`);
+      await sendTlsCommand(`${btoa(smtpConfig.username)}\r\n`);
+      await sendTlsCommand(`${btoa(smtpConfig.password!)}\r\n`);
+      await sendTlsCommand(`MAIL FROM:<${smtpConfig.username}>\r\n`);
+      await sendTlsCommand(`RCPT TO:<${teacherEmail}>\r\n`);
+      await sendTlsCommand(`DATA\r\n`);
+      
+      // Enviar contenido del email
+      const emailData = `From: Sistema de Sustituciones <${smtpConfig.username}>\r\nTo: ${teacherEmail}\r\nSubject: ${subject}\r\nContent-Type: text/html; charset=UTF-8\r\n\r\n${htmlContent}\r\n.\r\n`;
+      await tlsConn.write(encoder.encode(emailData));
+      
+      const finalBuffer = new Uint8Array(1024);
+      const finalBytesRead = await tlsConn.read(finalBuffer);
+      if (finalBytesRead) {
+        const finalResponse = decoder.decode(finalBuffer.subarray(0, finalBytesRead));
+        console.log('Email data response:', finalResponse.trim());
+      }
+      
+      await sendTlsCommand(`QUIT\r\n`);
+      tlsConn.close();
       console.log("Test email sent successfully to:", teacherEmail);
 
       return new Response(JSON.stringify({ 
