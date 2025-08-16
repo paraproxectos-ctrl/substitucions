@@ -2,3 +2,9 @@ project_id = "tgzxldtrniflakoexpew"
 
 [functions.send-substitution-email]
 verify_jwt = false
+
+[functions.test-email]
+verify_jwt = false
+
+[functions.create-teacher]
+verify_jwt = false
