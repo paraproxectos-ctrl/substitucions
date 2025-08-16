@@ -325,26 +325,16 @@ export const CalendarView: React.FC = () => {
   const handleCreateSubstitution = async () => {
     if (!createFormDate) return;
 
-    // Basic validation
-    if (!createFormData.hora_inicio || !createFormData.hora_fin || !createFormData.motivo || !createFormData.grupo_id || !createFormData.profesor_asignado_id) {
-      toast({
-        title: "Error",
-        description: "Por favor, completa os campos obrigatorios",
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       const substitutionData = {
         data: format(createFormDate, 'yyyy-MM-dd'),
-        hora_inicio: createFormData.hora_inicio,
-        hora_fin: createFormData.hora_fin,
-        motivo: createFormData.motivo as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
+        hora_inicio: createFormData.hora_inicio || '08:00', // Default time if empty
+        hora_fin: createFormData.hora_fin || '09:00', // Default time if empty
+        motivo: createFormData.motivo || 'otro' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
         motivo_outro: createFormData.motivo_outro || null,
         observacions: createFormData.observacions || null,
-        grupo_id: createFormData.grupo_id,
-        profesor_asignado_id: createFormData.profesor_asignado_id,
+        grupo_id: createFormData.grupo_id || null,
+        profesor_asignado_id: createFormData.profesor_asignado_id || null,
         profesor_ausente_id: createFormData.profesor_ausente_id === 'none' ? null : createFormData.profesor_ausente_id || null,
         sesion: createFormData.sesion === 'none' ? null : createFormData.sesion || null,
         guardia_transporte: createFormData.guardia_transporte as 'ningun' | 'entrada' | 'saida',
@@ -367,9 +357,9 @@ export const CalendarView: React.FC = () => {
       }
 
       // Increment teacher substitution counter if teacher is assigned
-      if (createFormData.profesor_asignado_id) {
+      if (substitutionData.profesor_asignado_id) {
         const { error: incrementError } = await supabase.rpc('increment_teacher_substitution', {
-          teacher_id: createFormData.profesor_asignado_id
+          teacher_id: substitutionData.profesor_asignado_id
         });
 
         if (incrementError) {
