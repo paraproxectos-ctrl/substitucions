@@ -31,30 +31,31 @@ const handler = async (req: Request): Promise<Response> => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Check if user already exists
-    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
-    const userExists = existingUser?.users?.find(user => user.email === email);
+    // Check if profile already exists with this email
+    const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
+      .from('profiles')
+      .select('user_id, nome, apelidos')
+      .eq('email', email)
+      .single();
 
-    if (userExists) {
-      console.log('User already exists, ensuring profile and role:', email);
+    if (existingProfile && !profileCheckError) {
+      console.log('Profile with email already exists, updating:', email);
       
-      // Ensure profile exists for existing user
-      const { error: profileUpsertError } = await supabaseAdmin
+      // Update existing profile
+      const { error: profileUpdateError } = await supabaseAdmin
         .from('profiles')
-        .upsert({
-          user_id: userExists.id,
+        .update({
           nome,
           apelidos,
-          email,
-          telefono: telefono || null
-        }, {
-          onConflict: 'user_id'
-        });
+          telefono: telefono || null,
+          horas_libres_semanais: 3 // Asegurar que tenga horas disponibles
+        })
+        .eq('user_id', existingProfile.user_id);
 
-      if (profileUpsertError) {
-        console.error('Error upserting profile for existing user:', profileUpsertError);
+      if (profileUpdateError) {
+        console.error('Error updating existing profile:', profileUpdateError);
         return new Response(
-          JSON.stringify({ success: false, error: `Error actualizando perfil: ${profileUpsertError.message}` }),
+          JSON.stringify({ success: false, error: `Error actualizando perfil: ${profileUpdateError.message}` }),
           {
             status: 400,
             headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -66,7 +67,7 @@ const handler = async (req: Request): Promise<Response> => {
       const { error: roleUpsertError } = await supabaseAdmin
         .from('user_roles')
         .upsert({
-          user_id: userExists.id,
+          user_id: existingProfile.user_id,
           role: 'profesor'
         }, {
           onConflict: 'user_id,role'
@@ -86,8 +87,9 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          user_id: userExists.id,
-          email: userExists.email 
+          user_id: existingProfile.user_id,
+          email: email,
+          message: 'Profesor actualizado exitosamente'
         }),
         {
           status: 200,
@@ -140,7 +142,8 @@ const handler = async (req: Request): Promise<Response> => {
       .update({
         nome,
         apelidos,
-        telefono: telefono || null
+        telefono: telefono || null,
+        horas_libres_semanais: 3 // Asegurar que tenga horas disponibles
       })
       .eq('user_id', authData.user.id);
 
