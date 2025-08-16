@@ -39,17 +39,6 @@ export const ReportsAndStatistics: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   const { userRole } = useAuth();
 
-  // Check admin access
-  if (userRole?.role !== 'admin') {
-    return (
-      <Alert>
-        <AlertDescription>
-          Non tes permisos para acceder a esta sección.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
   // Fetch teacher statistics
   const fetchTeacherStats = async () => {
     try {
@@ -153,6 +142,17 @@ export const ReportsAndStatistics: React.FC = () => {
   useEffect(() => {
     refreshData();
   }, []);
+
+  // Check admin access - MOVED AFTER ALL HOOKS
+  if (userRole?.role !== 'admin') {
+    return (
+      <Alert>
+        <AlertDescription>
+          Non tes permisos para acceder a esta sección.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   // Reset weekly counters manually
   const resetWeeklyCounters = async () => {
