@@ -185,38 +185,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Try to fetch profile, but don't let it block forever
-          try {
-            const { data: profileData } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single();
-            
-            if (profileData) {
-              setProfile(profileData);
-            }
-            
-            // Fetch role
-            const { data: roleData } = await supabase
-              .from('user_roles')
-              .select('role')
-              .eq('user_id', session.user.id)
-              .limit(1);
-            
-            if (roleData && roleData.length > 0) {
-              setUserRole(roleData[0]);
-            } else {
-              setUserRole({ role: 'profesor' }); // Default role
-            }
-          } catch (error) {
-            console.error('Error fetching profile:', error);
-            // Continue with default values
-            setUserRole({ role: 'profesor' });
-          }
+          console.log('User found on init, fetching profile...');
+          await fetchUserProfile(session.user.id);
+        } else {
+          console.log('No user found on init');
+          setLoading(false);
         }
         
-        setLoading(false);
       } catch (error) {
         console.error('Auth initialization error:', error);
         setLoading(false);
@@ -224,7 +199,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     // Set up auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event);
       setSession(session);
       setUser(session?.user ?? null);
@@ -232,6 +207,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'SIGNED_OUT') {
         setProfile(null);
         setUserRole(null);
+        setLoading(false);
+      } else if (event === 'SIGNED_IN' && session?.user) {
+        // Load profile and role when user signs in
+        await fetchUserProfile(session.user.id);
       }
     });
 
