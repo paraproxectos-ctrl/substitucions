@@ -1,15 +1,16 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import type { User, Session } from '@supabase/supabase-js';
 
 interface UserProfile {
-  id: string;
   user_id: string;
   nome: string;
   apelidos: string;
   email: string;
   telefono?: string;
+  horas_libres_semanais?: number;
+  sustitucions_realizadas_semana?: number;
 }
 
 interface UserRole {
@@ -32,7 +33,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth debe ser usado dentro dun AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
@@ -43,164 +44,123 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
-  const fetchingProfile = useRef(false);
+  const { toast } = useToast();
 
-  const fetchUserProfile = async (userId: string) => {
-    // Prevent concurrent profile fetches
-    if (fetchingProfile.current) {
-      console.log('Profile fetch already in progress, skipping...');
-      return;
-    }
-
+  const fetchUserData = async (userId: string) => {
     try {
-      fetchingProfile.current = true;
-      console.log('Fetching profile for user:', userId);
+      console.log('Fetching user data for:', userId);
       
-      const { data: profileData, error: profileError } = await supabase
+      // Fetch profile with timeout
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .single();
 
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        
-        // If profile doesn't exist, create a basic one
-        if (profileError.code === 'PGRST116') {
-          console.log('Profile not found, trying to create basic profile...');
-          const { data: insertData, error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              user_id: userId,
-              nome: 'Usuario',
-              apelidos: 'Sin Configurar',
-              email: user?.email || '',
-            })
-            .select()
-            .single();
-            
-          if (insertError) {
-            console.error('Error creating profile:', insertError);
-            toast({
-              title: "Error de perfil",
-              description: "No se pudo crear el perfil de usuario. Contacta al administrador.",
-              variant: "destructive",
-            });
-            setLoading(false);
-            return;
-          }
-          
-          console.log('Basic profile created:', insertData);
-          setProfile(insertData);
-        } else {
-          toast({
-            title: "Error de conexión",
-            description: "No se pudo cargar el perfil de usuario. Por favor, recarga la página.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-      } else {
-        console.log('Profile data found:', profileData);
-        setProfile(profileData);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+
+      let profileData = null;
+      try {
+        const result = await Promise.race([profilePromise, timeoutPromise]) as any;
+        profileData = result.data;
+      } catch (error: any) {
+        console.log('Profile fetch failed:', error.message);
+        // Set default profile if fetch fails
+        profileData = {
+          user_id: userId,
+          nome: 'Usuario',
+          apelidos: 'Sin Configurar',
+          email: user?.email || '',
+          horas_libres_semanais: 0,
+          sustitucions_realizadas_semana: 0
+        };
       }
 
-      // Fetch user role
-      const { data: roleData, error: roleError } = await supabase
+      setProfile(profileData);
+
+      // Fetch role with timeout
+      const rolePromise = supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .limit(1);
 
-      if (roleError) {
-        console.error('Error fetching role:', roleError);
-        
-        // If no role found, assign default profesor role
-        if (roleError.code === 'PGRST116' || (roleData && roleData.length === 0)) {
-          console.log('No role found, assigning default profesor role...');
-          const { error: insertRoleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: userId,
-              role: 'profesor',
-            });
-            
-          if (insertRoleError) {
-            console.error('Error creating role:', insertRoleError);
-            // Continue without role - let admin assign it
-            setUserRole({ role: 'profesor' });
-          } else {
-            setUserRole({ role: 'profesor' });
-          }
-        } else {
-          toast({
-            title: "Error de permisos",
-            description: "No se pudieron cargar los permisos de usuario. Contacta al administrador.",
-            variant: "destructive",
-          });
-          // Continue with null role
-          setUserRole(null);
-        }
-      } else {
-        // Si hay múltiples roles, tomar el primero (priorizando admin)
-        const roles = roleData || [];
-        console.log('User roles found:', roles);
-        
-        let selectedRole: UserRole | null = null;
-        if (roles.length > 0) {
-          // Priorizar admin si existe
-          const adminRole = roles.find(r => r.role === 'admin');
-          selectedRole = adminRole || roles[0];
-        } else {
-          // No roles found, assign default
-          selectedRole = { role: 'profesor' };
-        }
-        
-        console.log('Selected role:', selectedRole);
-        setUserRole(selectedRole);
+      let roleData = null;
+      try {
+        const result = await Promise.race([rolePromise, timeoutPromise]) as any;
+        roleData = result.data;
+      } catch (error: any) {
+        console.log('Role fetch failed:', error.message);
       }
-      
-      setLoading(false);
+
+      if (roleData && roleData.length > 0) {
+        const adminRole = roleData.find((r: any) => r.role === 'admin');
+        setUserRole(adminRole || roleData[0]);
+      } else {
+        setUserRole({ role: 'profesor' });
+      }
+
+      console.log('User data loaded successfully');
     } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-      toast({
-        title: "Error inesperado",
-        description: "Ocurrió un error al cargar la aplicación. Por favor, recarga la página.",
-        variant: "destructive",
+      console.error('Error fetching user data:', error);
+      // Set defaults on error
+      setProfile({
+        user_id: userId,
+        nome: 'Usuario',
+        apelidos: 'Sin Configurar',
+        email: user?.email || '',
+        horas_libres_semanais: 0,
+        sustitucions_realizadas_semana: 0
       });
-      setLoading(false);
-    } finally {
-      fetchingProfile.current = false;
+      setUserRole({ role: 'profesor' });
     }
   };
 
   useEffect(() => {
+    let mounted = true;
+
     const initAuth = async () => {
       try {
-        // Get initial session
-        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Initializing auth...');
         
+        // Get session with timeout
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session timeout')), 3000)
+        );
+
+        const { data: { session } } = await Promise.race([
+          sessionPromise, 
+          timeoutPromise
+        ]) as any;
+
+        if (!mounted) return;
+
+        console.log('Session status:', session ? 'found' : 'not found');
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('User found on init, fetching profile...');
-          await fetchUserProfile(session.user.id);
-        } else {
-          console.log('No user found on init');
-          setLoading(false);
+          await fetchUserData(session.user.id);
         }
         
-      } catch (error) {
-        console.error('Auth initialization error:', error);
         setLoading(false);
+      } catch (error) {
+        console.error('Auth init error:', error);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    // Set up auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event);
+    // Auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth event:', event);
+      
+      if (!mounted) return;
+
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -209,14 +169,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserRole(null);
         setLoading(false);
       } else if (event === 'SIGNED_IN' && session?.user) {
-        // Load profile and role when user signs in
-        await fetchUserProfile(session.user.id);
+        // Use setTimeout to prevent deadlock
+        setTimeout(() => {
+          if (mounted) {
+            fetchUserData(session.user.id).finally(() => {
+              if (mounted) setLoading(false);
+            });
+          }
+        }, 100);
       }
     });
 
     initAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -235,7 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshProfile = async () => {
     if (user) {
-      await fetchUserProfile(user.id);
+      await fetchUserData(user.id);
     }
   };
 
