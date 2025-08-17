@@ -14,8 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart3, TrendingUp, Users, Calendar, RefreshCw, Mail } from 'lucide-react';
-import { EmailTest } from '@/components/EmailTest';
+import { BarChart3, TrendingUp, Users, Calendar, RefreshCw } from 'lucide-react';
 
 interface TeacherStats {
   user_id: string;
@@ -320,17 +319,6 @@ export const ReportsAndStatistics: React.FC = () => {
       </Card>
 
       {/* Email Test Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            Test de Sistema de Correos
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <EmailTest />
-        </CardContent>
-      </Card>
     </div>
   );
 };

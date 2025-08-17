@@ -367,52 +367,10 @@ export const CalendarView: React.FC = () => {
         }
       }
 
-      // Enviar notificación por correo al profesor asignado
-      try {
-        const assignedTeacher = profiles.find(t => t.user_id === substitutionData.profesor_asignado_id);
-        const selectedGroup = grupos.find(g => g.id === substitutionData.grupo_id);
-        
-        if (assignedTeacher) {
-          const { error: emailError } = await supabase.functions.invoke('send-substitution-email', {
-            body: {
-              teacherEmail: assignedTeacher.email,
-              teacherName: `${assignedTeacher.nome} ${assignedTeacher.apelidos}`,
-              substitutionDetails: {
-                fecha: substitutionData.data,
-                hora_inicio: substitutionData.hora_inicio,
-                hora_fin: substitutionData.hora_fin,
-                materia: selectedGroup ? `${selectedGroup.nome} - ${selectedGroup.nivel}` : undefined,
-                grupo: selectedGroup?.nome,
-                observaciones: substitutionData.observacions
-              }
-            }
-          });
-
-          if (emailError) {
-            console.error('Error enviando notificación:', emailError);
-            toast({
-              title: "Substitución creada",
-              description: "Substitución creada pero erro ao enviar notificación por correo",
-            });
-          } else {
-            toast({
-              title: "Substitución creada",
-              description: "Substitución creada e notificación enviada por correo",
-            });
-          }
-        } else {
-          toast({
-            title: "Substitución creada",
-            description: "A substitución foi creada correctamente",
-          });
-        }
-      } catch (emailError) {
-        console.error('Error enviando notificación:', emailError);
-        toast({
-          title: "Substitución creada",
-          description: "A substitución foi creada correctamente",
-        });
-      }
+      toast({
+        title: "Substitución creada",
+        description: "A substitución foi creada correctamente",
+      });
 
       setShowCreateDialog(false);
       fetchSubstitucions(); // Refresh the calendar
