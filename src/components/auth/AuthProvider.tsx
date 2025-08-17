@@ -246,8 +246,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       async (event, session) => {
         console.log('Auth state change:', event);
         
-        // Only handle sign-in events to avoid duplicate profile fetches
-        if (event === 'SIGNED_IN' && session?.user) {
+        // Only handle actual sign-in/out events, not initial session
+        if (event === 'SIGNED_IN' && session?.user && !fetchingProfile.current) {
           setSession(session);
           setUser(session.user);
           await fetchUserProfile(session.user.id);
@@ -258,6 +258,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserRole(null);
           setLoading(false);
         }
+        // Ignore INITIAL_SESSION to prevent duplicate fetches
       }
     );
 
