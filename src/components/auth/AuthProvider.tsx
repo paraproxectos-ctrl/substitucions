@@ -176,94 +176,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Safety timeout - never stay loading more than 10 seconds
-    const safetyTimeout = setTimeout(() => {
-      console.warn('Auth initialization taking too long, forcing loading to false');
-      setLoading(false);
-      setInitialized(true);
-      toast({
-        title: "Tiempo de espera agotado",
-        description: "La aplicación tardó demasiado en cargar. Intenta recargar la página.",
-        variant: "destructive",
-      });
-    }, 10000);
-
-    // Initialize auth state only once
-    const initializeAuth = async () => {
-      try {
-        console.log('Initializing auth...');
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session:', error);
-          toast({
-            title: "Error de autenticación",
-            description: "No se pudo verificar la sesión. Por favor, recarga la página.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          clearTimeout(safetyTimeout);
-          return;
-        }
-
-        console.log('Session found:', !!session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setLoading(false);
-        }
-        
-        setInitialized(true);
-        clearTimeout(safetyTimeout);
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        toast({
-          title: "Error de conexión",
-          description: "No se pudo conectar con el sistema. Verifica tu conexión a internet.",
-          variant: "destructive",
-        });
+    let mounted = true;
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event);
+      
+      if (!mounted) return;
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        await fetchUserProfile(session.user.id);
+      } else if (event === 'SIGNED_OUT') {
+        setProfile(null);
+        setUserRole(null);
         setLoading(false);
-        setInitialized(true);
-        clearTimeout(safetyTimeout);
+      } else if (event === 'INITIAL_SESSION' && session?.user) {
+        await fetchUserProfile(session.user.id);
+      } else if (!session) {
+        setLoading(false);
       }
+    });
+
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        fetchUserProfile(session.user.id);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
     };
-
-    if (!initialized) {
-      initializeAuth();
-    }
-
-    return () => clearTimeout(safetyTimeout);
-  }, [initialized]);
-
-  useEffect(() => {
-    // Set up auth state change listener only after initialization
-    if (!initialized) return;
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event);
-        
-        // Only handle actual sign-in/out events, not initial session
-        if (event === 'SIGNED_IN' && session?.user && !fetchingProfile.current) {
-          setSession(session);
-          setUser(session.user);
-          await fetchUserProfile(session.user.id);
-        } else if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setUserRole(null);
-          setLoading(false);
-        }
-        // Ignore INITIAL_SESSION to prevent duplicate fetches
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [initialized]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
