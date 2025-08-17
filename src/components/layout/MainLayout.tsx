@@ -5,6 +5,7 @@ import { CalendarView } from '@/components/calendar/CalendarView';
 import { TeacherManagement } from '@/components/admin/TeacherManagement';
 import { SubstitutionManagement } from '@/components/admin/SubstitutionManagement';
 import { ReportsAndStatistics } from '@/components/admin/ReportsAndStatistics';
+import { AxudaView } from '@/components/help/AxudaView';
 import Auth from '@/pages/Auth';
 
 export const MainLayout: React.FC = () => {
@@ -36,6 +37,8 @@ export const MainLayout: React.FC = () => {
         return <TeacherManagement />;
       case 'reports':
         return <ReportsAndStatistics />;
+      case 'axuda':
+        return <AxudaView />;
       default:
         return <CalendarView />;
     }

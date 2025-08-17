@@ -11,7 +11,8 @@ import {
   School,
   CalendarDays,
   UserPlus,
-  PlusCircle
+  PlusCircle,
+  HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +49,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
       label: 'Informes e estatísticas',
       icon: Settings,
       available: isAdmin,
+    },
+    {
+      id: 'axuda',
+      label: 'Axuda',
+      icon: HelpCircle,
+      available: true,
     },
   ];
 
