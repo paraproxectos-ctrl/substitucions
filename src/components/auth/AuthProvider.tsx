@@ -30,6 +30,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Cleanup auth state utility
+const cleanupAuthState = () => {
+  try {
+    // Remove all Supabase auth keys from localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Remove from sessionStorage if in use
+    if (typeof sessionStorage !== 'undefined') {
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    }
+  } catch (error) {
+    console.log('Error cleaning up auth state:', error);
+  }
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
@@ -121,46 +144,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
 
-    const initAuth = async () => {
-      try {
-        console.log('Initializing auth...');
-        
-        // Get session with timeout
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session timeout')), 3000)
-        );
-
-        const { data: { session } } = await Promise.race([
-          sessionPromise, 
-          timeoutPromise
-        ]) as any;
-
-        if (!mounted) return;
-
-        console.log('Session status:', session ? 'found' : 'not found');
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await fetchUserData(session.user.id);
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error('Auth init error:', error);
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    // Auth state listener
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event);
       
       if (!mounted) return;
 
+      // Always update session and user synchronously
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -169,18 +159,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserRole(null);
         setLoading(false);
       } else if (event === 'SIGNED_IN' && session?.user) {
-        // Use setTimeout to prevent deadlock
+        // Defer data fetching to prevent deadlocks
         setTimeout(() => {
           if (mounted) {
             fetchUserData(session.user.id).finally(() => {
               if (mounted) setLoading(false);
             });
           }
-        }, 100);
+        }, 0);
+      } else if (event === 'INITIAL_SESSION') {
+        if (session?.user) {
+          // Defer data fetching for initial session
+          setTimeout(() => {
+            if (mounted) {
+              fetchUserData(session.user.id).finally(() => {
+                if (mounted) setLoading(false);
+              });
+            }
+          }, 0);
+        } else {
+          setLoading(false);
+        }
       }
     });
 
-    initAuth();
+    // THEN check for existing session
+    const initSession = async () => {
+      try {
+        console.log('Initializing auth...');
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
+
+        console.log('Session status:', session ? 'found' : 'not found');
+        // Don't set session here - let onAuthStateChange handle it
+        if (!session) {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Session init error:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    initSession();
 
     return () => {
       mounted = false;
@@ -189,17 +213,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      // Clean up existing state first
+      cleanupAuthState();
+      
+      // Attempt global sign out first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        // Continue even if this fails
+      }
+      
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      return { error };
+    } catch (error) {
+      return { error };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
-    setUserRole(null);
+    try {
+      // Clean up auth state first
+      cleanupAuthState();
+      
+      // Clear local state immediately
+      setProfile(null);
+      setUserRole(null);
+      setUser(null);
+      setSession(null);
+      
+      // Attempt global sign out
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.log('Sign out error (ignored):', err);
+      }
+      
+      // Force page reload for clean state
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Force reload even if sign out fails
+      window.location.href = '/';
+    }
   };
 
   const refreshProfile = async () => {
