@@ -220,10 +220,10 @@ export const SubstitutionManagement: React.FC = () => {
     fetchData();
   }, []);
 
-  // Get recommended teacher
+  // Get recommended teacher with proportional assignment
   const getRecommendedTeacher = async () => {
     try {
-      const { data, error } = await supabase.rpc('get_recommended_teacher');
+      const { data, error } = await supabase.rpc('get_proportional_teacher');
       if (error) {
         console.error('Error getting recommended teacher:', error);
         setRecommendedTeacher(null);

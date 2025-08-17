@@ -12,7 +12,8 @@ import {
   CalendarDays,
   UserPlus,
   PlusCircle,
-  HelpCircle
+  HelpCircle,
+  CheckCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -35,6 +36,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
       available: true,
     },
     {
+      id: 'daily-calendar',
+      label: 'Substitucións do día',
+      icon: CalendarDays,
+      available: true,
+    },
+    {
       id: 'substitutions',
       label: 'Xestionar substitucións',
       icon: PlusCircle,
@@ -44,6 +51,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
       id: 'teachers',
       label: 'Xestionar profesorado',
       icon: UserPlus,
+      available: isAdmin,
+    },
+    {
+      id: 'confirmations',
+      label: 'Estado das confirmacións',
+      icon: CheckCircle,
       available: isAdmin,
     },
     {

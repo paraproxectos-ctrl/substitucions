@@ -179,6 +179,7 @@ export type Database = {
       }
       substitucions: {
         Row: {
+          confirmada_professor: boolean | null
           created_at: string
           created_by: string
           data: string
@@ -199,6 +200,7 @@ export type Database = {
           vista: boolean
         }
         Insert: {
+          confirmada_professor?: boolean | null
           created_at?: string
           created_by: string
           data: string
@@ -219,6 +221,7 @@ export type Database = {
           vista?: boolean
         }
         Update: {
+          confirmada_professor?: boolean | null
           created_at?: string
           created_by?: string
           data?: string
@@ -312,6 +315,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_proportional_teacher: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          apelidos: string
+          horas_libres_semanais: number
+          nome: string
+          ratio_disponible: number
+          sustitucions_realizadas_semana: number
+          user_id: string
+        }[]
+      }
       get_recommended_teacher: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -320,6 +334,19 @@ export type Database = {
           nome: string
           sustitucions_realizadas_semana: number
           user_id: string
+        }[]
+      }
+      get_substitution_confirmations: {
+        Args: { target_date?: string }
+        Returns: {
+          confirmada: boolean
+          grupo_nome: string
+          hora_fin: string
+          hora_inicio: string
+          professor_id: string
+          professor_name: string
+          substitution_id: string
+          vista: boolean
         }[]
       }
       has_role: {

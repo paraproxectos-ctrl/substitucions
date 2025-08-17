@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Sidebar } from './Sidebar';
 import { CalendarView } from '@/components/calendar/CalendarView';
+import { DailyCalendarView } from '@/components/calendar/DailyCalendarView';
 import { TeacherManagement } from '@/components/admin/TeacherManagement';
 import { SubstitutionManagement } from '@/components/admin/SubstitutionManagement';
+import { ConfirmationDashboard } from '@/components/admin/ConfirmationDashboard';
 import { ReportsAndStatistics } from '@/components/admin/ReportsAndStatistics';
 import { AxudaView } from '@/components/help/AxudaView';
 import Auth from '@/pages/Auth';
@@ -31,10 +33,14 @@ export const MainLayout: React.FC = () => {
     switch (activeView) {
       case 'calendar':
         return <CalendarView />;
+      case 'daily-calendar':
+        return <DailyCalendarView />;
       case 'substitutions':
         return <SubstitutionManagement />;
       case 'teachers':
         return <TeacherManagement />;
+      case 'confirmations':
+        return <ConfirmationDashboard />;
       case 'reports':
         return <ReportsAndStatistics />;
       case 'axuda':

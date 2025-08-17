@@ -310,9 +310,9 @@ export const CalendarView: React.FC = () => {
       guardia_transporte: 'ningun' as typeof createFormData.guardia_transporte
     });
     
-    // Get recommended teacher
+    // Get recommended teacher with proportional assignment
     try {
-      const { data, error } = await supabase.rpc('get_recommended_teacher');
+      const { data, error } = await supabase.rpc('get_proportional_teacher');
       if (error) {
         console.error('Error getting recommended teacher:', error);
       } else if (data && data.length > 0) {
