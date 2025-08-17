@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 
 interface UserProfile {
   id: string;
@@ -42,9 +43,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
+  const fetchingProfile = useRef(false);
 
   const fetchUserProfile = async (userId: string) => {
+    // Prevent concurrent profile fetches
+    if (fetchingProfile.current) {
+      console.log('Profile fetch already in progress, skipping...');
+      return;
+    }
+
     try {
+      fetchingProfile.current = true;
       console.log('Fetching profile for user:', userId);
       
       const { data: profileData, error: profileError } = await supabase
@@ -55,6 +65,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (profileError) {
         console.error('Error fetching profile:', profileError);
+        toast({
+          title: "Error de conexión",
+          description: "No se pudo cargar el perfil de usuario. Por favor, recarga la página.",
+          variant: "destructive",
+        });
         setLoading(false);
         return;
       }
@@ -69,6 +84,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (roleError) {
         console.error('Error fetching role:', roleError);
+        toast({
+          title: "Error de permisos",
+          description: "No se pudieron cargar los permisos de usuario. Contacta al administrador.",
+          variant: "destructive",
+        });
         setLoading(false);
         return;
       }
@@ -89,21 +109,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
+      toast({
+        title: "Error inesperado",
+        description: "Ocurrió un error al cargar la aplicación. Por favor, recarga la página.",
+        variant: "destructive",
+      });
       setLoading(false);
+    } finally {
+      fetchingProfile.current = false;
     }
   };
 
   useEffect(() => {
-    // Configurar listener de cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    // Initialize auth state only once
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          toast({
+            title: "Error de autenticación",
+            description: "No se pudo verificar la sesión. Por favor, recarga la página.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user profile and role after successful authentication
           await fetchUserProfile(session.user.id);
         } else {
+          setLoading(false);
+        }
+        
+        setInitialized(true);
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        toast({
+          title: "Error de conexión",
+          description: "No se pudo conectar con el sistema. Verifica tu conexión a internet.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        setInitialized(true);
+      }
+    };
+
+    if (!initialized) {
+      initializeAuth();
+    }
+  }, [initialized]);
+
+  useEffect(() => {
+    // Set up auth state change listener only after initialization
+    if (!initialized) return;
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state change:', event);
+        
+        // Only handle sign-in events to avoid duplicate profile fetches
+        if (event === 'SIGNED_IN' && session?.user) {
+          setSession(session);
+          setUser(session.user);
+          await fetchUserProfile(session.user.id);
+        } else if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
           setProfile(null);
           setUserRole(null);
           setLoading(false);
@@ -111,23 +187,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    // Comprobar sesión existente
-    const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await fetchUserProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
     return () => subscription.unsubscribe();
-  }, []);
+  }, [initialized]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
