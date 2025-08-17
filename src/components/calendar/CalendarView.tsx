@@ -367,6 +367,22 @@ export const CalendarView: React.FC = () => {
         }
       }
 
+      // Send email notification to assigned teacher
+      if (substitutionData.profesor_asignado_id) {
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-substitution-email', {
+            body: { record: substitutionData }
+          });
+
+          if (emailError) {
+            console.error('Error sending email:', emailError);
+            // Don't show error to user as the substitution was created successfully
+          }
+        } catch (emailError) {
+          console.error('Error calling email function:', emailError);
+        }
+      }
+
       toast({
         title: "Substitución creada",
         description: "A substitución foi creada correctamente",
