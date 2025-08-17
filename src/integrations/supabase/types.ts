@@ -240,6 +240,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_substitucions_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fk_substitucions_profesor_asignado"
+            columns: ["profesor_asignado_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fk_substitucions_profesor_ausente"
+            columns: ["profesor_ausente_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "substitucions_grupo_id_fkey"
             columns: ["grupo_id"]
             isOneToOne: false

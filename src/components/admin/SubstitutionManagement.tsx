@@ -490,7 +490,7 @@ export const SubstitutionManagement: React.FC = () => {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="data">Data *</Label>
+                  <Label htmlFor="data">Data</Label>
                   <Input
                     id="data"
                     type="date"
@@ -499,7 +499,7 @@ export const SubstitutionManagement: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="hora_inicio">Hora inicio *</Label>
+                  <Label htmlFor="hora_inicio">Hora inicio</Label>
                   <Input
                     id="hora_inicio"
                     type="time"
@@ -508,7 +508,7 @@ export const SubstitutionManagement: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="hora_fin">Hora fin *</Label>
+                  <Label htmlFor="hora_fin">Hora fin</Label>
                   <Input
                     id="hora_fin"
                     type="time"
@@ -520,7 +520,7 @@ export const SubstitutionManagement: React.FC = () => {
               
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="grupo">Grupo *</Label>
+                  <Label htmlFor="grupo">Grupo</Label>
                   <Select value={formData.grupo_id} onValueChange={(value) => setFormData({...formData, grupo_id: value})}>
                     <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Selecciona un grupo" />
@@ -538,7 +538,7 @@ export const SubstitutionManagement: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="profesor_ausente">Profesor/a ausente *</Label>
+                  <Label htmlFor="profesor_ausente">Profesor/a ausente</Label>
                   <Select value={formData.profesor_ausente_id} onValueChange={(value) => setFormData({...formData, profesor_ausente_id: value})}>
                     <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Profesor/a que falta" />
@@ -554,7 +554,7 @@ export const SubstitutionManagement: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="profesor_sustituto">Profesor/a sustituto/a *</Label>
+                  <Label htmlFor="profesor_sustituto">Profesor/a sustituto/a</Label>
                   <Select value={formData.profesor_asignado_id} onValueChange={(value) => setFormData({...formData, profesor_asignado_id: value})}>
                     <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Profesor/a que cubre" />
@@ -571,7 +571,7 @@ export const SubstitutionManagement: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="motivo">Motivo *</Label>
+                <Label htmlFor="motivo">Motivo</Label>
                 <Select value={formData.motivo} onValueChange={(value: any) => setFormData({...formData, motivo: value})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un motivo" />
@@ -781,7 +781,7 @@ export const SubstitutionManagement: React.FC = () => {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-data">Data *</Label>
+                  <Label htmlFor="edit-data">Data</Label>
                   <Input
                     id="edit-data"
                     type="date"
@@ -790,7 +790,7 @@ export const SubstitutionManagement: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-hora_inicio">Hora inicio *</Label>
+                  <Label htmlFor="edit-hora_inicio">Hora inicio</Label>
                   <Input
                     id="edit-hora_inicio"
                     type="time"
@@ -799,7 +799,7 @@ export const SubstitutionManagement: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-hora_fin">Hora fin *</Label>
+                  <Label htmlFor="edit-hora_fin">Hora fin</Label>
                   <Input
                     id="edit-hora_fin"
                     type="time"
@@ -811,7 +811,7 @@ export const SubstitutionManagement: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-grupo">Grupo *</Label>
+                  <Label htmlFor="edit-grupo">Grupo</Label>
                   <Select value={formData.grupo_id} onValueChange={(value) => setFormData({...formData, grupo_id: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona un grupo" />
@@ -827,7 +827,7 @@ export const SubstitutionManagement: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-profesor">Profesor/a *</Label>
+                  <Label htmlFor="edit-profesor">Profesor/a</Label>
                   <Select value={formData.profesor_asignado_id} onValueChange={(value) => setFormData({...formData, profesor_asignado_id: value})}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona un profesor/a" />
@@ -844,7 +844,7 @@ export const SubstitutionManagement: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="edit-motivo">Motivo *</Label>
+                <Label htmlFor="edit-motivo">Motivo</Label>
                 <Select value={formData.motivo} onValueChange={(value: any) => setFormData({...formData, motivo: value})}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un motivo" />
