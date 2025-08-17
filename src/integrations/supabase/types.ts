@@ -317,14 +317,7 @@ export type Database = {
       }
       get_proportional_teacher: {
         Args: Record<PropertyKey, never>
-        Returns: {
-          apelidos: string
-          horas_libres_semanais: number
-          nome: string
-          ratio_disponible: number
-          sustitucions_realizadas_semana: number
-          user_id: string
-        }[]
+        Returns: string
       }
       get_recommended_teacher: {
         Args: Record<PropertyKey, never>
