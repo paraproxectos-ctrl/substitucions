@@ -24,6 +24,8 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
   const { userRole, signOut, profile } = useAuth();
   const isAdmin = userRole?.role === 'admin';
+  
+  console.log('Sidebar - userRole:', userRole, 'isAdmin:', isAdmin, 'profile:', profile);
 
   const menuItems = [
     {

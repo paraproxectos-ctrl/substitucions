@@ -381,29 +381,26 @@ export const CalendarView: React.FC = () => {
         }
       }
 
-      // Send email notification to assigned teacher
-      if (substitutionData.profesor_asignado_id) {
-        try {
-          const { error: emailError } = await supabase.functions.invoke('send-substitution-email', {
-            body: { record: substitutionData }
-          });
-
-          if (emailError) {
-            console.error('Error sending email:', emailError);
-            // Don't show error to user as the substitution was created successfully
-          }
-        } catch (emailError) {
-          console.error('Error calling email function:', emailError);
-        }
-      }
-
       toast({
-        title: "Substitución creada",
-        description: "A substitución foi creada correctamente",
+        title: "Éxito",
+        description: "Substitución creada correctamente",
       });
 
       setShowCreateDialog(false);
-      fetchSubstitucions(); // Refresh the calendar
+      setCreateFormData({
+        hora_inicio: '',
+        hora_fin: '',
+        motivo: '' as typeof createFormData.motivo,
+        motivo_outro: '',
+        observacions: '',
+        grupo_id: '',
+        profesor_asignado_id: '',
+        profesor_ausente_id: 'none',
+        sesion: 'none' as typeof createFormData.sesion,
+        guardia_transporte: 'ningun' as typeof createFormData.guardia_transporte
+      });
+      setRecommendedTeacher(null);
+      await fetchSubstitucions();
     } catch (error) {
       console.error('Error in handleCreateSubstitution:', error);
       toast({

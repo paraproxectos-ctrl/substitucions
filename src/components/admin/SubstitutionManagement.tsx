@@ -308,37 +308,6 @@ export const SubstitutionManagement: React.FC = () => {
         }
       }
 
-      // Send email notification to assigned teacher
-      if (formData.profesor_asignado_id) {
-        try {
-          const { error: emailError } = await supabase.functions.invoke('send-substitution-email', {
-            body: { 
-              record: {
-                data: formData.data,
-                hora_inicio: formData.hora_inicio,
-                hora_fin: formData.hora_fin,
-                grupo_id: formData.grupo_id,
-                profesor_ausente_id: formData.profesor_ausente_id,
-                profesor_asignado_id: formData.profesor_asignado_id,
-                motivo: formData.motivo,
-                motivo_outro: formData.motivo === 'outro' ? formData.motivo_outro : null,
-                observacions: formData.observacions || null,
-                sesion: formData.sesion ? formData.sesion : null,
-                guardia_transporte: formData.guardia_transporte,
-                created_by: user?.id
-              }
-            }
-          });
-
-          if (emailError) {
-            console.error('Error sending email:', emailError);
-            // Don't show error to user as the substitution was created successfully
-          }
-        } catch (emailError) {
-          console.error('Error calling email function:', emailError);
-        }
-      }
-
       toast({
         title: "Éxito",
         description: "Substitución creada correctamente",
