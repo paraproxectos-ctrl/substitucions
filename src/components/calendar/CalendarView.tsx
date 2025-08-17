@@ -312,25 +312,44 @@ export const CalendarView: React.FC = () => {
     
     // Get recommended teacher with proportional assignment
     try {
+      // Reset weekly counters first
+      await supabase.rpc('reset_weekly_counters');
+      
       const { data, error } = await supabase.rpc('get_proportional_teacher');
+      
       if (error) {
-        console.error('Error getting recommended teacher:', error);
-      } else if (data && data.length > 0) {
-        setRecommendedTeacher(data[0]);
+        console.error('Error getting proportional teacher:', error);
+        return;
+      }
+      
+      if (!data) {
+        setRecommendedTeacher(null);
+        toast({
+          title: "Non hai profesorado dispoñíbel",
+          description: "Non hai profesorado dispoñíbel dentro do cupo semanal",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Find the teacher profile
+      const teacher = profiles.find(p => p.user_id === data);
+      if (teacher) {
+        setRecommendedTeacher(teacher);
         setCreateFormData(prev => ({
           ...prev,
-          profesor_asignado_id: data[0].user_id
+          profesor_asignado_id: data
         }));
       } else {
         setRecommendedTeacher(null);
         toast({
-          title: "Aviso",
-          description: "Non hai profesorado dispoñíbel dentro do cupo semanal",
-          variant: "default",
+          title: "Error",
+          description: "Non se puido cargar a información do profesor recomendado",
+          variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Error in get_recommended_teacher:', error);
+      console.error('Error in getRecommendedTeacher:', error);
     }
     
     setShowCreateDialog(true);

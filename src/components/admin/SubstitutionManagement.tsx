@@ -223,26 +223,45 @@ export const SubstitutionManagement: React.FC = () => {
   // Get recommended teacher with proportional assignment
   const getRecommendedTeacher = async () => {
     try {
+      // Reset weekly counters first
+      await supabase.rpc('reset_weekly_counters');
+      
       const { data, error } = await supabase.rpc('get_proportional_teacher');
+      
       if (error) {
-        console.error('Error getting recommended teacher:', error);
+        console.error('Error getting proportional teacher:', error);
         setRecommendedTeacher(null);
-      } else if (data && data.length > 0) {
-        setRecommendedTeacher(data[0]);
+        return;
+      }
+      
+      if (!data) {
+        setRecommendedTeacher(null);
+        toast({
+          title: "Non hai profesorado dispoñible",
+          description: "Non hai profesorado dispoñible dentro do cupo semanal",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Find the teacher profile
+      const teacher = teachers.find(t => t.user_id === data);
+      if (teacher) {
+        setRecommendedTeacher(teacher);
         setFormData(prev => ({
           ...prev,
-          profesor_asignado_id: data[0].user_id
+          profesor_asignado_id: data
         }));
       } else {
         setRecommendedTeacher(null);
         toast({
-          title: "Aviso",
-          description: "Non hai profesorado dispoñible dentro do cupo semanal",
-          variant: "default",
+          title: "Error",
+          description: "Non se puido cargar a información do profesor recomendado",
+          variant: "destructive",
         });
       }
     } catch (error) {
-      console.error('Error in get_recommended_teacher:', error);
+      console.error('Error in getRecommendedTeacher:', error);
       setRecommendedTeacher(null);
     }
   };
@@ -297,8 +316,9 @@ export const SubstitutionManagement: React.FC = () => {
         return;
       }
 
-      // Increment teacher substitution counter if teacher is assigned
+      // Reset counters and increment teacher substitution counter if teacher is assigned
       if (formData.profesor_asignado_id) {
+        await supabase.rpc('reset_weekly_counters');
         const { error: incrementError } = await supabase.rpc('increment_teacher_substitution', {
           teacher_id: formData.profesor_asignado_id
         });
