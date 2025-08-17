@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Select,
   SelectContent,
@@ -88,6 +89,7 @@ export const SubstitutionManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingSubstitution, setEditingSubstitution] = useState<Substitution | null>(null);
+  const [selectedSubstitutions, setSelectedSubstitutions] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     data: '',
     hora_inicio: '',
@@ -418,6 +420,68 @@ export const SubstitutionManagement: React.FC = () => {
     });
   };
 
+  // Funciones de selección múltiple
+  const handleSelectSubstitution = (substitutionId: string, checked: boolean) => {
+    const newSelected = new Set(selectedSubstitutions);
+    if (checked) {
+      newSelected.add(substitutionId);
+    } else {
+      newSelected.delete(substitutionId);
+    }
+    setSelectedSubstitutions(newSelected);
+  };
+
+  const handleSelectAllSubstitutions = (checked: boolean) => {
+    if (checked) {
+      setSelectedSubstitutions(new Set(substitutions.map(s => s.id)));
+    } else {
+      setSelectedSubstitutions(new Set());
+    }
+  };
+
+  const deleteSelectedSubstitutions = async () => {
+    if (selectedSubstitutions.size === 0) return;
+    
+    if (!confirm(`¿Estás seguro de que queres eliminar ${selectedSubstitutions.size} substitución(es)?`)) {
+      return;
+    }
+
+    try {
+      for (const substitutionId of selectedSubstitutions) {
+        const { error } = await supabase
+          .from('substitucions')
+          .delete()
+          .eq('id', substitutionId);
+
+        if (error) {
+          console.error('Error deleting substitution:', error);
+          toast({
+            title: "Error",
+            description: "Error ao eliminar algunha substitución",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      toast({
+        title: "Éxito",
+        description: `${selectedSubstitutions.size} substitución(es) eliminada(s) correctamente`,
+      });
+
+      setSelectedSubstitutions(new Set());
+      await fetchData();
+
+    } catch (error) {
+      console.error('Error in deleteSelectedSubstitutions:', error);
+      toast({
+        title: "Error",
+        description: "Error ao eliminar as substitucións seleccionadas",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Opcións de motivos
   const motivoOptions = [
     { value: 'ausencia_imprevista', label: 'Ausencia imprevista' },
@@ -470,9 +534,26 @@ export const SubstitutionManagement: React.FC = () => {
           <h1 className="text-2xl font-bold text-foreground">
             Xestión de Substitucións
           </h1>
+          {selectedSubstitutions.size > 0 && (
+            <Badge variant="secondary" className="ml-4">
+              {selectedSubstitutions.size} seleccionada(s)
+            </Badge>
+          )}
         </div>
         
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <div className="flex items-center space-x-2">
+          {selectedSubstitutions.size > 0 && (
+            <Button 
+              variant="destructive" 
+              onClick={deleteSelectedSubstitutions}
+              className="mr-2"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Eliminar {selectedSubstitutions.size}
+            </Button>
+          )}
+          
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
             <Button className="bg-primary hover:bg-primary/90">
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -660,6 +741,7 @@ export const SubstitutionManagement: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Lista de substitucións */}
@@ -686,6 +768,13 @@ export const SubstitutionManagement: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedSubstitutions.size === substitutions.length && substitutions.length > 0}
+                      onCheckedChange={handleSelectAllSubstitutions}
+                      aria-label="Seleccionar todas"
+                    />
+                  </TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Horario</TableHead>
                   <TableHead>Grupo</TableHead>
@@ -698,6 +787,13 @@ export const SubstitutionManagement: React.FC = () => {
               <TableBody>
                 {substitutions.map((substitution) => (
                   <TableRow key={substitution.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedSubstitutions.has(substitution.id)}
+                        onCheckedChange={(checked) => handleSelectSubstitution(substitution.id, checked as boolean)}
+                        aria-label={`Seleccionar substitución do ${substitution.data}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {format(new Date(substitution.data), "dd/MM/yyyy", { locale: gl })}
                     </TableCell>

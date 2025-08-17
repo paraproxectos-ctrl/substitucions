@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Dialog, 
   DialogContent, 
@@ -53,6 +54,7 @@ export const TeacherManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [selectedTeachers, setSelectedTeachers] = useState<Set<string>>(new Set());
   const [formData, setFormData] = useState({
     nome: '',
     apelidos: '',
@@ -339,6 +341,75 @@ export const TeacherManagement: React.FC = () => {
     });
   };
 
+  // Funciones de selección múltiple
+  const handleSelectTeacher = (teacherId: string, checked: boolean) => {
+    const newSelected = new Set(selectedTeachers);
+    if (checked) {
+      newSelected.add(teacherId);
+    } else {
+      newSelected.delete(teacherId);
+    }
+    setSelectedTeachers(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedTeachers(new Set(teachers.map(t => t.id)));
+    } else {
+      setSelectedTeachers(new Set());
+    }
+  };
+
+  const deleteSelectedTeachers = async () => {
+    if (selectedTeachers.size === 0) return;
+    
+    if (!confirm(`¿Estás seguro de que queres eliminar ${selectedTeachers.size} profesor(es)?`)) {
+      return;
+    }
+
+    try {
+      for (const teacherId of selectedTeachers) {
+        const teacher = teachers.find(t => t.id === teacherId);
+        if (teacher) {
+          // Eliminar rol
+          await supabase
+            .from('user_roles')
+            .delete()
+            .eq('user_id', teacher.user_id);
+
+          // Eliminar perfil
+          await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', teacher.id);
+
+          // Intentar eliminar usuario de auth (opcional)
+          try {
+            await supabase.auth.admin.deleteUser(teacher.user_id);
+          } catch (authError) {
+            console.warn('Could not delete auth user:', authError);
+          }
+        }
+      }
+
+      toast({
+        title: "Éxito",
+        description: `${selectedTeachers.size} profesor(es) eliminado(s) correctamente`,
+      });
+
+      setSelectedTeachers(new Set());
+      await fetchTeachers();
+
+    } catch (error) {
+      console.error('Error in deleteSelectedTeachers:', error);
+      toast({
+        title: "Error",
+        description: "Error ao eliminar os profesores seleccionados",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -348,9 +419,26 @@ export const TeacherManagement: React.FC = () => {
           <h1 className="text-2xl font-bold text-foreground">
             Xestión de Profesorado
           </h1>
+          {selectedTeachers.size > 0 && (
+            <Badge variant="secondary" className="ml-4">
+              {selectedTeachers.size} seleccionado(s)
+            </Badge>
+          )}
         </div>
         
-        <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <div className="flex items-center space-x-2">
+          {selectedTeachers.size > 0 && (
+            <Button 
+              variant="destructive" 
+              onClick={deleteSelectedTeachers}
+              className="mr-2"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Eliminar {selectedTeachers.size}
+            </Button>
+          )}
+          
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
           <DialogTrigger asChild>
             <Button className="bg-primary hover:bg-primary/90">
               <UserPlus className="mr-2 h-4 w-4" />
@@ -448,9 +536,8 @@ export const TeacherManagement: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
-
-      {/* Lista de profesores */}
       <Card>
         <CardHeader>
           <CardTitle>Lista de Profesorado</CardTitle>
@@ -474,6 +561,13 @@ export const TeacherManagement: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedTeachers.size === teachers.length && teachers.length > 0}
+                      onCheckedChange={handleSelectAll}
+                      aria-label="Seleccionar todos"
+                    />
+                  </TableHead>
                   <TableHead>Nome Completo</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Teléfono</TableHead>
@@ -486,6 +580,13 @@ export const TeacherManagement: React.FC = () => {
               <TableBody>
                 {teachers.map((teacher) => (
                   <TableRow key={teacher.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedTeachers.has(teacher.id)}
+                        onCheckedChange={(checked) => handleSelectTeacher(teacher.id, checked as boolean)}
+                        aria-label={`Seleccionar ${teacher.nome} ${teacher.apelidos}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">
                       {teacher.nome} {teacher.apelidos}
                     </TableCell>
