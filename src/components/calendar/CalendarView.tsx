@@ -192,11 +192,18 @@ export const CalendarView: React.FC = () => {
 
   const markAsViewed = async (substitutionId: string) => {
     try {
-      const { error } = await supabase
+      console.log('Attempting to mark substitution as viewed:', {
+        substitutionId,
+        userId: user?.id,
+        userRole: userRole?.role
+      });
+
+      const { data, error } = await supabase
         .from('substitucions')
         .update({ vista: true })
         .eq('id', substitutionId)
-        .eq('profesor_asignado_id', user?.id);
+        .eq('profesor_asignado_id', user?.id)
+        .select();
 
       if (error) {
         console.error('Error marking as viewed:', error);
@@ -207,6 +214,8 @@ export const CalendarView: React.FC = () => {
         });
         return;
       }
+
+      console.log('Successfully updated substitution:', data);
 
       // Update local state
       setSubstitucions(prev => 
@@ -221,6 +230,11 @@ export const CalendarView: React.FC = () => {
       });
     } catch (error) {
       console.error('Error in markAsViewed:', error);
+      toast({
+        title: "Error",
+        description: "Erro inesperado ao marcar como vista",
+        variant: "destructive",
+      });
     }
   };
 

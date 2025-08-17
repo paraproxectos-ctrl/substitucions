@@ -104,6 +104,7 @@ export const SubstitutionManagement: React.FC = () => {
     guardia_transporte: 'ningun'
   });
   const [submitting, setSubmitting] = useState(false);
+  const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
   const { userRole, user } = useAuth();
   const { toast } = useToast();
 
@@ -218,6 +219,33 @@ export const SubstitutionManagement: React.FC = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Get recommended teacher
+  const getRecommendedTeacher = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_recommended_teacher');
+      if (error) {
+        console.error('Error getting recommended teacher:', error);
+        setRecommendedTeacher(null);
+      } else if (data && data.length > 0) {
+        setRecommendedTeacher(data[0]);
+        setFormData(prev => ({
+          ...prev,
+          profesor_asignado_id: data[0].user_id
+        }));
+      } else {
+        setRecommendedTeacher(null);
+        toast({
+          title: "Aviso",
+          description: "Non hai profesorado dispoñible dentro do cupo semanal",
+          variant: "default",
+        });
+      }
+    } catch (error) {
+      console.error('Error in get_recommended_teacher:', error);
+      setRecommendedTeacher(null);
+    }
+  };
 
   // Crear nova substitución
   const createSubstitution = async () => {
@@ -595,7 +623,13 @@ export const SubstitutionManagement: React.FC = () => {
             </Button>
           )}
           
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+          <Dialog open={showAddDialog} onOpenChange={(open) => {
+            if (open) {
+              // Get recommended teacher when opening dialog
+              getRecommendedTeacher();
+            }
+            setShowAddDialog(open);
+          }}>
           <DialogTrigger asChild>
             <Button className="bg-primary hover:bg-primary/90">
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -678,6 +712,12 @@ export const SubstitutionManagement: React.FC = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="profesor_sustituto">Profesor/a sustituto/a</Label>
+                  {recommendedTeacher && (
+                    <div className="text-xs text-green-600 mb-1">
+                      💡 Recomendado: {recommendedTeacher.nome} {recommendedTeacher.apelidos} 
+                      ({recommendedTeacher.sustitucions_realizadas_semana}/{recommendedTeacher.horas_libres_semanais} substitucións/semana)
+                    </div>
+                  )}
                   <Select value={formData.profesor_asignado_id} onValueChange={(value) => setFormData({...formData, profesor_asignado_id: value})}>
                     <SelectTrigger className="bg-background border-border">
                       <SelectValue placeholder="Profesor/a que cubre" />
