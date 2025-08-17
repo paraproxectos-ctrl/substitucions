@@ -65,18 +65,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (profileError) {
         console.error('Error fetching profile:', profileError);
-        toast({
-          title: "Error de conexión",
-          description: "No se pudo cargar el perfil de usuario. Por favor, recarga la página.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
+        
+        // If profile doesn't exist, create a basic one
+        if (profileError.code === 'PGRST116') {
+          console.log('Profile not found, trying to create basic profile...');
+          const { data: insertData, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+              user_id: userId,
+              nome: 'Usuario',
+              apelidos: 'Sin Configurar',
+              email: user?.email || '',
+            })
+            .select()
+            .single();
+            
+          if (insertError) {
+            console.error('Error creating profile:', insertError);
+            toast({
+              title: "Error de perfil",
+              description: "No se pudo crear el perfil de usuario. Contacta al administrador.",
+              variant: "destructive",
+            });
+            setLoading(false);
+            return;
+          }
+          
+          console.log('Basic profile created:', insertData);
+          setProfile(insertData);
+        } else {
+          toast({
+            title: "Error de conexión",
+            description: "No se pudo cargar el perfil de usuario. Por favor, recarga la página.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      } else {
+        console.log('Profile data found:', profileData);
+        setProfile(profileData);
       }
 
-      console.log('Profile data found:', profileData);
-      setProfile(profileData);
-
+      // Fetch user role
       const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -84,28 +115,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (roleError) {
         console.error('Error fetching role:', roleError);
-        toast({
-          title: "Error de permisos",
-          description: "No se pudieron cargar los permisos de usuario. Contacta al administrador.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
+        
+        // If no role found, assign default profesor role
+        if (roleError.code === 'PGRST116' || (roleData && roleData.length === 0)) {
+          console.log('No role found, assigning default profesor role...');
+          const { error: insertRoleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: userId,
+              role: 'profesor',
+            });
+            
+          if (insertRoleError) {
+            console.error('Error creating role:', insertRoleError);
+            // Continue without role - let admin assign it
+            setUserRole({ role: 'profesor' });
+          } else {
+            setUserRole({ role: 'profesor' });
+          }
+        } else {
+          toast({
+            title: "Error de permisos",
+            description: "No se pudieron cargar los permisos de usuario. Contacta al administrador.",
+            variant: "destructive",
+          });
+          // Continue with null role
+          setUserRole(null);
+        }
+      } else {
+        // Si hay múltiples roles, tomar el primero (priorizando admin)
+        const roles = roleData || [];
+        console.log('User roles found:', roles);
+        
+        let selectedRole: UserRole | null = null;
+        if (roles.length > 0) {
+          // Priorizar admin si existe
+          const adminRole = roles.find(r => r.role === 'admin');
+          selectedRole = adminRole || roles[0];
+        } else {
+          // No roles found, assign default
+          selectedRole = { role: 'profesor' };
+        }
+        
+        console.log('Selected role:', selectedRole);
+        setUserRole(selectedRole);
       }
-
-      // Si hay múltiples roles, tomar el primero (priorizando admin)
-      const roles = roleData || [];
-      console.log('User roles found:', roles);
       
-      let selectedRole: UserRole | null = null;
-      if (roles.length > 0) {
-        // Priorizar admin si existe
-        const adminRole = roles.find(r => r.role === 'admin');
-        selectedRole = adminRole || roles[0];
-      }
-      
-      console.log('Selected role:', selectedRole);
-      setUserRole(selectedRole);
       setLoading(false);
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
@@ -121,9 +176,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // Safety timeout - never stay loading more than 10 seconds
+    const safetyTimeout = setTimeout(() => {
+      console.warn('Auth initialization taking too long, forcing loading to false');
+      setLoading(false);
+      setInitialized(true);
+      toast({
+        title: "Tiempo de espera agotado",
+        description: "La aplicación tardó demasiado en cargar. Intenta recargar la página.",
+        variant: "destructive",
+      });
+    }, 10000);
+
     // Initialize auth state only once
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -134,9 +202,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             variant: "destructive",
           });
           setLoading(false);
+          clearTimeout(safetyTimeout);
           return;
         }
 
+        console.log('Session found:', !!session);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -147,6 +217,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         setInitialized(true);
+        clearTimeout(safetyTimeout);
       } catch (error) {
         console.error('Error initializing auth:', error);
         toast({
@@ -156,12 +227,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         setLoading(false);
         setInitialized(true);
+        clearTimeout(safetyTimeout);
       }
     };
 
     if (!initialized) {
       initializeAuth();
     }
+
+    return () => clearTimeout(safetyTimeout);
   }, [initialized]);
 
   useEffect(() => {
