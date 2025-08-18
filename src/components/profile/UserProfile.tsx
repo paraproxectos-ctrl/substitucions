@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,25 +6,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { User, Lock, Save } from 'lucide-react';
 
 export const UserProfile: React.FC = () => {
-  // Para hosting tradicional: intentar usar auth pero no depender de él
-  let profile = { nome: 'Usuario', apelidos: 'Demo', email: 'demo@vallinclan.org', user_id: 'demo', telefono: '' } as any;
-  let userRole = { role: 'admin' };
-  let refreshProfile = () => Promise.resolve();
-  
-  try {
-    const authData = useAuth();
-    // Solo usar datos de auth si están disponibles
-    if (authData.profile) profile = authData.profile;
-    if (authData.userRole) userRole = authData.userRole;
-    if (authData.refreshProfile) refreshProfile = authData.refreshProfile;
-  } catch (error) {
-    console.log('Auth no disponible en UserProfile, usando modo demo');
-    // Ya tenemos valores por defecto arriba
-  }
+  // Datos fijos para modo demo
+  const profile = { 
+    nome: 'Usuario', 
+    apelidos: 'Demo', 
+    email: 'demo@vallinclan.org', 
+    user_id: 'demo', 
+    telefono: '123456789' 
+  };
+  const userRole = { role: 'admin' };
   
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
@@ -33,10 +25,10 @@ export const UserProfile: React.FC = () => {
   
   // Form states
   const [profileData, setProfileData] = useState({
-    nome: profile?.nome || '',
-    apelidos: profile?.apelidos || '',
-    email: profile?.email || '',
-    telefono: profile?.telefono || '',
+    nome: profile.nome,
+    apelidos: profile.apelidos,
+    email: profile.email,
+    telefono: profile.telefono,
   });
   
   const [passwordData, setPasswordData] = useState({
@@ -45,52 +37,18 @@ export const UserProfile: React.FC = () => {
     confirmPassword: '',
   });
 
-  React.useEffect(() => {
-    if (profile) {
-      setProfileData({
-        nome: profile.nome || '',
-        apelidos: profile.apelidos || '',
-        email: profile.email || '',
-        telefono: profile.telefono || '',
-      });
-    }
-  }, [profile]);
-
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          nome: profileData.nome,
-          apelidos: profileData.apelidos,
-          telefono: profileData.telefono || null,
-        })
-        .eq('user_id', profile?.user_id);
-
-      if (error) {
-        throw error;
-      }
-
+    // Simular guardado en modo demo
+    setTimeout(() => {
       toast({
         title: "Perfil actualizado",
-        description: "Os teus datos foron actualizados correctamente",
+        description: "Os teus datos foron actualizados correctamente (modo demo)",
       });
-
-      // Refresh profile data
-      await refreshProfile();
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      toast({
-        title: "Error",
-        description: `Non se puido actualizar o perfil: ${error.message}`,
-        variant: "destructive",
-      });
-    } finally {
       setLoading(false);
-    }
+    }, 1000);
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -116,18 +74,11 @@ export const UserProfile: React.FC = () => {
 
     setLoading(true);
 
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: passwordData.newPassword
-      });
-
-      if (error) {
-        throw error;
-      }
-
+    // Simular cambio de contraseña en modo demo
+    setTimeout(() => {
       toast({
         title: "Contrasinal actualizada",
-        description: "A túa contrasinal foi cambiada correctamente",
+        description: "A túa contrasinal foi cambiada correctamente (modo demo)",
       });
 
       setPasswordData({
@@ -135,16 +86,8 @@ export const UserProfile: React.FC = () => {
         newPassword: '',
         confirmPassword: '',
       });
-    } catch (error: any) {
-      console.error('Error updating password:', error);
-      toast({
-        title: "Error",
-        description: `Non se puido cambiar a contrasinal: ${error.message}`,
-        variant: "destructive",
-      });
-    } finally {
       setLoading(false);
-    }
+    }, 1000);
   };
 
   return (
