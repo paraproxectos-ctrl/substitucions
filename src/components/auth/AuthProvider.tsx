@@ -183,11 +183,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // THEN check for existing session
+    // THEN check for existing session with aggressive timeout
     const initSession = async () => {
       try {
         console.log('Initializing auth...');
-        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Timeout agresivo de 3 segundos para hosting tradicional
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Auth connection timeout')), 3000)
+        );
+        
+        const sessionPromise = supabase.auth.getSession();
+        
+        const result = await Promise.race([sessionPromise, timeoutPromise]);
+        const { data: { session } } = result as any;
         
         if (!mounted) return;
 
@@ -197,8 +206,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false);
         }
       } catch (error) {
-        console.error('Session init error:', error);
+        console.error('Session init error (allowing app to continue):', error);
         if (mounted) {
+          // En caso de timeout o error de red, permitir continuar sin auth
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+          setUserRole(null);
           setLoading(false);
         }
       }
