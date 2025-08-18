@@ -24,21 +24,19 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
   // Para hosting tradicional: intentar usar auth pero no depender de él
-  let userRole = null;
-  let profile = null;
-  let signOut = () => {};
+  let userRole = { role: 'admin' }; // Valor por defecto
+  let profile = { nome: 'Usuario', apelidos: 'Demo', email: 'demo@vallinclan.org' };
+  let signOut = () => console.log('Logout no disponible en modo demo');
   
   try {
     const authData = useAuth();
-    userRole = authData.userRole;
-    profile = authData.profile;
-    signOut = authData.signOut;
+    // Solo usar datos de auth si están disponibles
+    if (authData.userRole) userRole = authData.userRole;
+    if (authData.profile) profile = authData.profile;
+    if (authData.signOut) signOut = authData.signOut;
   } catch (error) {
     console.log('Auth no disponible en Sidebar, usando modo demo');
-    // Valores por defecto para modo demo
-    userRole = { role: 'admin' };
-    profile = { nome: 'Usuario', apelidos: 'Demo', email: 'demo@vallinclan.org' };
-    signOut = () => console.log('Logout no disponible en modo demo');
+    // Ya tenemos valores por defecto arriba
   }
   
   const isAdmin = userRole?.role === 'admin';

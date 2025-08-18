@@ -12,20 +12,19 @@ import { User, Lock, Save } from 'lucide-react';
 
 export const UserProfile: React.FC = () => {
   // Para hosting tradicional: intentar usar auth pero no depender de él
-  let profile = null;
-  let userRole = null;
+  let profile = { nome: 'Usuario', apelidos: 'Demo', email: 'demo@vallinclan.org', user_id: 'demo', telefono: '' } as any;
+  let userRole = { role: 'admin' };
   let refreshProfile = () => Promise.resolve();
   
   try {
     const authData = useAuth();
-    profile = authData.profile;
-    userRole = authData.userRole;
-    refreshProfile = authData.refreshProfile;
+    // Solo usar datos de auth si están disponibles
+    if (authData.profile) profile = authData.profile;
+    if (authData.userRole) userRole = authData.userRole;
+    if (authData.refreshProfile) refreshProfile = authData.refreshProfile;
   } catch (error) {
     console.log('Auth no disponible en UserProfile, usando modo demo');
-    // Valores por defecto para modo demo
-    profile = { nome: 'Usuario', apelidos: 'Demo', email: 'demo@vallinclan.org', user_id: 'demo' };
-    userRole = { role: 'admin' };
+    // Ya tenemos valores por defecto arriba
   }
   
   const { toast } = useToast();
