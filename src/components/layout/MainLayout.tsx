@@ -12,19 +12,7 @@ import Auth from '@/pages/Auth';
 
 export const MainLayout: React.FC = () => {
   const [activeView, setActiveView] = useState('calendar');
-  
-  // Para hosting tradicional: intentar usar auth pero no depender de él
-  let user = null;
-  let loading = false;
-  
-  try {
-    const authData = useAuth();
-    user = authData.user;
-    loading = authData.loading;
-  } catch (error) {
-    console.log('Auth no disponible, continuando sin autenticación');
-    // Continuar sin autenticación
-  }
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -37,9 +25,9 @@ export const MainLayout: React.FC = () => {
     );
   }
 
-  // MODO DEMO: Si no hay usuario, mostrar la aplicación de todos modos
+  // Si no hay usuario autenticado, mostrar la página de auth
   if (!user) {
-    console.log('Funcionando en modo demo sin autenticación');
+    return <Auth />;
   }
 
   const renderMainContent = () => {
