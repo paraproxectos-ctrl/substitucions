@@ -138,6 +138,7 @@ export const TeacherManagement: React.FC = () => {
         teacher.apelidos && teacher.apelidos.trim() !== ''
       ) || [];
       
+      console.log('Valid teachers found:', validTeachers.length, validTeachers);
       setTeachers(validTeachers);
     } catch (error) {
       console.error('Error in fetchTeachers:', error);

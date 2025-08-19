@@ -37,7 +37,16 @@ export const ReportsAndStatistics: React.FC = () => {
   const [substitutionStats, setSubstitutionStats] = useState<SubstitutionStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('week');
-  const { userRole } = useAuth();
+
+  // Para hosting tradicional: intentar usar auth pero no depender de él
+  let userRole = { role: 'admin' }; // Valor por defecto para demo
+  
+  try {
+    const authData = useAuth();
+    if (authData.userRole) userRole = authData.userRole;
+  } catch (error) {
+    console.log('Auth no disponible en ReportsAndStatistics, usando modo demo');
+  }
 
   // Fetch teacher statistics
   const fetchTeacherStats = async () => {

@@ -28,7 +28,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   let profile = { nome: 'Usuario', apelidos: 'Demo', email: 'demo@vallinclan.org' };
   let signOut = () => {
     console.log('Cerrando sesión en modo demo');
-    window.location.reload();
+    // En demo mode, redirigir a la página de login
+    window.location.href = '/auth';
   };
   
   try {
