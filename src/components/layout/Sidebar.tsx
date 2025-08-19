@@ -26,7 +26,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
   // Para hosting tradicional: intentar usar auth pero no depender de él
   let userRole = { role: 'admin' }; // Valor por defecto
   let profile = { nome: 'Usuario', apelidos: 'Demo', email: 'demo@vallinclan.org' };
-  let signOut = () => console.log('Logout no disponible en modo demo');
+  let signOut = () => {
+    console.log('Cerrando sesión en modo demo');
+    window.location.reload();
+  };
   
   try {
     const authData = useAuth();
