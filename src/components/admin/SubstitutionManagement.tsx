@@ -105,19 +105,8 @@ export const SubstitutionManagement: React.FC = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
+  const { userRole, user } = useAuth();
   const { toast } = useToast();
-
-  // Para hosting tradicional: intentar usar auth pero no depender de él
-  let userRole = { role: 'admin' }; // Valor por defecto para demo
-  let user = { id: 'demo-user' }; // Valor por defecto para demo
-  
-  try {
-    const authData = useAuth();
-    if (authData.userRole) userRole = authData.userRole;
-    if (authData.user) user = authData.user;
-  } catch (error) {
-    console.log('Auth no disponible en SubstitutionManagement, usando modo demo');
-  }
 
   // Verificar que é administrador
   if (userRole?.role !== 'admin') {
