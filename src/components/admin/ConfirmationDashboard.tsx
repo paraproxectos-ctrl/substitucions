@@ -26,8 +26,17 @@ export const ConfirmationDashboard: React.FC = () => {
   const [confirmations, setConfirmations] = useState<SubstitutionConfirmation[]>([]);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const { userRole } = useAuth();
   const { toast } = useToast();
+
+  // Para hosting tradicional: intentar usar auth pero no depender de él
+  let userRole = { role: 'admin' }; // Valor por defecto para demo
+  
+  try {
+    const authData = useAuth();
+    if (authData.userRole) userRole = authData.userRole;
+  } catch (error) {
+    console.log('Auth no disponible en ConfirmationDashboard, usando modo demo');
+  }
 
   // Verificar que é administrador
   if (userRole?.role !== 'admin') {

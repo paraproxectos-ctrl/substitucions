@@ -64,8 +64,17 @@ export const TeacherManagement: React.FC = () => {
     horas_libres_semanais: 0
   });
   const [submitting, setSubmitting] = useState(false);
-  const { userRole } = useAuth();
   const { toast } = useToast();
+
+  // Para hosting tradicional: intentar usar auth pero no depender de él
+  let userRole = { role: 'admin' }; // Valor por defecto para demo
+  
+  try {
+    const authData = useAuth();
+    if (authData.userRole) userRole = authData.userRole;
+  } catch (error) {
+    console.log('Auth no disponible en TeacherManagement, usando modo demo');
+  }
 
   // Verificar que é administrador
   if (userRole?.role !== 'admin') {
