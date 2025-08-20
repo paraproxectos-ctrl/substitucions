@@ -8,11 +8,16 @@ import { SubstitutionManagement } from '@/components/admin/SubstitutionManagemen
 import { ConfirmationDashboard } from '@/components/admin/ConfirmationDashboard';
 import { ReportsAndStatistics } from '@/components/admin/ReportsAndStatistics';
 import { AxudaView } from '@/components/help/AxudaView';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
 import Auth from '@/pages/Auth';
 
 export const MainLayout: React.FC = () => {
   const [activeView, setActiveView] = useState('calendar');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, loading } = useAuth();
+  const isMobile = useIsMobile();
 
   if (loading) {
     return (
@@ -52,12 +57,43 @@ export const MainLayout: React.FC = () => {
   };
 
   return (
-    <div className="flex h-screen bg-background w-full">
-      <div className="flex-shrink-0">
-        <Sidebar activeView={activeView} onViewChange={setActiveView} />
+    <div className="flex h-screen bg-background w-full relative">
+      {/* Mobile menu button */}
+      {isMobile && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="fixed top-4 left-4 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+          onClick={() => setSidebarOpen(true)}
+        >
+          <Menu className="h-4 w-4" />
+          <span className="ml-2">VER</span>
+        </Button>
+      )}
+
+      {/* Sidebar */}
+      <div className={`flex-shrink-0 ${isMobile ? 'fixed inset-y-0 left-0 z-40' : ''} ${
+        isMobile && !sidebarOpen ? '-translate-x-full' : 'translate-x-0'
+      } transition-transform duration-300 ease-in-out`}>
+        <Sidebar 
+          activeView={activeView} 
+          onViewChange={setActiveView}
+          onClose={() => setSidebarOpen(false)}
+          isMobile={isMobile}
+        />
       </div>
-      <main className="flex-1 overflow-auto min-w-0 ml-48 md:ml-0">
-        <div className="p-3 md:p-6 w-full">
+
+      {/* Overlay for mobile */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <main className={`flex-1 overflow-auto min-w-0 ${isMobile ? 'w-full' : 'ml-48'}`}>
+        <div className={`p-3 md:p-6 w-full ${isMobile ? 'pt-16' : ''}`}>
           {renderMainContent()}
         </div>
       </main>

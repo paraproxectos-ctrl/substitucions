@@ -47,7 +47,23 @@ export const UserProfile: React.FC = () => {
     setLoading(true);
 
     try {
-      // First update profile data in database
+      // If email changed, update auth email first
+      if (profileData.email !== profile?.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: profileData.email
+        });
+        
+        if (emailError) {
+          throw new Error(`Error ao actualizar o email de autenticación: ${emailError.message}`);
+        }
+        
+        toast({
+          title: "Email actualizado",
+          description: "Revisa o teu novo email para confirmar o cambio. Podes seguir usando a aplicación.",
+        });
+      }
+
+      // Then update profile data in database
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -62,27 +78,7 @@ export const UserProfile: React.FC = () => {
         throw profileError;
       }
 
-      // Try to update auth email if changed (this might fail for some email formats)
-      if (profileData.email !== profile?.email) {
-        const { error: emailError } = await supabase.auth.updateUser({
-          email: profileData.email
-        });
-        
-        if (emailError) {
-          console.warn('Auth email update failed:', emailError.message);
-          // Don't throw error, just show warning - profile email was already updated
-          toast({
-            title: "Perfil actualizado",
-            description: "Datos actualizados. O email de autenticación mantense igual por restriccións do sistema.",
-            variant: "default",
-          });
-        } else {
-          toast({
-            title: "Perfil e email actualizados",
-            description: "Revisa o teu novo email para confirmar o cambio de autenticación",
-          });
-        }
-      } else {
+      if (profileData.email === profile?.email) {
         toast({
           title: "Perfil actualizado",
           description: "Os teus datos foron actualizados correctamente",

@@ -20,14 +20,23 @@ import { cn } from '@/lib/utils';
 interface SidebarProps {
   activeView: string;
   onViewChange: (view: string) => void;
+  onClose?: () => void;
+  isMobile?: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onClose, isMobile }) => {
   const { userRole, profile, signOut } = useAuth();
   
   const isAdmin = userRole?.role === 'admin';
   
   console.log('Sidebar - userRole:', userRole, 'isAdmin:', isAdmin, 'profile:', profile);
+
+  const handleViewChange = (view: string) => {
+    onViewChange(view);
+    if (isMobile && onClose) {
+      onClose();
+    }
+  };
 
   const menuItems = [
     {
@@ -115,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange }) =>
                 )}
                 onClick={() => {
                   console.log(`Clicking menu item: ${item.id}, available: ${item.available}, isAdmin: ${isAdmin}`);
-                  onViewChange(item.id);
+                  handleViewChange(item.id);
                 }}
               >
                 <Icon className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
