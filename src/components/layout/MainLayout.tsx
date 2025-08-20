@@ -56,8 +56,8 @@ export const MainLayout: React.FC = () => {
       <div className="flex-shrink-0">
         <Sidebar activeView={activeView} onViewChange={setActiveView} />
       </div>
-      <main className="flex-1 overflow-auto min-w-0">
-        <div className="p-6 w-full">
+      <main className="flex-1 overflow-auto min-w-0 ml-48 md:ml-0">
+        <div className="p-3 md:p-6 w-full">
           {renderMainContent()}
         </div>
       </main>

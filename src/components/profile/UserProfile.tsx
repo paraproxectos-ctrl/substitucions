@@ -6,29 +6,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { supabase } from '@/integrations/supabase/client';
 import { User, Lock, Save } from 'lucide-react';
 
 export const UserProfile: React.FC = () => {
-  // Datos fijos para modo demo
-  const profile = { 
-    nome: 'Usuario', 
-    apelidos: 'Demo', 
-    email: 'demo@vallinclan.org', 
-    user_id: 'demo', 
-    telefono: '123456789' 
-  };
-  const userRole = { role: 'admin' };
-  
+  const { profile, userRole, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   
   // Form states
   const [profileData, setProfileData] = useState({
-    nome: profile.nome,
-    apelidos: profile.apelidos,
-    email: profile.email,
-    telefono: profile.telefono,
+    nome: profile?.nome || '',
+    apelidos: profile?.apelidos || '',
+    email: profile?.email || '',
+    telefono: profile?.telefono || '',
   });
   
   const [passwordData, setPasswordData] = useState({
@@ -37,18 +30,69 @@ export const UserProfile: React.FC = () => {
     confirmPassword: '',
   });
 
+  // Update local state when profile changes
+  React.useEffect(() => {
+    if (profile) {
+      setProfileData({
+        nome: profile.nome || '',
+        apelidos: profile.apelidos || '',
+        email: profile.email || '',
+        telefono: profile.telefono || '',
+      });
+    }
+  }, [profile]);
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simular guardado en modo demo
-    setTimeout(() => {
+    try {
+      // Update email if changed
+      if (profileData.email !== profile?.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: profileData.email
+        });
+        
+        if (emailError) {
+          throw emailError;
+        }
+        
+        toast({
+          title: "Email actualizado",
+          description: "Revisa o teu novo email para confirmar o cambio",
+        });
+      }
+
+      // Update profile data
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          nome: profileData.nome,
+          apelidos: profileData.apelidos,
+          email: profileData.email,
+          telefono: profileData.telefono,
+        })
+        .eq('user_id', profile?.user_id);
+
+      if (profileError) {
+        throw profileError;
+      }
+
+      await refreshProfile();
+      
       toast({
         title: "Perfil actualizado",
-        description: "Os teus datos foron actualizados correctamente (modo demo)",
+        description: "Os teus datos foron actualizados correctamente",
       });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Erro ao actualizar o perfil",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -74,11 +118,18 @@ export const UserProfile: React.FC = () => {
 
     setLoading(true);
 
-    // Simular cambio de contraseña en modo demo
-    setTimeout(() => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      });
+
+      if (error) {
+        throw error;
+      }
+
       toast({
         title: "Contrasinal actualizada",
-        description: "A túa contrasinal foi cambiada correctamente (modo demo)",
+        description: "A túa contrasinal foi cambiada correctamente",
       });
 
       setPasswordData({
@@ -86,8 +137,15 @@ export const UserProfile: React.FC = () => {
         newPassword: '',
         confirmPassword: '',
       });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Erro ao cambiar a contrasinal",
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -95,10 +153,10 @@ export const UserProfile: React.FC = () => {
       <DialogTrigger asChild>
         <Button
           variant="ghost"
-          className="w-full justify-start"
+          className="w-full justify-start text-xs md:text-sm h-8 md:h-9"
         >
-          <User className="mr-2 h-4 w-4" />
-          Meu perfil
+          <User className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+          <span className="truncate">Meu perfil</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
@@ -144,16 +202,16 @@ export const UserProfile: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">Email *</Label>
                     <Input
                       id="email"
                       type="email"
                       value={profileData.email}
-                      disabled
-                      className="bg-muted"
+                      onChange={(e) => setProfileData({...profileData, email: e.target.value})}
+                      required
                     />
                     <p className="text-xs text-muted-foreground">
-                      O email non se pode cambiar. Contacta co administrador se necesitas cambialo.
+                      Se cambias o email, recibirás unha confirmación no novo enderezo.
                     </p>
                   </div>
                   
