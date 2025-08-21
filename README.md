@@ -71,3 +71,8 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+# Trigger de sincronización
+
+Este archivo existe solo para forzar un commit y lanzar el workflow de sincronización hacia el repositorio `substitucions`.
+
+Última ejecución: {{fecha}}
