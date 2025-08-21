@@ -1,11 +1,13 @@
 name: Sync to substitucions
+
 on:
-concurrency:
-  group: sync-to-substitucions
-  cancel-in-progress: true
   push:
     branches: [ main ]
   workflow_dispatch:
+
+concurrency:
+  group: sync-to-substitucions
+  cancel-in-progress: true
 
 jobs:
   sync:
@@ -16,14 +18,14 @@ jobs:
       TARGET_REPO: substitucions
       TARGET_BRANCH: main
 
-      # Copiamos TODO el proyecto, pero con exclusiones abajo
+      # Copiamos TODO el proyecto (usaremos exclusiones abajo)
       FILES_TO_COPY: |
         ./
 
-      # Exclusiones para NO pisar Netlify ni el .git del destino
+      # Exclusiones: no copiar .git, node_modules, .env ni ficheros de Netlify
       RSYNC_EXCLUDES: |
         --exclude ".git/"
-        --exclude ".github/"          # evita copiar workflows al destino (opcional)
+        --exclude ".github/"
         --exclude "node_modules/"
         --exclude ".env"
         --exclude ".env.*"
@@ -53,26 +55,13 @@ jobs:
         run: |
           set -e
           cd target
-          # Asegura que empujamos al repo destino
           git remote set-url origin "https://${{ secrets.PUSH_TOKEN }}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           if [ -n "$(git status --porcelain)" ]; then
             git add -A
             git commit -m "chore: full sync from valente-substitucions ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
             git push origin ${TARGET_BRANCH}
           else
             echo "No hay cambios que sincronizar."
-          finame: Sync to substitucions
-
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-concurrency:
-  group: sync-to-substitucions
-  cancel-in-progress: true
-
+          fi
