@@ -1,73 +1,27 @@
 name: Sync to substitucions
 
 on:
-  push:
-    branches: [ main ]        # Automático en cada commit a main
-  workflow_dispatch:          # También lanzable a mano desde Actions
-
-concurrency:
-  group: sync-to-substitucions
-  cancel-in-progress: true
-
-permissions:
-  contents: write             # Permiso de escritura para el GITHUB_TOKEN
+  workflow_dispatch:   # permite lanzarlo a mano desde Actions
+  push:                # también se ejecuta cada vez que hay un push en main
+    branches:
+      - main
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    env:
-      TARGET_OWNER: paraproxectos-ctrl
-      TARGET_REPO: substitucions
-      TARGET_BRANCH: main
-
-      # No copiar nada sensible ni que rompa Netlify ni el repo destino
-      RSYNC_EXCLUDES: |
-        --exclude ".git/"
-        --exclude ".github/"
-        --exclude "node_modules/"
-        --exclude ".env"
-        --exclude ".env.*"
-        --exclude ".netlify/"
-        --exclude "netlify/"
-        --exclude "netlify.toml"
-        --exclude ".netlify.toml"
-        --exclude "Netlify.toml"
-        --exclude "_redirects"
-        --exclude "target/"        # evita bucles (clon del destino)
 
     steps:
-      - name: Checkout source (valente-substitucions)
-        uses: actions/checkout@v4
+      - name: Checkout source repo (valente-substitucions)
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          repository: paraproxectos-ctrl/valente-substitucions
+          token: ${{ secrets.PUSH_TOKEN }}
+          path: source
 
-      - name: Clone target (substitucions)
+      - name: Push to destination repo (substitucions)
         run: |
-          git clone --depth=1 "https://${{ secrets.PUSH_TOKEN }}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git" target
-          cd target
-          git checkout ${TARGET_BRANCH}
-
-      - name: Copy project to target (respecting excludes)
-        run: |
-          set -e
-          rsync -av ${RSYNC_EXCLUDES} ./ target/
-
-      - name: Commit & push if changes
-        run: |
-          set -e
-          cd target
-          # Asegura que el remoto apunta al repo destino
-          git remote set-url origin "https://${{ secrets.PUSH_TOKEN }}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
-
+          cd source
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          if [ -n "$(git status --porcelain)" ]; then
-            git add -A
-            git commit -m "chore: full sync from valente-substitucions ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
-            git push origin ${TARGET_BRANCH}
-          else
-            echo "No hay cambios que sincronizar."
-          fi
+          git remote add dest https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/paraproxectos-ctrl/substitucions.git
+          git push dest main --force
