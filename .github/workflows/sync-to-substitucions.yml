@@ -18,11 +18,9 @@ jobs:
       TARGET_REPO: substitucions
       TARGET_BRANCH: main
 
-      # Copiamos TODO el proyecto (usaremos exclusiones abajo)
       FILES_TO_COPY: |
         ./
 
-      # Exclusiones: no copiar .git, node_modules, .env ni ficheros de Netlify
       RSYNC_EXCLUDES: |
         --exclude ".git/"
         --exclude ".github/"
@@ -51,7 +49,7 @@ jobs:
           set -e
           rsync -av ${RSYNC_EXCLUDES} ./ target/
 
-      - name: Commit & push if changes (force correct remote)
+      - name: Commit & push if changes
         run: |
           set -e
           cd target
