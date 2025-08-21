@@ -34,7 +34,7 @@ jobs:
         --exclude ".netlify.toml"
         --exclude "Netlify.toml"
         --exclude "_redirects"
-        --exclude "target/"        # ¡evita el bucle!
+        --exclude "target/"
 
     steps:
       - name: Checkout source (valente-substitucions)
@@ -48,7 +48,7 @@ jobs:
           cd target
           git checkout ${TARGET_BRANCH}
 
-      - name: Copy project (skip excluded; don't copy target itself)
+      - name: Copy project (skip excluded)
         run: |
           set -e
           rsync -av ${RSYNC_EXCLUDES} ./ target/
