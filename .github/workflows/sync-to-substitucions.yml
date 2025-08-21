@@ -63,4 +63,14 @@ jobs:
             git push origin ${TARGET_BRANCH}
           else
             echo "No hay cambios que sincronizar."
-          fi
+          finame: Sync to substitucions
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: sync-to-substitucions
+  cancel-in-progress: true
+
