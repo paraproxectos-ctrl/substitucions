@@ -76,4 +76,4 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-trick
 Este archivo existe solo para forzar un commit y lanzar el workflow de sincronización hacia el repositorio `substitucions`.
 
 Última ejecución: {{fecha}}
-<!-- trigger sync full copy -->
+[//]: # (trigger sync full copy)
