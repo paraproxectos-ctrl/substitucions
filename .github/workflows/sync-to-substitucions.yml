@@ -14,18 +14,23 @@ jobs:
       TARGET_REPO: substitucions
       TARGET_BRANCH: main
 
-      # Aquí decimos: copiar TODO
+      # Copiamos TODO el proyecto, pero con exclusiones abajo
       FILES_TO_COPY: |
         ./
 
-      # Aquí decimos: NO copiar nada de Netlify
-      EXCLUDES: |
+      # Exclusiones para NO pisar Netlify ni el .git del destino
+      RSYNC_EXCLUDES: |
+        --exclude ".git/"
+        --exclude ".github/"          # evita copiar workflows al destino (opcional)
+        --exclude "node_modules/"
+        --exclude ".env"
+        --exclude ".env.*"
         --exclude ".netlify/"
-        --exclude "netlify.toml"
-        --exclude "_redirects"
         --exclude "netlify/"
+        --exclude "netlify.toml"
         --exclude ".netlify.toml"
         --exclude "Netlify.toml"
+        --exclude "_redirects"
 
     steps:
       - name: Checkout source (valente-substitucions)
@@ -37,16 +42,21 @@ jobs:
           cd target
           git checkout ${TARGET_BRANCH}
 
-      - name: Copy all project (skip Netlify files)
+      - name: Copy all project (skip excluded)
         run: |
           set -e
-          rsync -av ${EXCLUDES} ./ target/
+          rsync -av ${RSYNC_EXCLUDES} ./ target/
 
-      - name: Commit & push if changes
+      - name: Commit & push if changes (force correct remote)
         run: |
+          set -e
           cd target
+          # Asegura que empujamos al repo destino
+          git remote set-url origin "https://${{ secrets.PUSH_TOKEN }}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           if [ -n "$(git status --porcelain)" ]; then
             git add -A
             git commit -m "chore: full sync from valente-substitucions ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
