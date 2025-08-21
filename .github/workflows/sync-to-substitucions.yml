@@ -1,42 +1,78 @@
 name: Sync to substitucions
 
 on:
-  workflow_dispatch:   # puedes lanzarlo a mano desde Actions
-  push:                # se ejecuta con cada push en main
-    branches:
-      - main
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
 
+    env:
+      TARGET_OWNER: paraproxectos-ctrl
+      TARGET_REPO: substitucions
+      TARGET_BRANCH: main
+
+      # Qué copiar desde valente-substitucions hacia substitucions:
+      FILES_TO_COPY: |
+        dist/
+        public/
+        index.html
+
     steps:
-      - name: Checkout source repo (valente-substitucions)
-        uses: actions/checkout@v3
-        with:
-          repository: paraproxectos-ctrl/valente-substitucions
-          token: ${{ secrets.PUSH_TOKEN }}
-          path: source
+      - name: Checkout source (valente-substitucions)
+        uses: actions/checkout@v4
 
-      - name: Show files in source repo
-        run: |
-          echo "Contenido del repo fuente:"
-          ls -la source
+      # Si necesitas build para generar 'dist', descomenta esto:
+      # - name: Setup Node
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 20
+      #
+      # - name: Install & Build
+      #   run: |
+      #     npm ci
+      #     npm run build
 
-      - name: Configure git
+      - name: Clone target (substitucions)
         run: |
-          cd source
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git clone --depth=1 "https://${{ secrets.PUSH_TOKEN }}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git" target
+          cd target
+          git checkout ${TARGET_BRANCH}
 
-      - name: Add destination remote
+      - name: Copy changed files (robust, only if they exist)
         run: |
-          cd source
-          git remote add dest https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/paraproxectos-ctrl/substitucions.git
-          git remote -v
+          set -e
+          echo "Rutas candidatas:"
+          echo "${FILES_TO_COPY}"
+          existing=()
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            if [ -e "$path" ]; then
+              echo "✓ Existe: $path"
+              existing+=("$path")
+            else
+              echo "… No existe (se ignora): $path"
+            fi
+          done <<< "${FILES_TO_COPY}"
 
-      - name: Push to destination repo (substitucions)
+          if [ ${#existing[@]} -eq 0 ]; then
+            echo "No hay rutas existentes que copiar. Continuamos sin error."
+          else
+            tar -cf - "${existing[@]}" --exclude=.git --exclude=.github \
+            | tar -xf - -C target
+          fi
+
+      - name: Commit & push if changes
         run: |
-          cd source
-          echo "Empujando cambios a destino..."
-          git push dest main --force
+          cd target
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "chore: sync from valente-substitucions ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+            git push origin ${TARGET_BRANCH}
+          else
+            echo "No hay cambios que sincronizar."
+          fi
