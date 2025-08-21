@@ -8,15 +8,58 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout ORIGIN
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Push to DEST main
-        env:
-          TOKEN: ${{ secrets.MIRROR_TOKEN }}
+    env:
+      TARGET_OWNER: paraproxectos-ctrl
+      TARGET_REPO: substitucions
+      TARGET_BRANCH: main
+
+      # Qué copiar desde valente-substitucions hacia substitucions:
+      FILES_TO_COPY: |
+        dist/
+        index.html
+
+      # Qué NO tocar en el repo destino (Netlify)
+      EXCLUDES: |
+        --exclude ".netlify/"
+        --exclude "netlify.toml"
+        --exclude "_redirects"
+        --exclude "netlify/"
+        --exclude ".netlify.toml"
+        --exclude "Netlify.toml"
+
+    steps:
+      - name: Checkout source (valente-substitucions)
+        uses: actions/checkout@v4
+
+      # Si necesitas compilar, descomenta:
+      # - uses: actions/setup-node@v4
+      #   with: { node-version: 20 }
+      # - run: npm ci && npm run build
+
+      - name: Clone target (substitucions)
         run: |
-          git remote add mirror "https://${TOKEN}@github.com/paraproxectos-ctrl/substitucions.git" || git remote set-url mirror "https://${TOKEN}@github.com/paraproxectos-ctrl/substitucions.git"
-          git push --force mirror main:main
+          git clone --depth=1 "https://${{ secrets.PUSH_TOKEN }}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git" target
+          cd target
+          git checkout ${TARGET_BRANCH}
+
+      - name: Copy changed files (rsync, sin pisar Netlify)
+        run: |
+          set -e
+          while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            rsync -av ${EXCLUDES} "$path" "target/"
+          done <<< "${FILES_TO_COPY}"
+
+      - name: Commit & push if changes
+        run: |
+          cd target
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "chore: sync from valente-substitucions ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+            git push origin ${TARGET_BRANCH}
+          else
+            echo "No hay cambios que sincronizar."
+          fi
