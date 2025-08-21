@@ -22,9 +22,10 @@ interface SidebarProps {
   onViewChange: (view: string) => void;
   onClose?: () => void;
   isMobile?: boolean;
+  collapsed?: boolean;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onClose, isMobile }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onClose, isMobile, collapsed }) => {
   const { userRole, profile, signOut } = useAuth();
   
   const isAdmin = userRole?.role === 'admin';
