@@ -14,26 +14,22 @@ jobs:
       TARGET_REPO: substitucions
       TARGET_BRANCH: main
 
-      # Qué copiar desde valente-substitucions hacia substitucions:
+      # Aquí decimos: copiar TODO
       FILES_TO_COPY: |
-        dist/
-        public/
-        index.html
+        ./
+
+      # Aquí decimos: NO copiar nada de Netlify
+      EXCLUDES: |
+        --exclude ".netlify/"
+        --exclude "netlify.toml"
+        --exclude "_redirects"
+        --exclude "netlify/"
+        --exclude ".netlify.toml"
+        --exclude "Netlify.toml"
 
     steps:
       - name: Checkout source (valente-substitucions)
         uses: actions/checkout@v4
-
-      # Si necesitas build para generar 'dist', descomenta esto:
-      # - name: Setup Node
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: 20
-      #
-      # - name: Install & Build
-      #   run: |
-      #     npm ci
-      #     npm run build
 
       - name: Clone target (substitucions)
         run: |
@@ -41,28 +37,10 @@ jobs:
           cd target
           git checkout ${TARGET_BRANCH}
 
-      - name: Copy changed files (robust, only if they exist)
+      - name: Copy all project (skip Netlify files)
         run: |
           set -e
-          echo "Rutas candidatas:"
-          echo "${FILES_TO_COPY}"
-          existing=()
-          while IFS= read -r path; do
-            [ -z "$path" ] && continue
-            if [ -e "$path" ]; then
-              echo "✓ Existe: $path"
-              existing+=("$path")
-            else
-              echo "… No existe (se ignora): $path"
-            fi
-          done <<< "${FILES_TO_COPY}"
-
-          if [ ${#existing[@]} -eq 0 ]; then
-            echo "No hay rutas existentes que copiar. Continuamos sin error."
-          else
-            tar -cf - "${existing[@]}" --exclude=.git --exclude=.github \
-            | tar -xf - -C target
-          fi
+          rsync -av ${EXCLUDES} ./ target/
 
       - name: Commit & push if changes
         run: |
@@ -71,7 +49,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
             git add -A
-            git commit -m "chore: sync from valente-substitucions ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
+            git commit -m "chore: full sync from valente-substitucions ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
             git push origin ${TARGET_BRANCH}
           else
             echo "No hay cambios que sincronizar."
