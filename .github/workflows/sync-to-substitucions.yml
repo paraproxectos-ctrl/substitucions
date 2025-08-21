@@ -1,8 +1,8 @@
 name: Sync to substitucions
 
 on:
-  workflow_dispatch:   # permite lanzarlo a mano desde Actions
-  push:                # también se ejecuta cada vez que hay un push en main
+  workflow_dispatch:   # puedes lanzarlo a mano desde Actions
+  push:                # se ejecuta con cada push en main
     branches:
       - main
 
@@ -18,10 +18,25 @@ jobs:
           token: ${{ secrets.PUSH_TOKEN }}
           path: source
 
+      - name: Show files in source repo
+        run: |
+          echo "Contenido del repo fuente:"
+          ls -la source
+
+      - name: Configure git
+        run: |
+          cd source
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add destination remote
+        run: |
+          cd source
+          git remote add dest https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/paraproxectos-ctrl/substitucions.git
+          git remote -v
+
       - name: Push to destination repo (substitucions)
         run: |
           cd source
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote add dest https://x-access-token:${{ secrets.PUSH_TOKEN }}@github.com/paraproxectos-ctrl/substitucions.git
+          echo "Empujando cambios a destino..."
           git push dest main --force
