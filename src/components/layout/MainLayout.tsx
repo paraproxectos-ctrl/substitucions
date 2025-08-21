@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Sidebar } from './Sidebar';
 import { CalendarView } from '@/components/calendar/CalendarView';
@@ -16,9 +16,14 @@ import Auth from '@/pages/Auth';
 export const MainLayout: React.FC = () => {
   const [activeView, setActiveView] = useState('calendar');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, loading } = useAuth();
   const isMobile = useIsMobile();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile);
+
+  // Update sidebar state when mobile state changes
+  useEffect(() => {
+    setSidebarCollapsed(isMobile);
+  }, [isMobile]);
 
   if (loading) {
     return (
