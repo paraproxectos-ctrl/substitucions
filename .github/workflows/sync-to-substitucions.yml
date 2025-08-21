@@ -2,15 +2,15 @@ name: Sync to substitucions
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ main ]        # Automático en cada commit a main
+  workflow_dispatch:          # También lanzable a mano desde Actions
 
 concurrency:
   group: sync-to-substitucions
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: write             # Permiso de escritura para el GITHUB_TOKEN
 
 jobs:
   sync:
@@ -22,6 +22,7 @@ jobs:
       TARGET_REPO: substitucions
       TARGET_BRANCH: main
 
+      # No copiar nada sensible ni que rompa Netlify ni el repo destino
       RSYNC_EXCLUDES: |
         --exclude ".git/"
         --exclude ".github/"
@@ -34,7 +35,7 @@ jobs:
         --exclude ".netlify.toml"
         --exclude "Netlify.toml"
         --exclude "_redirects"
-        --exclude "target/"
+        --exclude "target/"        # evita bucles (clon del destino)
 
     steps:
       - name: Checkout source (valente-substitucions)
@@ -48,18 +49,21 @@ jobs:
           cd target
           git checkout ${TARGET_BRANCH}
 
-      - name: Copy project (skip excluded)
+      - name: Copy project to target (respecting excludes)
         run: |
           set -e
           rsync -av ${RSYNC_EXCLUDES} ./ target/
 
-      - name: Commit & push if changes (force correct remote)
+      - name: Commit & push if changes
         run: |
           set -e
           cd target
+          # Asegura que el remoto apunta al repo destino
           git remote set-url origin "https://${{ secrets.PUSH_TOKEN }}@github.com/${TARGET_OWNER}/${TARGET_REPO}.git"
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           if [ -n "$(git status --porcelain)" ]; then
             git add -A
             git commit -m "chore: full sync from valente-substitucions ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
