@@ -9,17 +9,18 @@ concurrency:
   group: sync-to-substitucions
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   sync:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     env:
       TARGET_OWNER: paraproxectos-ctrl
       TARGET_REPO: substitucions
       TARGET_BRANCH: main
-
-      FILES_TO_COPY: |
-        ./
 
       RSYNC_EXCLUDES: |
         --exclude ".git/"
@@ -33,10 +34,13 @@ jobs:
         --exclude ".netlify.toml"
         --exclude "Netlify.toml"
         --exclude "_redirects"
+        --exclude "target/"        # ¡evita el bucle!
 
     steps:
       - name: Checkout source (valente-substitucions)
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Clone target (substitucions)
         run: |
@@ -44,12 +48,12 @@ jobs:
           cd target
           git checkout ${TARGET_BRANCH}
 
-      - name: Copy all project (skip excluded)
+      - name: Copy project (skip excluded; don't copy target itself)
         run: |
           set -e
           rsync -av ${RSYNC_EXCLUDES} ./ target/
 
-      - name: Commit & push if changes
+      - name: Commit & push if changes (force correct remote)
         run: |
           set -e
           cd target
