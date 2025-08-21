@@ -76,6 +76,8 @@ export const CalendarView: React.FC = () => {
     guardia_transporte: 'ningun' as 'ningun' | 'entrada' | 'saida'
   });
   const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
+  const [showViewDayDialog, setShowViewDayDialog] = useState(false);
+  const [viewDayDate, setViewDayDate] = useState<Date | null>(null);
   const { user, userRole } = useAuth();
   const { toast } = useToast();
 
@@ -292,6 +294,10 @@ export const CalendarView: React.FC = () => {
     setSelectedDate(date);
     if (userRole?.role === 'admin') {
       openCreateDialog(date);
+    } else {
+      // Para profesores, mostrar las sustituciones del día
+      setViewDayDate(date);
+      setShowViewDayDialog(true);
     }
   };
 
@@ -995,6 +1001,141 @@ export const CalendarView: React.FC = () => {
               Crear substitución
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* View Day Substitutions Dialog */}
+      <Dialog open={showViewDayDialog} onOpenChange={setShowViewDayDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Substitucións do {viewDayDate && format(viewDayDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: gl })}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {viewDayDate && (() => {
+            const daySubstitutions = getSubstitutionsForDate(viewDayDate);
+            const myDaySubstitutions = daySubstitutions.filter(sub => sub.profesor_asignado_id === user?.id);
+            const otherDaySubstitutions = daySubstitutions.filter(sub => sub.profesor_asignado_id !== user?.id);
+            
+            return (
+              <div className="space-y-6">
+                {/* My Substitutions */}
+                {myDaySubstitutions.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-accent-foreground mb-3">
+                      As miñas substitucións
+                    </h3>
+                    <div className="space-y-3">
+                      {myDaySubstitutions.map((sub) => (
+                        <div
+                          key={sub.id}
+                          className="flex items-center justify-between p-4 border border-accent/20 rounded-lg bg-accent/5"
+                        >
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">
+                                {sub.hora_inicio} - {sub.hora_fin}
+                              </span>
+                              <Badge className={getMotivoColor(sub.motivo)}>
+                                {getMotivoLabel(sub.motivo, sub.motivo_outro)}
+                              </Badge>
+                            </div>
+                            
+                            <div className="text-sm text-muted-foreground">
+                              <strong>Grupo:</strong> {sub.grupos_educativos?.nome}
+                            </div>
+                            
+                            {sub.observacions && (
+                              <div className="text-sm text-muted-foreground">
+                                <strong>Observacións:</strong> {sub.observacions}
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            {sub.vista ? (
+                              <Badge variant="secondary" className="flex items-center space-x-1">
+                                <Eye className="h-3 w-3" />
+                                <span>Vista</span>
+                              </Badge>
+                            ) : (
+                              <Button
+                                size="sm"
+                                onClick={() => markAsViewed(sub.id)}
+                                className="flex items-center space-x-1"
+                              >
+                                <EyeOff className="h-3 w-3" />
+                                <span>Marcar como vista</span>
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Other Substitutions */}
+                {otherDaySubstitutions.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-foreground mb-3">
+                      Outras substitucións do día
+                    </h3>
+                    <div className="space-y-3">
+                      {otherDaySubstitutions.map((sub) => (
+                        <div
+                          key={sub.id}
+                          className="p-4 border rounded-lg"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Clock className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">
+                                {sub.hora_inicio} - {sub.hora_fin}
+                              </span>
+                              <Badge className={getMotivoColor(sub.motivo)}>
+                                {getMotivoLabel(sub.motivo, sub.motivo_outro)}
+                              </Badge>
+                            </div>
+                            
+                            <div className="text-sm text-muted-foreground">
+                              <strong>Grupo:</strong> {sub.grupos_educativos?.nome}
+                            </div>
+                            
+                            <div className="flex items-center text-sm text-muted-foreground">
+                              <User className="h-3 w-3 mr-1" />
+                              <strong>Profesor/a:</strong> {sub.profiles?.nome} {sub.profiles?.apelidos}
+                            </div>
+                            
+                            {sub.observacions && (
+                              <div className="text-sm text-muted-foreground">
+                                <strong>Observacións:</strong> {sub.observacions}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* No substitutions */}
+                {daySubstitutions.length === 0 && (
+                  <div className="text-center py-12">
+                    <CalendarIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-muted-foreground mb-2">
+                      Non hai substitucións para este día
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Desfruta do teu día normal de clases!
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
