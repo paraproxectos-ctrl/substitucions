@@ -14,12 +14,13 @@ jobs:
       TARGET_REPO: substitucions
       TARGET_BRANCH: main
 
-      # Qué copiar desde valente-substitucions hacia substitucions:
+      # Añade aquí lo que quieras copiar. Si no construyes 'dist', no lo pongas.
       FILES_TO_COPY: |
         dist/
+        public/
         index.html
 
-      # Qué NO tocar en el repo destino (Netlify)
+      # No tocar archivos de Netlify en el repo destino
       EXCLUDES: |
         --exclude ".netlify/"
         --exclude "netlify.toml"
@@ -32,10 +33,15 @@ jobs:
       - name: Checkout source (valente-substitucions)
         uses: actions/checkout@v4
 
-      # Si necesitas compilar, descomenta:
-      # - uses: actions/setup-node@v4
-      #   with: { node-version: 20 }
-      # - run: npm ci && npm run build
+      # Si necesitas build para generar 'dist', DESCOMENTA:
+      # - name: Setup Node
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 20
+      # - name: Install & Build
+      #   run: |
+      #     npm ci
+      #     npm run build
 
       - name: Clone target (substitucions)
         run: |
@@ -43,12 +49,17 @@ jobs:
           cd target
           git checkout ${TARGET_BRANCH}
 
-      - name: Copy changed files (rsync, sin pisar Netlify)
+      - name: Copy changed files (skip if missing)
         run: |
           set -e
           while IFS= read -r path; do
             [ -z "$path" ] && continue
-            rsync -av ${EXCLUDES} "$path" "target/"
+            if [ -e "$path" ]; then
+              echo "Copiando $path ..."
+              rsync -av ${EXCLUDES} "$path" "target/"
+            else
+              echo "Saltando $path (no existe)"
+            fi
           done <<< "${FILES_TO_COPY}"
 
       - name: Commit & push if changes
@@ -58,8 +69,4 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [ -n "$(git status --porcelain)" ]; then
             git add -A
-            git commit -m "chore: sync from valente-substitucions ($(date -u +'%Y-%m-%d %H:%M:%S UTC'))"
-            git push origin ${TARGET_BRANCH}
-          else
-            echo "No hay cambios que sincronizar."
-          fi
+            git commit -m "chore: sync from va
