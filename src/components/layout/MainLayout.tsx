@@ -105,23 +105,23 @@ export const MainLayout: React.FC = () => {
       </Button>
 
       {/* Sidebar */}
-      <div 
-        id="main-sidebar"
-        className={`
-          flex-shrink-0 transition-all duration-300 ease-in-out
-          ${isMobile ? (isSidebarOpen ? 'fixed inset-y-0 left-0 z-40 w-80' : 'hidden') : 'relative'}
-          ${!isMobile && isSidebarOpen ? 'w-80' : !isMobile && !isSidebarOpen ? 'w-0' : ''}
-          ${isMobile && isSidebarOpen ? 'translate-x-0' : isMobile && !isSidebarOpen ? '-translate-x-full' : ''}
-        `}
-      >
-        <Sidebar 
-          activeView={activeView} 
-          onViewChange={setActiveView}
-          onClose={() => setIsSidebarOpen(false)}
-          isMobile={isMobile}
-          collapsed={!isSidebarOpen}
-        />
-      </div>
+      {isSidebarOpen && (
+        <div 
+          id="main-sidebar"
+          className={`
+            flex-shrink-0 transition-all duration-300 ease-in-out
+            ${isMobile ? 'fixed inset-y-0 left-0 z-40 w-80' : 'relative w-80'}
+          `}
+        >
+          <Sidebar 
+            activeView={activeView} 
+            onViewChange={setActiveView}
+            onClose={() => setIsSidebarOpen(false)}
+            isMobile={isMobile}
+            collapsed={false}
+          />
+        </div>
+      )}
 
       {/* Mobile backdrop */}
       {isMobile && isSidebarOpen && (
@@ -133,10 +133,7 @@ export const MainLayout: React.FC = () => {
       )}
 
       {/* Main content */}
-      <main className={`
-        flex-1 overflow-auto min-w-0 transition-all duration-300 ease-in-out
-        ${!isMobile && isSidebarOpen ? 'ml-0' : 'ml-0'}
-      `}>
+      <main className="flex-1 overflow-auto min-w-0">
         <div className="p-3 md:p-6 w-full pt-16">
           {renderMainContent()}
         </div>
