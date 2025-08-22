@@ -8,6 +8,7 @@ import { SubstitutionManagement } from '@/components/admin/SubstitutionManagemen
 import { ConfirmationDashboard } from '@/components/admin/ConfirmationDashboard';
 import { ReportsAndStatistics } from '@/components/admin/ReportsAndStatistics';
 import { AxudaView } from '@/components/help/AxudaView';
+import { SubstitutionsPopup } from '@/components/substitutions/SubstitutionsPopup';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
@@ -15,15 +16,41 @@ import Auth from '@/pages/Auth';
 
 export const MainLayout: React.FC = () => {
   const [activeView, setActiveView] = useState('calendar');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, loading } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);  
+  const { user, loading, userRole } = useAuth();
   const isMobile = useIsMobile();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(isMobile);
 
-  // Update sidebar state when mobile state changes
+  // Control body scroll when sidebar is open on mobile
   useEffect(() => {
-    setSidebarCollapsed(isMobile);
-  }, [isMobile]);
+    if (isMobile && isSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobile, isSidebarOpen]);
+
+  // Close sidebar on route change in mobile
+  useEffect(() => {
+    if (isMobile) {
+      setIsSidebarOpen(false);
+    }
+  }, [activeView, isMobile]);
+
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobile && isSidebarOpen) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMobile, isSidebarOpen]);
 
   if (loading) {
     return (
@@ -64,60 +91,59 @@ export const MainLayout: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-background w-full relative">
-      {/* Sidebar Toggle Buttons */}
-      {!sidebarCollapsed ? (
-        <Button
-          variant="outline"
-          size="sm"
-          className="fixed top-4 left-4 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-          onClick={() => setSidebarCollapsed(true)}
-        >
-          <Menu className="h-4 w-4" />
-          <span className="ml-2">OCULTAR</span>
-        </Button>
-      ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          className="fixed top-4 left-4 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-          onClick={() => setSidebarCollapsed(false)}
-        >
-          <Menu className="h-4 w-4" />
-          <span className="ml-2">VER</span>
-        </Button>
-      )}
+      {/* Sidebar Toggle Button */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="fixed top-4 left-4 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        aria-expanded={isSidebarOpen}
+        aria-controls="main-sidebar"
+      >
+        <Menu className="h-4 w-4" />
+        <span className="ml-2">{isSidebarOpen ? 'OCULTAR' : 'VER'}</span>
+      </Button>
 
       {/* Sidebar */}
       <div 
-        className={`flex-shrink-0 transition-all duration-500 ease-in-out ${
-          sidebarCollapsed ? '-translate-x-full' : 'translate-x-0'
-        } ${isMobile ? 'fixed inset-y-0 left-0 z-40' : ''}`}
+        id="main-sidebar"
+        className={`
+          flex-shrink-0 transition-all duration-300 ease-in-out
+          ${isMobile ? 'fixed inset-y-0 left-0 z-40' : 'relative'}
+          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          ${!isMobile && !isSidebarOpen ? 'w-0' : ''}
+        `}
       >
         <Sidebar 
           activeView={activeView} 
           onViewChange={setActiveView}
-          onClose={() => setSidebarCollapsed(true)}
+          onClose={() => setIsSidebarOpen(false)}
           isMobile={isMobile}
-          collapsed={sidebarCollapsed}
+          collapsed={!isSidebarOpen}
         />
       </div>
 
-      {/* Overlay for mobile when sidebar is open */}
-      {isMobile && !sidebarCollapsed && (
+      {/* Mobile backdrop */}
+      {isMobile && isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-30"
-          onClick={() => setSidebarCollapsed(true)}
+          className="fixed inset-0 bg-black/50 z-30 animate-fade-in"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Main content */}
-      <main className={`flex-1 overflow-auto min-w-0 transition-all duration-500 ease-in-out ${
-        sidebarCollapsed || isMobile ? 'ml-0' : 'ml-48'
-      }`}>
+      <main className={`
+        flex-1 overflow-auto min-w-0 transition-all duration-300 ease-in-out
+        ${!isMobile && isSidebarOpen ? 'ml-0' : 'ml-0'}
+      `}>
         <div className="p-3 md:p-6 w-full pt-16">
           {renderMainContent()}
         </div>
       </main>
+
+      {/* Substitutions Popup */}
+      <SubstitutionsPopup />
     </div>
   );
 };
