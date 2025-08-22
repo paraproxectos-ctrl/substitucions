@@ -109,9 +109,9 @@ export const MainLayout: React.FC = () => {
         id="main-sidebar"
         className={`
           flex-shrink-0 transition-all duration-300 ease-in-out
-          ${isMobile ? 'fixed inset-y-0 left-0 z-40' : 'relative'}
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          ${!isMobile && !isSidebarOpen ? 'w-0' : ''}
+          ${isMobile ? (isSidebarOpen ? 'fixed inset-y-0 left-0 z-40 w-80' : 'hidden') : 'relative'}
+          ${!isMobile && isSidebarOpen ? 'w-80' : !isMobile && !isSidebarOpen ? 'w-0' : ''}
+          ${isMobile && isSidebarOpen ? 'translate-x-0' : isMobile && !isSidebarOpen ? '-translate-x-full' : ''}
         `}
       >
         <Sidebar 

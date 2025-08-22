@@ -19,6 +19,7 @@ interface Substitution {
   };
   motivo: string;
   observacions?: string;
+  confirmada_professor?: boolean;
 }
 
 export const SubstitutionsPopup: React.FC = () => {
@@ -45,6 +46,7 @@ export const SubstitutionsPopup: React.FC = () => {
             hora_fin,
             motivo,
             observacions,
+            confirmada_professor,
             grupos_educativos (
               nome,
               nivel
@@ -52,7 +54,7 @@ export const SubstitutionsPopup: React.FC = () => {
           `)
           .eq('profesor_asignado_id', user.id)
           .gte('data', today)
-          .eq('vista', false)
+          .or('confirmada_professor.is.null,confirmada_professor.eq.false')
           .order('data', { ascending: true })
           .order('hora_inicio', { ascending: true });
 
@@ -79,16 +81,16 @@ export const SubstitutionsPopup: React.FC = () => {
   const handleClose = async () => {
     setIsOpen(false);
     
-    // Mark substitutions as viewed
+    // Mark substitutions as confirmed by professor
     if (substitutions.length > 0) {
       try {
         const substitutionIds = substitutions.map(sub => sub.id);
         await supabase
           .from('substitucions')
-          .update({ vista: true })
+          .update({ confirmada_professor: true, vista: true })
           .in('id', substitutionIds);
       } catch (error) {
-        console.error('Error marking substitutions as viewed:', error);
+        console.error('Error confirming substitutions:', error);
       }
     }
   };
@@ -113,10 +115,10 @@ export const SubstitutionsPopup: React.FC = () => {
       <DialogContent className="max-w-md mx-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold text-center">
-            Substitucións asignadas
+            Substitucións pendentes de confirmación
           </DialogTitle>
           <DialogDescription className="text-center">
-            Tes {substitutions.length} substitución{substitutions.length > 1 ? 's' : ''} asignada{substitutions.length > 1 ? 's' : ''}
+            Tes {substitutions.length} substitución{substitutions.length > 1 ? 's' : ''} pendente{substitutions.length > 1 ? 's' : ''} de confirmar
           </DialogDescription>
         </DialogHeader>
         
@@ -163,7 +165,7 @@ export const SubstitutionsPopup: React.FC = () => {
 
         <div className="flex justify-center pt-4">
           <Button onClick={handleClose} className="w-full">
-            Entendido
+            Confirmar substitucións
           </Button>
         </div>
       </DialogContent>
