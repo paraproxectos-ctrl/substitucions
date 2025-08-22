@@ -26,13 +26,22 @@ export const SubstitutionsPopup: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [substitutions, setSubstitutions] = useState<Substitution[]>([]);
   const [hasChecked, setHasChecked] = useState(false);
-  const { user, userRole } = useAuth();
+  const { user, userRole, loading } = useAuth();
+
+  // Reset hasChecked when auth state changes
+  useEffect(() => {
+    if (!loading && user && userRole) {
+      setHasChecked(false);
+    }
+  }, [user, userRole, loading]);
 
   useEffect(() => {
     const checkSubstitutions = async () => {
       if (!user || !userRole || userRole.role !== 'profesor' || hasChecked) {
         return;
       }
+
+      console.log('Checking substitutions for user:', user.id);
 
       try {
         const today = new Date().toISOString().split('T')[0];
@@ -58,14 +67,19 @@ export const SubstitutionsPopup: React.FC = () => {
           .order('data', { ascending: true })
           .order('hora_inicio', { ascending: true });
 
+        console.log('Substitutions query result:', { data, error });
+
         if (error) {
           console.error('Error fetching substitutions:', error);
           return;
         }
 
         if (data && data.length > 0) {
+          console.log('Found substitutions to confirm:', data.length);
           setSubstitutions(data);
           setIsOpen(true);
+        } else {
+          console.log('No substitutions found to confirm');
         }
 
         setHasChecked(true);
@@ -75,7 +89,10 @@ export const SubstitutionsPopup: React.FC = () => {
       }
     };
 
-    checkSubstitutions();
+    // Add a small delay to ensure user and userRole are fully loaded
+    const timeoutId = setTimeout(checkSubstitutions, 500);
+    
+    return () => clearTimeout(timeoutId);
   }, [user, userRole, hasChecked]);
 
   const handleClose = async () => {
