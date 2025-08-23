@@ -56,7 +56,7 @@ export const MainLayout: React.FC = () => {
         ${sidebarOpen ? 'md:ml-64' : 'ml-0'}
         transition-all duration-300 ease-in-out
       `}>
-        <Index />
+        <Index onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
       </div>
 
       {/* Backdrop for mobile */}
