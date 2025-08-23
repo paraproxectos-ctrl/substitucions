@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Table,
   TableBody,
@@ -14,7 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart3, TrendingUp, Users, Calendar, RefreshCw } from 'lucide-react';
+import { BarChart3, TrendingUp, Users, Calendar, RefreshCw, RotateCcw } from 'lucide-react';
 
 interface TeacherStats {
   user_id: string;
@@ -38,6 +39,7 @@ export const ReportsAndStatistics: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   const { userRole } = useAuth();
+  const { toast } = useToast();
 
   // Fetch teacher statistics
   const fetchTeacherStats = async () => {
@@ -158,9 +160,45 @@ export const ReportsAndStatistics: React.FC = () => {
   const resetWeeklyCounters = async () => {
     try {
       await supabase.rpc('reset_weekly_counters');
+      toast({
+        title: "Éxito",
+        description: "Contadores semanais restablecidos correctamente",
+      });
       await refreshData();
     } catch (error) {
       console.error('Error resetting weekly counters:', error);
+      toast({
+        title: "Error",
+        description: "Erro ao restablecer os contadores semanais",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Reset all teacher statistics
+  const resetAllStatistics = async () => {
+    try {
+      // Reset all weekly counters and total substitutions count
+      await supabase
+        .from('profiles')
+        .update({ 
+          sustitucions_realizadas_semana: 0,
+          ultima_semana_reset: new Date().toISOString().split('T')[0]
+        })
+        .neq('user_id', '00000000-0000-0000-0000-000000000000'); // Update all profiles
+
+      toast({
+        title: "Éxito",
+        description: "Todas as estatísticas do profesorado foron restablecidas",
+      });
+      await refreshData();
+    } catch (error) {
+      console.error('Error resetting all statistics:', error);
+      toast({
+        title: "Error",
+        description: "Erro ao restablecer as estatísticas",
+        variant: "destructive",
+      });
     }
   };
 
@@ -204,6 +242,15 @@ export const ReportsAndStatistics: React.FC = () => {
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Reset semanal
+          </Button>
+          <Button
+            variant="outline"
+            onClick={resetAllStatistics}
+            size="sm"
+            className="text-destructive hover:text-destructive"
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Reset estatísticas
           </Button>
           <Button
             variant="outline"
