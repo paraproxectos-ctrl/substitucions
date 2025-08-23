@@ -8,15 +8,20 @@ import { SubstitutionConfirmationPopup } from '@/components/substitutions/Substi
 
 export const MainLayout: React.FC = () => {
   const { user, loading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // Auto close sidebar on route change (mobile)
+  // Responsive sidebar behavior
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
+      if (window.innerWidth < 768) {
         setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
       }
     };
+
+    // Set initial state based on screen size
+    handleResize();
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -41,11 +46,9 @@ export const MainLayout: React.FC = () => {
     <div className="min-h-screen bg-background flex">
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 
-        ${sidebarOpen ? 'w-64' : 'w-0'} 
-        md:${sidebarOpen ? 'w-64' : 'w-0'}
-        transition-all duration-300 ease-in-out overflow-hidden
-        ${sidebarOpen ? '' : 'hidden'}
+        md:relative md:block fixed inset-y-0 left-0 z-50 
+        ${sidebarOpen ? 'block' : 'hidden md:block'} 
+        transition-all duration-300 ease-in-out
       `}>
         <Sidebar activeView="calendar" onViewChange={() => {}} />
       </div>
