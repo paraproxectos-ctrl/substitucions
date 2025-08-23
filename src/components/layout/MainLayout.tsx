@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Sidebar } from './Sidebar';
-import { Index } from '@/pages/Index';
-import { Auth } from '@/pages/Auth';
+import Index from '@/pages/Index';
+import Auth from '@/pages/Auth';
 import { SubstitutionConfirmationPopup } from '@/components/substitutions/SubstitutionConfirmationPopup';
 
 export const MainLayout: React.FC = () => {
