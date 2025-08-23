@@ -272,6 +272,21 @@ export type Database = {
           },
         ]
       }
+      telegram_updates_cursor: {
+        Row: {
+          id: number
+          last_update_id: number
+        }
+        Insert: {
+          id: number
+          last_update_id?: number
+        }
+        Update: {
+          id?: number
+          last_update_id?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -290,6 +305,27 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_telegram: {
+        Row: {
+          chat_id: string
+          linked_at: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          chat_id: string
+          linked_at?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          chat_id?: string
+          linked_at?: string | null
+          user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -356,6 +392,14 @@ export type Database = {
       reset_weekly_counters: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      telegram_send_to_user: {
+        Args: { p_text: string; p_user_id: string }
+        Returns: undefined
+      }
+      telegram_sync_updates: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
     }
     Enums: {

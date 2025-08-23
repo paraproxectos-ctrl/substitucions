@@ -47,7 +47,7 @@ export const MainLayout: React.FC = () => {
         transition-all duration-300 ease-in-out overflow-hidden
         ${sidebarOpen ? '' : 'hidden'}
       `}>
-        <Sidebar onToggle={() => setSidebarOpen(!sidebarOpen)} />
+        <Sidebar activeView="calendar" onViewChange={() => {}} />
       </div>
 
       {/* Main content */}
@@ -56,7 +56,7 @@ export const MainLayout: React.FC = () => {
         ${sidebarOpen ? 'md:ml-64' : 'ml-0'}
         transition-all duration-300 ease-in-out
       `}>
-        <Index onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+        <Index />
       </div>
 
       {/* Backdrop for mobile */}
