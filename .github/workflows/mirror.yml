@@ -22,10 +22,11 @@ jobs:
           git config user.name "repo-sync-bot"
           git config user.email "actions@github.com"
 
-      - name: Add repo B (substitucions) as remote
+      - name: Add repo B as remote + test access
         run: |
+          set -e
           git remote add mirror https://x-access-token:${{ secrets.TARGET_REPO_PAT }}@github.com/paraproxectos-ctrl/substitucions.git
-          git fetch mirror || true
+          git ls-remote --heads mirror
 
       - name: Push main -> main (force)
         run: |
