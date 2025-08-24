@@ -2,8 +2,8 @@ name: Mirror A -> B
 
 on:
   push:
-    branches:
-      - main   # cambia si tu rama principal NO es main
+    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: read
