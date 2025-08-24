@@ -95,13 +95,13 @@ export const MainLayout: React.FC = () => {
       <Button
         variant="outline"
         size="sm"
-        className="fixed top-4 left-4 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
+        className="fixed top-4 left-4 z-50 bg-background border-border shadow-md hover:bg-accent"
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-expanded={isSidebarOpen}
         aria-controls="main-sidebar"
       >
         <Menu className="h-4 w-4" />
-        <span className="ml-2">{isSidebarOpen ? 'OCULTAR' : 'VER'}</span>
+        <span className="ml-2 text-sm">{isSidebarOpen ? 'OCULTAR' : 'VER'}</span>
       </Button>
 
       {/* Sidebar */}
