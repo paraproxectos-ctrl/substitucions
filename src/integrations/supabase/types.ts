@@ -14,6 +14,100 @@ export type Database = {
   }
   public: {
     Tables: {
+      arquivos_audit_log: {
+        Row: {
+          action: string
+          by_uid: string
+          file_id: string | null
+          id: string
+          owner_uid: string
+          timestamp: string
+        }
+        Insert: {
+          action: string
+          by_uid: string
+          file_id?: string | null
+          id?: string
+          owner_uid: string
+          timestamp?: string
+        }
+        Update: {
+          action?: string
+          by_uid?: string
+          file_id?: string | null
+          id?: string
+          owner_uid?: string
+          timestamp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arquivos_audit_log_file_id_fkey"
+            columns: ["file_id"]
+            isOneToOne: false
+            referencedRelation: "arquivos_calendario"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      arquivos_calendario: {
+        Row: {
+          class_id: string | null
+          class_name: string
+          created_at: string
+          date: string
+          file_size: number
+          filename: string
+          id: string
+          mime_type: string
+          notes: string | null
+          original_filename: string
+          owner_name: string
+          owner_uid: string
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          class_id?: string | null
+          class_name: string
+          created_at?: string
+          date: string
+          file_size: number
+          filename: string
+          id?: string
+          mime_type: string
+          notes?: string | null
+          original_filename: string
+          owner_name: string
+          owner_uid: string
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          class_id?: string | null
+          class_name?: string
+          created_at?: string
+          date?: string
+          file_size?: number
+          filename?: string
+          id?: string
+          mime_type?: string
+          notes?: string | null
+          original_filename?: string
+          owner_name?: string
+          owner_uid?: string
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arquivos_calendario_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_educativos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversacion_participantes: {
         Row: {
           conversacion_id: string
@@ -272,6 +366,21 @@ export type Database = {
           },
         ]
       }
+      telegram_updates_cursor: {
+        Row: {
+          id: number
+          last_update_id: number
+        }
+        Insert: {
+          id: number
+          last_update_id?: number
+        }
+        Update: {
+          id?: number
+          last_update_id?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -290,6 +399,27 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_telegram: {
+        Row: {
+          chat_id: string
+          linked_at: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          chat_id: string
+          linked_at?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          chat_id?: string
+          linked_at?: string | null
+          user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -356,6 +486,23 @@ export type Database = {
       reset_weekly_counters: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      send_push_to_user: {
+        Args: {
+          p_msg: string
+          p_title: string
+          p_url?: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      telegram_send_to_user: {
+        Args: { p_text: string; p_user_id: string }
+        Returns: undefined
+      }
+      telegram_sync_updates: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
     }
     Enums: {

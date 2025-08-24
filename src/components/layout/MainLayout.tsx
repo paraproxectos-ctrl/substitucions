@@ -7,6 +7,7 @@ import { TeacherManagement } from '@/components/admin/TeacherManagement';
 import { SubstitutionManagement } from '@/components/admin/SubstitutionManagement';
 import { ConfirmationDashboard } from '@/components/admin/ConfirmationDashboard';
 import { ReportsAndStatistics } from '@/components/admin/ReportsAndStatistics';
+import { ArquivosCalendarView } from '@/components/arquivos/ArquivosCalendarView';
 import { AxudaView } from '@/components/help/AxudaView';
 import { SubstitutionsPopup } from '@/components/substitutions/SubstitutionsPopup';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -74,6 +75,8 @@ export const MainLayout: React.FC = () => {
         return <CalendarView />;
       case 'daily-calendar':
         return <DailyCalendarView />;
+      case 'arquivos':
+        return <ArquivosCalendarView />;
       case 'substitutions':
         return <SubstitutionManagement />;
       case 'teachers':

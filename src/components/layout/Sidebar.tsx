@@ -13,7 +13,8 @@ import {
   UserPlus,
   PlusCircle,
   HelpCircle,
-  CheckCircle
+  CheckCircle,
+  FolderOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -50,6 +51,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onCl
       id: 'daily-calendar',
       label: 'Substitucións do día',
       icon: CalendarDays,
+      available: true,
+    },
+    {
+      id: 'arquivos',
+      label: 'Arquivos',
+      icon: FolderOpen,
       available: true,
     },
     {
