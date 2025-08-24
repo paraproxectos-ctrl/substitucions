@@ -1,0 +1,32 @@
+name: Mirror A -> B
+
+on:
+  push:
+    branches:
+      - main   # cambia si tu rama principal NO es main
+
+permissions:
+  contents: read
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo A (valente-substitucions)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set git identity
+        run: |
+          git config user.name "repo-sync-bot"
+          git config user.email "actions@github.com"
+
+      - name: Add repo B (substitucions) as remote
+        run: |
+          git remote add mirror https://x-access-token:${{ secrets.TARGET_REPO_PAT }}@github.com/paraproxectos-ctrl/substitucions.git
+          git fetch mirror || true
+
+      - name: Push main -> main (force)
+        run: |
+          git push mirror main:main --force
