@@ -1,36 +1,24 @@
 name: Mirror A -> B
-
 on:
-  push:
-    branches: [ main ]
+  push: { branches: [ main ] }
   workflow_dispatch:
-
-permissions:
-  contents: read
-
+permissions: { contents: read }
 jobs:
   mirror:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo A (valente-substitucions)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Set git identity
-        run: |
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: |
           git config user.name "repo-sync-bot"
           git config user.email "actions@github.com"
-
       - name: Add repo B as remote + test access
-        env:
-          GIT_TRACE: 1
-          GIT_CURL_VERBOSE: 1
+        env: { GIT_TRACE: 1, GIT_CURL_VERBOSE: 1 }
         run: |
           set -e
+          git remote remove mirror || true
           git remote add mirror https://x-access-token:${{ secrets.TARGET_REPO_PAT }}@github.com/paraproxectos-ctrl/substitucions.git
+          git remote -v
           git ls-remote --heads mirror
-
       - name: Push main -> main (force)
-        run: |
-          git push mirror main:main --force
+        run: git push mirror main:main --force
