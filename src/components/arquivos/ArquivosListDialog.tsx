@@ -1,5 +1,3 @@
-import { deleteFile, uploadFile } from '../../lib/files';
-import { BUCKET } from '../../lib/supabaseClient';
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,7 +6,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from '@/components/ui/alert-dialog';
 import { Download, Trash2, FileText, Search, Upload, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -22,7 +30,7 @@ interface ArquivoCalendario {
   original_filename: string;
   mime_type: string;
   file_size: number;
-  storage_path: string;
+  storage_path: string;  // <-- path completo en el bucket
   owner_uid: string;
   owner_name: string;
   notes?: string;
@@ -77,11 +85,11 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
   const uniqueOwners = [...new Set(files.map(f => f.owner_name))].sort();
 
   const filteredFiles = files.filter(file => {
-    const matchesSearch = 
+    const matchesSearch =
       file.original_filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
       file.class_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       file.owner_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesClass = classFilter === 'all' || file.class_name === classFilter;
     const matchesOwner = ownerFilter === 'all' || file.owner_name === ownerFilter;
 
@@ -92,16 +100,14 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
     try {
       setDownloading(file.id);
 
-      // Get signed URL for download
+      // URL firmada (1 hora)
       const { data, error } = await supabase.storage
         .from('arquivos-substitucions')
-        .createSignedUrl(file.storage_path, 3600); // 1 hour expiry
+        .createSignedUrl(file.storage_path, 3600);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
-      // Log the download
+      // Auditoría
       await supabase
         .from('arquivos_audit_log')
         .insert({
@@ -111,7 +117,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
           by_uid: user?.id || '',
         });
 
-      // Trigger download
+      // Descargar
       const link = document.createElement('a');
       link.href = data.signedUrl;
       link.download = file.original_filename;
@@ -135,28 +141,25 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
     }
   };
 
+  // BORRADO REAL: Storage + BD + auditoría
   const handleDelete = async (file: ArquivoCalendario) => {
     try {
-      // Delete from storage
+      // 1) Borra del Storage (ruta completa en storage_path)
       const { error: storageError } = await supabase.storage
         .from('arquivos-substitucions')
         .remove([file.storage_path]);
 
-      if (storageError) {
-        throw storageError;
-      }
+      if (storageError) throw storageError;
 
-      // Delete from database
+      // 2) Borra de la base de datos
       const { error: dbError } = await supabase
         .from('arquivos_calendario')
         .delete()
         .eq('id', file.id);
 
-      if (dbError) {
-        throw dbError;
-      }
+      if (dbError) throw dbError;
 
-      // Log the deletion
+      // 3) Log
       await supabase
         .from('arquivos_audit_log')
         .insert({
@@ -167,7 +170,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
         });
 
       onDeleteSuccess();
-      
+
       toast({
         title: "Arquivo eliminado",
         description: `${file.original_filename} foi eliminado correctamente`,
@@ -183,8 +186,8 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
   };
 
   const getFileIcon = (mimeType: string) => {
-    if (mimeType.includes('pdf')) return '📄';
-    if (mimeType.includes('word') || mimeType.includes('document')) return '📝';
+    if (mimeType?.includes('pdf')) return '📄';
+    if (mimeType?.includes('word') || mimeType?.includes('document')) return '📝';
     return '📋';
   };
 
@@ -268,8 +271,8 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
                 <Card key={file.id}>
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">
-                  <div className="text-2xl">{getFileIcon(file.mime_type || '')}</div>
-                      
+                      <div className="text-2xl">{getFileIcon(file.mime_type || '')}</div>
+
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
@@ -281,7 +284,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
                               </span>
                             </div>
                           </div>
-                          
+
                           <div className="flex gap-2 flex-shrink-0">
                             <Button
                               variant="outline"
@@ -292,11 +295,11 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
                               <Download className="h-4 w-4" />
                               {downloading === file.id ? 'Descargando...' : 'Descargar'}
                             </Button>
-                            
+
                             {canDelete(file) && (
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                  <Button variant="outline" size="sm">
+                                  <Button variant="outline" size="sm" title="Eliminar">
                                     <Trash2 className="h-4 w-4" />
                                   </Button>
                                 </AlertDialogTrigger>
@@ -304,7 +307,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
                                   <AlertDialogHeader>
                                     <AlertDialogTitle>Eliminar arquivo</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      Estás seguro de que queres eliminar "{file.original_filename}"? 
+                                      Estás seguro de que queres eliminar "{file.original_filename}"?
                                       Esta acción non se pode desfacer.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
@@ -322,7 +325,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="mt-2 space-y-1">
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <User className="h-3 w-3" />
@@ -330,7 +333,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
                             <span>•</span>
                             <span>{formatDate(file.created_at)}</span>
                           </div>
-                          
+
                           {file.notes && (
                             <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
                               <strong>Indicacións:</strong> {file.notes}
@@ -345,7 +348,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
             )}
           </div>
 
-          {/* Upload More Button */}
+          {/* Footer */}
           <div className="flex justify-between pt-4 border-t">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Pechar
@@ -353,8 +356,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
             <Button
               onClick={() => {
                 onOpenChange(false);
-                // This would trigger opening the upload dialog
-                // We'll need to communicate this back to the parent component
+                // Aquí podrías abrir el diálogo de subida desde el componente padre
               }}
             >
               <Upload className="h-4 w-4 mr-2" />
