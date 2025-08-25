@@ -441,6 +441,10 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_expired_arquivos: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_current_iso_week: {
         Args: Record<PropertyKey, never>
         Returns: string
