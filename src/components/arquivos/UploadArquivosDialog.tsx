@@ -135,7 +135,10 @@ export const UploadArquivosDialog: React.FC<UploadArquivosDialogProps> = ({
         throw new Error('Datos incompletos para subir o arquivo');
       }
 
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const year = selectedDate.getFullYear();
+      const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+      const day = String(selectedDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       const timestamp = Date.now();
       const fileExtension = fileUpload.file.name.split('.').pop();
       const filename = `${user.id}-${timestamp}-${fileUpload.file.name}`;
