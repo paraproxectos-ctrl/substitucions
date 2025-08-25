@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="gl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía de Axuda - Sistema de Substitucións CEIP Valle Inclán</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            color: #333;
+            background: white;
+        }
+        h1 {
+            color: #2563eb;
+            border-bottom: 3px solid #2563eb;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            color: #1d4ed8;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 8px;
+            margin-top: 40px;
+        }
+        h3 {
+            color: #1e40af;
+            margin-top: 30px;
+        }
+        .intro {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #2563eb;
+        }
+        .important {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #f59e0b;
+        }
+        .warning {
+            background: #fee2e2;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #ef4444;
+        }
+        .success {
+            background: #ecfdf5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #10b981;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .section {
+            page-break-inside: avoid;
+            margin-bottom: 30px;
+        }
+        .steps {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        @media print {
+            body { margin: 20px; }
+            .section { page-break-inside: avoid; }
+            h2 { page-break-after: avoid; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🏫 GUÍA DE AXUDA - SISTEMA DE SUBSTITUCIÓNS<br>CEIP Valle Inclán</h1>
+    
+    <div class="intro">
+        <h2>📖 Introdución</h2>
+        <p>Este sistema permite xestionar de forma eficiente as substitucións do profesorado no CEIP Valle Inclán.</p>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>Para Profesorado</h3>
+                <ul>
+                    <li>✅ Ver o calendario de substitucións</li>
+                    <li>✅ Marcar substitucións como vistas</li>
+                    <li>✅ Subir e xestionar arquivos por data</li>
+                    <li>✅ Consultar o seu perfil</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h3>Para Administradores</h3>
+                <ul>
+                    <li>✅ Crear e xestionar substitucións</li>
+                    <li>✅ Xestionar profesorado</li>
+                    <li>✅ Xestionar arquivos do sistema</li>
+                    <li>✅ Ver informes e estatísticas</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="important">
+            <strong>⚠️ Importante:</strong> Cada profesor ten un número limitado de horas libres semanais. Isto serve para distribuír equitativamente as substitucións entre todo o profesorado.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📅 Calendario</h2>
+        
+        <h3>🔍 Visualizar substitucións</h3>
+        <p>O calendario mostra todas as substitucións programadas:</p>
+        <ul>
+            <li><strong>Azul:</strong> Substitucións asignadas a ti</li>
+            <li><strong>Gris:</strong> Substitucións doutros profesores</li>
+            <li><strong>Vermello:</strong> Substitucións urxentes ou non vistas</li>
+        </ul>
+        <div class="success">
+            💡 <strong>Consello:</strong> Fai clic nunha substitución para ver todos os detalles e marcar como vista.
+        </div>
+
+        <h3>🔎 Filtros e busca</h3>
+        <ul>
+            <li>Podes filtrar por data, profesor ou grupo</li>
+            <li>Usa a busca rápida para atopar substitucións específicas</li>
+            <li>As substitucións pasadas móstranse en cor máis suave</li>
+        </ul>
+
+        <h3>📧 Notificacións por email</h3>
+        <p>Recibirás un email automático cando:</p>
+        <ul>
+            <li>Te asignen unha nova substitución</li>
+            <li>Haxa cambios nunha substitución xa asignada</li>
+            <li>Se cancele unha substitución</li>
+        </ul>
+        <div class="important">
+            📬 <strong>Importante:</strong> Asegúrate de que o teu email está actualizado no teu perfil.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📁 Sistema de Arquivos</h2>
+        
+        <h3>📤 Subir arquivos</h3>
+        <div class="steps">
+            <p><strong>Pasos para subir arquivos:</strong></p>
+            <ol>
+                <li>Vai á sección "Arquivos" no menú principal</li>
+                <li>Selecciona a data para a que queres subir arquivos</li>
+                <li>Fai clic no botón "Subir arquivos" para esa data</li>
+                <li>Selecciona os arquivos do teu ordenador</li>
+                <li>Engade unha descrición (opcional)</li>
+                <li>Fai clic en "Subir"</li>
+            </ol>
+        </div>
+        
+        <div class="success">
+            📋 <strong>Tipos admitidos:</strong> PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, imaxes (JPG, PNG, GIF) e moitos máis. Tamaño máximo: 10MB por arquivo.
+        </div>
+
+        <h3>👀 Ver e descargar arquivos</h3>
+        <p><strong>Formas de acceder aos arquivos:</strong></p>
+        <ul>
+            <li><strong>Vista calendario:</strong> Os días con arquivos aparecen marcados cunha icona de carpeta</li>
+            <li><strong>Lista de arquivos:</strong> Fai clic nunha data para ver todos os arquivos dese día</li>
+            <li><strong>Descarga:</strong> Fai clic no nome do arquivo para descargalo</li>
+            <li><strong>Previsualización:</strong> Algúns arquivos (PDFs, imaxes) pódense ver sen descargar</li>
+        </ul>
+
+        <div class="card">
+            <h4>Información mostrada:</h4>
+            <ul>
+                <li>Nome orixinal do arquivo</li>
+                <li>Quen o subiu</li>
+                <li>Data e hora de subida</li>
+                <li>Tamaño do arquivo</li>
+                <li>Descrición (se a hai)</li>
+            </ul>
+        </div>
+
+        <h3>🗑️ Eliminar arquivos</h3>
+        <p><strong>Eliminación manual:</strong></p>
+        <ul>
+            <li>Só podes eliminar os arquivos que subiches ti</li>
+            <li>Os administradores poden eliminar calquera arquivo</li>
+            <li>Fai clic na icona de lixo xunto ao arquivo</li>
+            <li>Confirma a eliminación no diálogo que aparece</li>
+        </ul>
+
+        <div class="warning">
+            ⏰ <strong>Eliminación automática:</strong> Os arquivos elimínanse automaticamente 5 días despois da data de substitución para liberar espazo.
+        </div>
+
+        <div class="important">
+            <h4>⚠️ Importante sobre a caducidade</h4>
+            <p>Os arquivos caducan automaticamente 5 días despois da data de substitución. Por exemplo, se subes un arquivo para o día 23, eliminarase automaticamente o día 28. Isto garante que o sistema non se encha de arquivos antigos.</p>
+        </div>
+
+        <h3>📂 Organización por datas</h3>
+        <p>O sistema organiza todos os arquivos por data de substitución:</p>
+        <ul>
+            <li>Cada data ten a súa propia carpeta virtual</li>
+            <li>Podes subir múltiples arquivos para a mesma data</li>
+            <li>Os arquivos están dispoñibles para todo o profesorado</li>
+            <li>As datas con arquivos aparecen destacadas no calendario</li>
+        </ul>
+
+        <div class="card">
+            <h4>Casos de uso típicos:</h4>
+            <ul>
+                <li>Fichas de traballo para substitucións</li>
+                <li>Instrucións específicas para o día</li>
+                <li>Material de apoio</li>
+                <li>Documentos administrativos</li>
+                <li>Plans de traballo alternativos</li>
+            </ul>
+        </div>
+
+        <h3>🔒 Permisos e seguridade</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Todo o profesorado pode:</h4>
+                <ul>
+                    <li>Ver todos os arquivos</li>
+                    <li>Descargar todos os arquivos</li>
+                    <li>Subir arquivos</li>
+                    <li>Eliminar os seus propios arquivos</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Os administradores poden:</h4>
+                <ul>
+                    <li>Todo o anterior</li>
+                    <li>Eliminar calquera arquivo</li>
+                    <li>Ver quen subiu cada arquivo</li>
+                    <li>Xestionar o espazo de almacenamento</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="success">
+            🛡️ <strong>Seguridade:</strong> Todos os arquivos quedan rexistrados nun historial interno do sistema para efectos de auditoría e seguridade.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>➕ Xestión de Substitucións (Administradores)</h2>
+        
+        <h3>🆕 Crear unha nova substitución</h3>
+        <div class="steps">
+            <p><strong>Pasos para crear unha substitución:</strong></p>
+            <ol>
+                <li>Fai clic en "Nova Substitución"</li>
+                <li>Selecciona a data e hora</li>
+                <li>Escolle o profesor ausente (opcional)</li>
+                <li>Selecciona o grupo afectado</li>
+                <li>Escolle o motivo da substitución</li>
+                <li>O sistema asignará automaticamente o profesor con máis horas libres</li>
+                <li>Engade observacións se é necesario</li>
+                <li>Garda a substitución</li>
+            </ol>
+        </div>
+        
+        <div class="important">
+            🤖 <strong>Asignación automática:</strong> O sistema escolle automaticamente o profesor que ten máis horas libres dispoñibles na semana.
+        </div>
+
+        <h3>📝 Motivos de substitución</h3>
+        <div class="grid">
+            <div class="card">
+                <h4>Motivos principais:</h4>
+                <ul>
+                    <li>Enfermidade</li>
+                    <li>Formación</li>
+                    <li>Xestións oficiais</li>
+                    <li>Reunión</li>
+                    <li>Outro (especificar)</li>
+                </ul>
+            </div>
+            <div class="card">
+                <h4>Información adicional:</h4>
+                <ul>
+                    <li>Sesión (1ª, 2ª, 3ª, etc.)</li>
+                    <li>Guardia de transporte se procede</li>
+                    <li>Observacións especiais</li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>✏️ Editar ou eliminar substitucións</h3>
+        <p><strong>Para modificar unha substitución:</strong></p>
+        <ul>
+            <li>Fai clic na substitución no calendario</li>
+            <li>Selecciona "Editar" no diálogo que aparece</li>
+            <li>Modifica os campos necesarios</li>
+            <li>Garda os cambios</li>
+        </ul>
+        
+        <div class="warning">
+            📧 <strong>Atención:</strong> Se cambias o profesor asignado, o novo profesor recibirá unha notificación por email.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>👥 Xestión do Profesorado (Administradores)</h2>
+        
+        <h3>➕ Engadir novo profesor</h3>
+        <p><strong>Campos obrigatorios:</strong></p>
+        <ul>
+            <li><strong>Nome:</strong> Nome do profesor</li>
+            <li><strong>Apelidos:</strong> Apelidos completos</li>
+            <li><strong>Email:</strong> Correo electrónico (será o usuario de acceso)</li>
+            <li><strong>Contrasinal:</strong> Contrasinal inicial (o profesor pode cambialo)</li>
+            <li><strong>Teléfono:</strong> Número de contacto (opcional)</li>
+            <li><strong>Horas libres semanais:</strong> MUY IMPORTANTE</li>
+        </ul>
+
+        <div class="important">
+            ⏰ <strong>¿Por qué as horas libres semanais?</strong><br>
+            Este número determina cantas substitucións pode facer cada profesor por semana. Garante unha distribución equitativa das substitucións entre todo o profesorado. O sistema asigna automaticamente as substitucións ao profesor con máis horas libres dispoñibles.
+        </div>
+
+        <h3>🧮 ¿Como calcular as horas libres semanais?</h3>
+        <div class="card">
+            <h4>Cálculo recomendado:</h4>
+            <ul>
+                <li><strong>Profesor a tempo completo:</strong> 5-8 horas libres</li>
+                <li><strong>Profesor con media xornada:</strong> 2-4 horas libres</li>
+                <li><strong>Especialistas:</strong> 3-6 horas libres</li>
+                <li><strong>Equipo directivo:</strong> 1-3 horas libres</li>
+            </ul>
+            <p><em>Estas cifras son orientativas. Cada centro debe adaptálas segundo a súa organización e as necesidades específicas de cada profesor.</em></p>
+        </div>
+
+        <h3>🔄 Sistema de contador semanal</h3>
+        <p>O sistema leva un contador automático:</p>
+        <ul>
+            <li>Cada substitución asignada desconta 1 hora das libres dispoñibles</li>
+            <li>O contador reiníciase automaticamente cada luns</li>
+            <li>Podes ver as horas restantes na xestión de profesorado</li>
+            <li>Se un profesor non ten horas libres, non se lle asignarán substitucións</li>
+        </ul>
+        
+        <div class="success">
+            ⚙️ <strong>Opción avanzada:</strong> Podes reiniciar manualmente o contador se é necesario desde a xestión de profesorado.
+        </div>
+
+        <h3>✏️ Editar datos do profesorado</h3>
+        <div class="steps">
+            <p>Para modificar os datos dun profesor:</p>
+            <ol>
+                <li>Vai a "Xestionar profesorado"</li>
+                <li>Busca o profesor na lista</li>
+                <li>Fai clic en "Editar"</li>
+                <li>Modifica os campos necesarios</li>
+                <li>Non esquezas axustar as horas libres se cambia a súa situación</li>
+                <li>Garda os cambios</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Resolución de Problemas</h2>
+        
+        <h3>📁 Problemas con arquivos</h3>
+        <div class="warning">
+            <h4>Problemas frecuentes:</h4>
+            <ul>
+                <li><strong>Arquivo moi grande:</strong> O tamaño máximo é 10MB. Se o arquivo é maior, comprímeo ou divídeo en varios arquivos.</li>
+                <li><strong>Tipo de arquivo non admitido:</strong> Revisa que o arquivo sexa dun tipo admitido. A maioría de formatos de oficina e imaxes están soportados.</li>
+                <li><strong>Non se pode descargar:</strong> Proba con outro navegador ou limpa a caché. Se persiste, contacta co administrador.</li>
+                <li><strong>Arquivo desapareceu:</strong> Lembra que os arquivos se eliminan automaticamente 5 días despois da data de substitución.</li>
+                <li><strong>Non podo eliminar un arquivo:</strong> Só podes eliminar os arquivos que subiches ti. Os administradores poden eliminar calquera arquivo.</li>
+            </ul>
+        </div>
+
+        <h3>❌ Erro ao crear substitución</h3>
+        <div class="warning">
+            <h4>Posibles causas e solucións:</h4>
+            <ul>
+                <li><strong>Non hai profesores dispoñibles:</strong> Todos os profesores esgotaron as súas horas libres. Verifica na xestión de profesorado quen ten horas dispoñibles ou reinicia os contadores semanais.</li>
+                <li><strong>Conflito de horarios:</strong> O profesor seleccionado xa ten unha substitución na mesma hora. O sistema debería evitar isto, pero podes verificar no calendario.</li>
+                <li><strong>Campos obrigatorios baleiros:</strong> Revisa que todos os campos marcados con * estean cumprimentados.</li>
+                <li><strong>Problema de conexión:</strong> Verifica a túa conexión a internet e inténtao de novo.</li>
+            </ul>
+        </div>
+
+        <h3>❌ Erro ao engadir profesor</h3>
+        <div class="warning">
+            <h4>Problemas frecuentes:</h4>
+            <ul>
+                <li><strong>Email xa existe:</strong> Ese correo electrónico xa está rexistrado no sistema. Cada profesor debe ter un email único.</li>
+                <li><strong>Contrasinal moi simple:</strong> O contrasinal debe ter polo menos 6 caracteres.</li>
+                <li><strong>Formato de email incorrecto:</strong> Asegúrate de que o email ten o formato correcto (exemplo@dominio.com).</li>
+                <li><strong>Horas libres non válidas:</strong> Debe ser un número entre 0 e 40.</li>
+            </ul>
+        </div>
+
+        <h3>📧 Non chegan os emails de notificación</h3>
+        <p><strong>Que comprobar:</strong></p>
+        <ul>
+            <li>Revisa a carpeta de spam/correo non desexado</li>
+            <li>Verifica que o email no perfil do profesor está correcto</li>
+            <li>Alguns servidores de correo poden bloquear emails automáticos</li>
+            <li>Contacta co administrador do sistema se persiste o problema</li>
+        </ul>
+        
+        <div class="important">
+            📬 <strong>Paciencia:</strong> Os emails de notificación poden tardar uns minutos en chegar. Se tras 10 minutos non chegou, revisa os puntos anteriores.
+        </div>
+
+        <h3>🔐 Non podo acceder ao sistema</h3>
+        <p><strong>Problemas de acceso:</strong></p>
+        <ul>
+            <li>Verifica que estás usando o email correcto (non o nome de usuario)</li>
+            <li>Asegúrate de que o contrasinal é correcto</li>
+            <li>Proba a restablecer o contrasinal</li>
+            <li>Limpa a caché do navegador</li>
+            <li>Proba con outro navegador</li>
+        </ul>
+        
+        <div class="success">
+            🆘 <strong>Axuda:</strong> Se continúas tendo problemas, contacta co administrador do sistema. Proporciona o teu email e unha descrición do erro que aparece.
+        </div>
+
+        <h3>🐌 O sistema vai lento</h3>
+        <p><strong>Optimizacións:</strong></p>
+        <ul>
+            <li>Usa un navegador actualizado (Chrome, Firefox, Safari)</li>
+            <li>Limpa a caché e cookies do navegador</li>
+            <li>Desactiva extensións innecesarias do navegador</li>
+            <li>Verifica a túa conexión a internet</li>
+            <li>Evita ter moitas pestanas abertas ao mesmo tempo</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>📞 Soporte e Contacto</h2>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>🔧 Administrador do Sistema</h3>
+                <p><strong>Para problemas técnicos:</strong></p>
+                <ul>
+                    <li>Erros no sistema</li>
+                    <li>Problemas de acceso</li>
+                    <li>Configuración de contas</li>
+                    <li>Preguntas sobre funcionamento</li>
+                </ul>
+            </div>
+            
+            <div class="card">
+                <h3>🏫 Equipo Directivo</h3>
+                <p><strong>Para temas organizativos:</strong></p>
+                <ul>
+                    <li>Asignación de horas libres</li>
+                    <li>Política de substitucións</li>
+                    <li>Cambios organizativos</li>
+                    <li>Consultas pedagóxicas</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="success">
+            💡 <strong>Consello:</strong> Antes de contactar, revisa esta guía de axuda. A maioría de problemas teñen solución rápida seguindo estes pasos.
+        </div>
+
+        <div class="card">
+            <h4>Información útil para reportar problemas:</h4>
+            <ul>
+                <li>Que estabas intentando facer cando ocorreu o erro</li>
+                <li>Mensaxe de erro exacta (se aparece algúa)</li>
+                <li>Navegador que estás usando</li>
+                <li>Se o problema ocorre sempre ou só ás veces</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer style="margin-top: 50px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #6b7280;">
+        <p>📚 Este documento foi xerado automaticamente do sistema de axuda do CEIP Valle Inclán - Sistema de Substitucións</p>
+        <p>🗓️ Data de xeración: Agosto 2025</p>
+    </footer>
+</body>
+</html>

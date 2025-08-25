@@ -16,7 +16,11 @@ import {
   Info,
   AlertCircle,
   UserPlus,
-  PlusCircle
+  PlusCircle,
+  FolderOpen,
+  Upload,
+  Trash2,
+  FileText
 } from 'lucide-react';
 
 export const AxudaView: React.FC = () => {
@@ -32,9 +36,10 @@ export const AxudaView: React.FC = () => {
       </div>
 
       <Tabs defaultValue="introduccion" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="introduccion">Introdución</TabsTrigger>
           <TabsTrigger value="calendario">Calendario</TabsTrigger>
+          <TabsTrigger value="arquivos">Arquivos</TabsTrigger>
           <TabsTrigger value="substitucions">Substitucións</TabsTrigger>
           <TabsTrigger value="profesorado">Profesorado</TabsTrigger>
           <TabsTrigger value="problemas">Problemas</TabsTrigger>
@@ -70,6 +75,10 @@ export const AxudaView: React.FC = () => {
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
+                        Subir e xestionar arquivos por data
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
                         Consultar o seu perfil
                       </li>
                     </ul>
@@ -89,6 +98,10 @@ export const AxudaView: React.FC = () => {
                       <li className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
                         Xestionar profesorado
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        Xestionar arquivos do sistema
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -171,6 +184,160 @@ export const AxudaView: React.FC = () => {
                       <Mail className="h-4 w-4" />
                       <AlertDescription>
                         Asegúrate de que o teu email está actualizado no teu perfil
+                      </AlertDescription>
+                    </Alert>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="arquivos" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FolderOpen className="h-5 w-5 text-primary" />
+                Xestión de Arquivos
+              </CardTitle>
+              <CardDescription>
+                Sistema de arquivos organizados por data de substitución
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="subir-arquivos">
+                  <AccordionTrigger>Subir arquivos</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p><strong>Como subir arquivos:</strong></p>
+                    <ol className="space-y-2 ml-4 list-decimal">
+                      <li>Vai á sección "Arquivos" no menú principal</li>
+                      <li>Selecciona a data para a que queres subir arquivos</li>
+                      <li>Fai clic no botón "Subir arquivos" para esa data</li>
+                      <li>Selecciona os arquivos do teu ordenador</li>
+                      <li>Engade unha descrición (opcional)</li>
+                      <li>Fai clic en "Subir"</li>
+                    </ol>
+                    
+                    <Alert>
+                      <Upload className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Tipos admitidos:</strong> PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, 
+                        imaxes (JPG, PNG, GIF) e moitos máis. Tamaño máximo: 10MB por arquivo.
+                      </AlertDescription>
+                    </Alert>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="ver-arquivos">
+                  <AccordionTrigger>Ver e descargar arquivos</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p><strong>Formas de acceder aos arquivos:</strong></p>
+                    <ul className="space-y-2 ml-4">
+                      <li>• <strong>Vista calendario:</strong> Os días con arquivos aparecen marcados cunha icona de carpeta</li>
+                      <li>• <strong>Lista de arquivos:</strong> Fai clic nunha data para ver todos os arquivos dese día</li>
+                      <li>• <strong>Descarga:</strong> Fai clic no nome do arquivo para descargalo</li>
+                      <li>• <strong>Previsualización:</strong> Algúns arquivos (PDFs, imaxes) pódense ver sen descargar</li>
+                    </ul>
+                    
+                    <div className="bg-muted p-4 rounded-lg">
+                      <h4 className="font-semibold mb-2">Información mostrada:</h4>
+                      <ul className="space-y-1 text-sm">
+                        <li>• Nome orixinal do arquivo</li>
+                        <li>• Quen o subiu</li>
+                        <li>• Data e hora de subida</li>
+                        <li>• Tamaño do arquivo</li>
+                        <li>• Descrición (se a hai)</li>
+                      </ul>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="eliminar-arquivos">
+                  <AccordionTrigger>Eliminar arquivos</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p><strong>Eliminación manual:</strong></p>
+                    <ul className="space-y-2 ml-4">
+                      <li>• Só podes eliminar os arquivos que subiches ti</li>
+                      <li>• Os administradores poden eliminar calquera arquivo</li>
+                      <li>• Fai clic na icona de lixo xunto ao arquivo</li>
+                      <li>• Confirma a eliminación no diálogo que aparece</li>
+                    </ul>
+                    
+                    <Alert>
+                      <Trash2 className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Eliminación automática:</strong> Os arquivos elimínanse automaticamente 
+                        5 días despois da data de substitución para liberar espazo.
+                      </AlertDescription>
+                    </Alert>
+
+                    <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <h4 className="font-semibold text-amber-800 dark:text-amber-200 mb-2">
+                        ⚠️ Importante sobre a caducidade
+                      </h4>
+                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                        Os arquivos caducan automaticamente 5 días despois da data de substitución. 
+                        Por exemplo, se subes un arquivo para o día 23, eliminarase automaticamente o día 28. 
+                        Isto garante que o sistema non se encha de arquivos antigos.
+                      </p>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="organizacion">
+                  <AccordionTrigger>Organización por datas</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p>O sistema organiza todos os arquivos por data de substitución:</p>
+                    <ul className="space-y-2 ml-4">
+                      <li>• Cada data ten a súa propia carpeta virtual</li>
+                      <li>• Podes subir múltiples arquivos para a mesma data</li>
+                      <li>• Os arquivos están dispoñibles para todo o profesorado</li>
+                      <li>• As datas con arquivos aparecen destacadas no calendario</li>
+                    </ul>
+
+                    <div className="bg-muted p-4 rounded-lg">
+                      <h4 className="font-semibold mb-2">Casos de uso típicos:</h4>
+                      <ul className="space-y-1 text-sm">
+                        <li>• Fichas de traballo para substitucións</li>
+                        <li>• Instrucións específicas para o día</li>
+                        <li>• Material de apoio</li>
+                        <li>• Documentos administrativos</li>
+                        <li>• Plans de traballo alternativos</li>
+                      </ul>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="permisos">
+                  <AccordionTrigger>Permisos e seguridade</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <h4 className="font-semibold mb-2">Todo o profesorado pode:</h4>
+                        <ul className="space-y-1 text-sm">
+                          <li>• Ver todos os arquivos</li>
+                          <li>• Descargar todos os arquivos</li>
+                          <li>• Subir arquivos</li>
+                          <li>• Eliminar os seus propios arquivos</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-2">Os administradores poden:</h4>
+                        <ul className="space-y-1 text-sm">
+                          <li>• Todo o anterior</li>
+                          <li>• Eliminar calquera arquivo</li>
+                          <li>• Ver quen subiu cada arquivo</li>
+                          <li>• Xestionar o espazo de almacenamento</li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        Todos os arquivos quedan rexistrados nun historial interno do sistema 
+                        para efectos de auditoría e seguridade.
                       </AlertDescription>
                     </Alert>
                   </AccordionContent>
@@ -378,6 +545,37 @@ export const AxudaView: React.FC = () => {
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="error-arquivos">
+                  <AccordionTrigger>📁 Problemas con arquivos</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/20">
+                      <h4 className="font-semibold text-destructive mb-2">Problemas frecuentes:</h4>
+                      <ul className="space-y-2 text-sm">
+                        <li>
+                          <strong>Arquivo moi grande:</strong><br/>
+                          O tamaño máximo é 10MB. Se o arquivo é maior, comprímeo ou divídeo en varios arquivos.
+                        </li>
+                        <li>
+                          <strong>Tipo de arquivo non admitido:</strong><br/>
+                          Revisa que o arquivo sexa dun tipo admitido. A maioría de formatos de oficina e imaxes están soportados.
+                        </li>
+                        <li>
+                          <strong>Non se pode descargar:</strong><br/>
+                          Proba con outro navegador ou limpa a caché. Se persiste, contacta co administrador.
+                        </li>
+                        <li>
+                          <strong>Arquivo desapareceu:</strong><br/>
+                          Lembra que os arquivos se eliminan automaticamente 5 días despois da data de substitución.
+                        </li>
+                        <li>
+                          <strong>Non podo eliminar un arquivo:</strong><br/>
+                          Só podes eliminar os arquivos que subiches ti. Os administradores poden eliminar calquera arquivo.
+                        </li>
+                      </ul>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
                 <AccordionItem value="error-sustitucion">
                   <AccordionTrigger>❌ Erro ao crear substitución</AccordionTrigger>
                   <AccordionContent className="space-y-3">

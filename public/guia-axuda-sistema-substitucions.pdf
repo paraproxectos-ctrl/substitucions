@@ -1,0 +1,463 @@
+%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/Resources <<
+/Font <<
+/F1 4 0 R
+>>
+>>
+/MediaBox [0 0 612 792]
+/Contents 5 0 R
+>>
+endobj
+
+4 0 obj
+<<
+/Type /Font
+/Subtype /Type1
+/BaseFont /Helvetica
+>>
+endobj
+
+5 0 obj
+<<
+/Length 15000
+>>
+stream
+BT
+/F1 18 Tf
+50 750 Td
+(GUÍA DE AXUDA - SISTEMA DE SUBSTITUCIÓNS) Tj
+0 -30 Td
+/F1 14 Tf
+(CEIP Valle Inclán) Tj
+0 -40 Td
+/F1 12 Tf
+
+(========================================) Tj
+0 -20 Td
+(INTRODUCIÓN) Tj
+0 -20 Td
+(========================================) Tj
+0 -15 Td
+
+(Este sistema permite xestionar de forma eficiente as substitucións) Tj
+0 -12 Td
+(do profesorado no CEIP Valle Inclán.) Tj
+0 -20 Td
+
+(PARA PROFESORADO:) Tj
+0 -12 Td
+(• Ver o calendario de substitucións) Tj
+0 -12 Td
+(• Marcar substitucións como vistas) Tj
+0 -12 Td
+(• Subir e xestionar arquivos por data) Tj
+0 -12 Td
+(• Consultar o seu perfil) Tj
+0 -20 Td
+
+(PARA ADMINISTRADORES:) Tj
+0 -12 Td
+(• Crear e xestionar substitucións) Tj
+0 -12 Td
+(• Xestionar profesorado) Tj
+0 -12 Td
+(• Xestionar arquivos do sistema) Tj
+0 -12 Td
+(• Ver informes e estatísticas) Tj
+0 -20 Td
+
+(IMPORTANTE: Cada profesor ten un número limitado de horas libres) Tj
+0 -12 Td
+(semanais. Isto serve para distribuír equitativamente as) Tj
+0 -12 Td
+(substitucións entre todo o profesorado.) Tj
+0 -30 Td
+
+(========================================) Tj
+0 -20 Td
+(CALENDARIO) Tj
+0 -20 Td
+(========================================) Tj
+0 -15 Td
+
+(VISUALIZAR SUBSTITUCIÓNS:) Tj
+0 -12 Td
+(O calendario mostra todas as substitucións programadas:) Tj
+0 -12 Td
+(• Azul: Substitucións asignadas a ti) Tj
+0 -12 Td
+(• Gris: Substitucións doutros profesores) Tj
+0 -12 Td
+(• Vermello: Substitucións urxentes ou non vistas) Tj
+0 -15 Td
+(Fai clic nunha substitución para ver todos os detalles) Tj
+0 -12 Td
+(e marcar como vista.) Tj
+0 -20 Td
+
+(FILTROS E BUSCA:) Tj
+0 -12 Td
+(• Podes filtrar por data, profesor ou grupo) Tj
+0 -12 Td
+(• Usa a busca rápida para atopar substitucións específicas) Tj
+0 -12 Td
+(• As substitucións pasadas móstranse en cor máis suave) Tj
+0 -20 Td
+
+(NOTIFICACIÓNS POR EMAIL:) Tj
+0 -12 Td
+(Recibirás un email automático cando:) Tj
+0 -12 Td
+(• Te asignen unha nova substitución) Tj
+0 -12 Td
+(• Haxa cambios nunha substitución xa asignada) Tj
+0 -12 Td
+(• Se cancele unha substitución) Tj
+0 -15 Td
+(Asegúrate de que o teu email está actualizado no teu perfil.) Tj
+0 -30 Td
+
+(========================================) Tj
+0 -20 Td
+(SISTEMA DE ARQUIVOS) Tj
+0 -20 Td
+(========================================) Tj
+0 -15 Td
+
+(SUBIR ARQUIVOS:) Tj
+0 -12 Td
+(1. Vai á sección "Arquivos" no menú principal) Tj
+0 -12 Td
+(2. Selecciona a data para a que queres subir arquivos) Tj
+0 -12 Td
+(3. Fai clic no botón "Subir arquivos" para esa data) Tj
+0 -12 Td
+(4. Selecciona os arquivos do teu ordenador) Tj
+0 -12 Td
+(5. Engade unha descrición \(opcional\)) Tj
+0 -12 Td
+(6. Fai clic en "Subir") Tj
+0 -15 Td
+(Tipos admitidos: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT,) Tj
+0 -12 Td
+(imaxes \(JPG, PNG, GIF\) e moitos máis. Tamaño máximo: 10MB.) Tj
+0 -20 Td
+
+(VER E DESCARGAR ARQUIVOS:) Tj
+0 -12 Td
+(• Vista calendario: Os días con arquivos aparecen marcados) Tj
+0 -12 Td
+(• Lista de arquivos: Fai clic nunha data para ver todos) Tj
+0 -12 Td
+(• Descarga: Fai clic no nome do arquivo para descargalo) Tj
+0 -12 Td
+(• Previsualización: Algúns arquivos pódense ver sen descargar) Tj
+0 -20 Td
+
+(ELIMINACIÓN DE ARQUIVOS:) Tj
+0 -12 Td
+(• Só podes eliminar os arquivos que subiches ti) Tj
+0 -12 Td
+(• Os administradores poden eliminar calquera arquivo) Tj
+0 -12 Td
+(• Fai clic na icona de lixo xunto ao arquivo) Tj
+0 -15 Td
+(IMPORTANTE: Os arquivos elimínanse automaticamente) Tj
+0 -12 Td
+(5 días despois da data de substitución para liberar espazo.) Tj
+0 -20 Td
+
+(CADUCIDADE AUTOMÁTICA:) Tj
+0 -12 Td
+(Os arquivos caducan automaticamente 5 días despois da data) Tj
+0 -12 Td
+(de substitución. Por exemplo, se subes un arquivo para o) Tj
+0 -12 Td
+(día 23, eliminarase automaticamente o día 28.) Tj
+0 -30 Td
+
+(========================================) Tj
+0 -20 Td
+(XESTIÓN DE SUBSTITUCIÓNS \(ADMINISTRADORES\)) Tj
+0 -20 Td
+(========================================) Tj
+0 -15 Td
+
+(CREAR UNHA NOVA SUBSTITUCIÓN:) Tj
+0 -12 Td
+(1. Fai clic en "Nova Substitución") Tj
+0 -12 Td
+(2. Selecciona a data e hora) Tj
+0 -12 Td
+(3. Escolle o profesor ausente \(opcional\)) Tj
+0 -12 Td
+(4. Selecciona o grupo afectado) Tj
+0 -12 Td
+(5. Escolle o motivo da substitución) Tj
+0 -12 Td
+(6. O sistema asignará automaticamente o profesor) Tj
+0 -12 Td
+(7. Engade observacións se é necesario) Tj
+0 -12 Td
+(8. Garda a substitución) Tj
+0 -15 Td
+(O sistema escolle automaticamente o profesor que ten) Tj
+0 -12 Td
+(máis horas libres dispoñibles na semana.) Tj
+0 -20 Td
+
+(MOTIVOS DE SUBSTITUCIÓN:) Tj
+0 -12 Td
+(• Enfermidade) Tj
+0 -12 Td
+(• Formación) Tj
+0 -12 Td
+(• Xestións oficiais) Tj
+0 -12 Td
+(• Reunión) Tj
+0 -12 Td
+(• Outro \(especificar\)) Tj
+0 -20 Td
+
+(EDITAR OU ELIMINAR SUBSTITUCIÓNS:) Tj
+0 -12 Td
+(• Fai clic na substitución no calendario) Tj
+0 -12 Td
+(• Selecciona "Editar" no diálogo que aparece) Tj
+0 -12 Td
+(• Modifica os campos necesarios) Tj
+0 -12 Td
+(• Garda os cambios) Tj
+0 -15 Td
+(Se cambias o profesor asignado, o novo profesor recibirá) Tj
+0 -12 Td
+(unha notificación por email.) Tj
+0 -30 Td
+
+(========================================) Tj
+0 -20 Td
+(XESTIÓN DO PROFESORADO \(ADMINISTRADORES\)) Tj
+0 -20 Td
+(========================================) Tj
+0 -15 Td
+
+(ENGADIR NOVO PROFESOR:) Tj
+0 -12 Td
+(Campos obrigatorios:) Tj
+0 -12 Td
+(• Nome: Nome do profesor) Tj
+0 -12 Td
+(• Apelidos: Apelidos completos) Tj
+0 -12 Td
+(• Email: Correo electrónico \(será o usuario de acceso\)) Tj
+0 -12 Td
+(• Contrasinal: Contrasinal inicial) Tj
+0 -12 Td
+(• Teléfono: Número de contacto \(opcional\)) Tj
+0 -12 Td
+(• Horas libres semanais: MUY IMPORTANTE) Tj
+0 -20 Td
+
+(CÁLCULO DAS HORAS LIBRES SEMANAIS:) Tj
+0 -12 Td
+(• Profesor a tempo completo: 5-8 horas libres) Tj
+0 -12 Td
+(• Profesor con media xornada: 2-4 horas libres) Tj
+0 -12 Td
+(• Especialistas: 3-6 horas libres) Tj
+0 -12 Td
+(• Equipo directivo: 1-3 horas libres) Tj
+0 -15 Td
+(Estas cifras son orientativas. Cada centro debe adaptálas) Tj
+0 -12 Td
+(segundo a súa organización.) Tj
+0 -20 Td
+
+(SISTEMA DE CONTADOR SEMANAL:) Tj
+0 -12 Td
+(• Cada substitución asignada desconta 1 hora das libres) Tj
+0 -12 Td
+(• O contador reiníciase automaticamente cada luns) Tj
+0 -12 Td
+(• Podes ver as horas restantes na xestión de profesorado) Tj
+0 -12 Td
+(• Se un profesor non ten horas libres, non se lle asignarán) Tj
+0 -15 Td
+(Podes reiniciar manualmente o contador se é necesario.) Tj
+0 -30 Td
+
+(========================================) Tj
+0 -20 Td
+(RESOLUCIÓN DE PROBLEMAS) Tj
+0 -20 Td
+(========================================) Tj
+0 -15 Td
+
+(PROBLEMAS CON ARQUIVOS:) Tj
+0 -12 Td
+(• Arquivo moi grande: O tamaño máximo é 10MB) Tj
+0 -12 Td
+(• Tipo non admitido: Revisa que sexa un tipo soportado) Tj
+0 -12 Td
+(• Non se pode descargar: Proba con outro navegador) Tj
+0 -12 Td
+(• Arquivo desapareceu: Lembra a caducidade automática) Tj
+0 -12 Td
+(• Non podo eliminar: Só podes eliminar os teus arquivos) Tj
+0 -20 Td
+
+(ERRO AO CREAR SUBSTITUCIÓN:) Tj
+0 -12 Td
+(• Non hai profesores dispoñibles: Verifica as horas libres) Tj
+0 -12 Td
+(• Conflito de horarios: Verifica no calendario) Tj
+0 -12 Td
+(• Campos baleiros: Revisa que todos os campos estean) Tj
+0 -12 Td
+(• Problema de conexión: Verifica internet) Tj
+0 -20 Td
+
+(ERRO AO ENGADIR PROFESOR:) Tj
+0 -12 Td
+(• Email xa existe: Cada profesor debe ter email único) Tj
+0 -12 Td
+(• Contrasinal moi simple: Mínimo 6 caracteres) Tj
+0 -12 Td
+(• Formato de email incorrecto: exemplo@dominio.com) Tj
+0 -12 Td
+(• Horas libres non válidas: Debe ser entre 0 e 40) Tj
+0 -20 Td
+
+(NON CHEGAN OS EMAILS:) Tj
+0 -12 Td
+(• Revisa a carpeta de spam) Tj
+0 -12 Td
+(• Verifica que o email no perfil está correcto) Tj
+0 -12 Td
+(• Algúns servidores poden bloquear emails automáticos) Tj
+0 -12 Td
+(• Contacta co administrador se persiste) Tj
+0 -15 Td
+(Os emails poden tardar uns minutos en chegar.) Tj
+0 -20 Td
+
+(NON PODO ACCEDER:) Tj
+0 -12 Td
+(• Usa o email correcto \(non o nome de usuario\)) Tj
+0 -12 Td
+(• Asegúrate de que o contrasinal é correcto) Tj
+0 -12 Td
+(• Proba a restablecer o contrasinal) Tj
+0 -12 Td
+(• Limpa a caché do navegador) Tj
+0 -12 Td
+(• Proba con outro navegador) Tj
+0 -20 Td
+
+(O SISTEMA VAI LENTO:) Tj
+0 -12 Td
+(• Usa un navegador actualizado) Tj
+0 -12 Td
+(• Limpa a caché e cookies) Tj
+0 -12 Td
+(• Desactiva extensións innecesarias) Tj
+0 -12 Td
+(• Verifica a conexión a internet) Tj
+0 -12 Td
+(• Evita moitas pestanas abertas) Tj
+0 -30 Td
+
+(========================================) Tj
+0 -20 Td
+(SOPORTE E CONTACTO) Tj
+0 -20 Td
+(========================================) Tj
+0 -15 Td
+
+(ADMINISTRADOR DO SISTEMA:) Tj
+0 -12 Td
+(Para problemas técnicos:) Tj
+0 -12 Td
+(• Erros no sistema) Tj
+0 -12 Td
+(• Problemas de acceso) Tj
+0 -12 Td
+(• Configuración de contas) Tj
+0 -12 Td
+(• Preguntas sobre funcionamento) Tj
+0 -20 Td
+
+(EQUIPO DIRECTIVO:) Tj
+0 -12 Td
+(Para temas organizativos:) Tj
+0 -12 Td
+(• Asignación de horas libres) Tj
+0 -12 Td
+(• Política de substitucións) Tj
+0 -12 Td
+(• Cambios organizativos) Tj
+0 -12 Td
+(• Consultas pedagóxicas) Tj
+0 -20 Td
+
+(CONSELLO: Antes de contactar, revisa esta guía.) Tj
+0 -12 Td
+(A maioría de problemas teñen solución rápida.) Tj
+0 -20 Td
+
+(INFORMACIÓN ÚTIL PARA REPORTAR PROBLEMAS:) Tj
+0 -12 Td
+(• Que estabas intentando facer cando ocorreu o erro) Tj
+0 -12 Td
+(• Mensaxe de erro exacta \(se aparece algúa\)) Tj
+0 -12 Td
+(• Navegador que estás usando) Tj
+0 -12 Td
+(• Se o problema ocorre sempre ou só ás veces) Tj
+0 -30 Td
+
+(========================================) Tj
+0 -15 Td
+(Este documento foi xerado automaticamente do sistema) Tj
+0 -12 Td
+(de axuda do CEIP Valle Inclán - Sistema de Substitucións) Tj
+
+ET
+endstream
+endobj
+
+xref
+0 6
+0000000000 65535 f 
+0000000010 00000 n 
+0000000079 00000 n 
+0000000173 00000 n 
+0000000301 00000 n 
+0000000380 00000 n 
+trailer
+<<
+/Size 6
+/Root 1 0 R
+>>
+startxref
+15435
+%%EOF
