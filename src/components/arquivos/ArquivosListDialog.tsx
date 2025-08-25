@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,7 +30,7 @@ interface ArquivoCalendario {
   original_filename: string;
   mime_type: string;
   file_size: number;
-  storage_path: string;  // <-- path completo en el bucket
+  storage_path: string;  // clave relativa dentro del bucket
   owner_uid: string;
   owner_name: string;
   notes?: string;
@@ -56,6 +56,13 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
   const [classFilter, setClassFilter] = useState('all');
   const [ownerFilter, setOwnerFilter] = useState('all');
   const [downloading, setDownloading] = useState<string | null>(null);
+
+  // 👇 estado local de la lista + sincronización con la prop files
+  const [list, setList] = useState<ArquivoCalendario[]>([]);
+  useEffect(() => {
+    setList(files);
+  }, [files]);
+
   const { user, userRole } = useAuth();
   const { toast } = useToast();
 
@@ -81,10 +88,11 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
     return user && (file.owner_uid === user.id || userRole?.role === 'admin');
   };
 
-  const uniqueClasses = [...new Set(files.map(f => f.class_name))].sort();
-  const uniqueOwners = [...new Set(files.map(f => f.owner_name))].sort();
+  // 👇 ahora calculamos a partir de list (no de files)
+  const uniqueClasses = [...new Set(list.map(f => f.class_name))].sort();
+  const uniqueOwners = [...new Set(list.map(f => f.owner_name))].sort();
 
-  const filteredFiles = files.filter(file => {
+  const filteredFiles = list.filter(file => {
     const matchesSearch =
       file.original_filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
       file.class_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,7 +149,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
     }
   };
 
-  // BORRADO REAL: Storage + BD + auditoría
+  // BORRADO REAL: Storage + BD + auditoría + actualización de UI local
   const handleDelete = async (file: ArquivoCalendario) => {
     try {
       // 1) Borra del Storage (ruta completa en storage_path)
@@ -169,6 +177,10 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
           by_uid: user?.id || '',
         });
 
+      // 4) Actualiza la UI inmediatamente
+      setList(prev => prev.filter(f => f.id !== file.id));
+
+      // (opcional) si el padre quiere recargar, lo mantenemos
       onDeleteSuccess();
 
       toast({
@@ -254,7 +266,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
 
           {/* Stats */}
           <div className="flex gap-4 text-sm text-muted-foreground">
-            <span>Total: {files.length} arquivos</span>
+            <span>Total: {list.length} arquivos</span>
             <span>Filtrados: {filteredFiles.length} arquivos</span>
             <span>Clases: {uniqueClasses.length}</span>
           </div>
@@ -356,7 +368,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
             <Button
               onClick={() => {
                 onOpenChange(false);
-                // Aquí podrías abrir el diálogo de subida desde el componente padre
+                // aquí podrías abrir el diálogo de subida desde el componente padre
               }}
             >
               <Upload className="h-4 w-4 mr-2" />
