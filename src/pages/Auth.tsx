@@ -19,21 +19,17 @@ const Auth: React.FC = () => {
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate('/');
-      }
+      if (session) navigate('/');
     };
     checkUser();
   }, [navigate]);
 
   const cleanupAuthState = () => {
-    // Remove all Supabase auth keys from localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         localStorage.removeItem(key);
       }
     });
-    // Remove from sessionStorage if in use
     Object.keys(sessionStorage || {}).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
         sessionStorage.removeItem(key);
@@ -45,22 +41,19 @@ const Auth: React.FC = () => {
     e.preventDefault();
     if (!loginForm.email || !loginForm.password) {
       toast({
-        title: "Error",
-        description: "Por favor, introduce email e contraseña",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Por favor, introduce email e contraseña',
+        variant: 'destructive',
       });
       return;
     }
 
     setLoading(true);
     try {
-      // Clean up existing state
       cleanupAuthState();
       try {
         await supabase.auth.signOut({ scope: 'global' });
-      } catch (err) {
-        // Continue even if this fails
-      }
+      } catch {}
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: loginForm.email,
@@ -68,36 +61,23 @@ const Auth: React.FC = () => {
       });
 
       if (error) {
-        let errorMessage = "Error ao iniciar sesión";
+        let errorMessage = 'Error ao iniciar sesión';
         if (error.message.includes('Invalid login credentials')) {
-          errorMessage = "Email ou contraseña incorrectos";
+          errorMessage = 'Email ou contraseña incorrectos';
         } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = "Por favor, confirma o teu email antes de iniciar sesión";
+          errorMessage = 'Por favor, confirma o teu email antes de iniciar sesión';
         }
-        
-        toast({
-          title: "Error de autenticación",
-          description: errorMessage,
-          variant: "destructive",
-        });
+        toast({ title: 'Error de autenticación', description: errorMessage, variant: 'destructive' });
         return;
       }
 
       if (data.user) {
-        toast({
-          title: "Benvido/a",
-          description: "Sesión iniciada correctamente",
-        });
-        // Force page reload for clean state
+        toast({ title: 'Benvido/a', description: 'Sesión iniciada correctamente' });
         window.location.href = '/';
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      toast({
-        title: "Error",
-        description: "Erro inesperado ao iniciar sesión",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error('Login error:', err);
+      toast({ title: 'Error', description: 'Erro inesperado ao iniciar sesión', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -131,7 +111,7 @@ const Auth: React.FC = () => {
                 <Input
                   id="login-email"
                   type="email"
-                  placeholder="admin@vallinclan.edu.es"
+                  placeholder="admin@valleinclan.edu.es"
                   value={loginForm.email}
                   onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                   required
@@ -153,11 +133,7 @@ const Auth: React.FC = () => {
                   disabled={loading}
                 />
               </div>
-              <Button 
-                type="submit" 
-                className="w-full"
-                disabled={loading}
-              >
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
               </Button>
             </form>
@@ -172,7 +148,7 @@ const Auth: React.FC = () => {
         </Card>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          Sistema educativo © 2024 Valle Inclán
+          Sistema educativo © {new Date().getFullYear()} Valle Inclán
         </p>
       </div>
     </div>
