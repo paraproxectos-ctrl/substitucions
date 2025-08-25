@@ -1,3 +1,5 @@
+import { deleteFile, uploadFile } from '../../lib/files';
+import { BUCKET } from '../../lib/supabaseClient';
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
