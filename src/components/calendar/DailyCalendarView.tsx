@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar as CalendarIcon, Clock, User, CheckCircle, Eye, EyeOff, Bell, BellRing } from 'lucide-react';
+import { DailyCalendarViewEditable } from './DailyCalendarViewEditable';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import { format, parseISO, isToday } from 'date-fns';
 import { gl } from 'date-fns/locale';
@@ -33,9 +34,17 @@ interface Substitucion {
 
 export const DailyCalendarView: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { userRole } = useAuth();
+
+  // If admin, use the editable version
+  if (userRole?.role === 'admin') {
+    return <DailyCalendarViewEditable selectedDate={selectedDate} setSelectedDate={setSelectedDate} />;
+  }
+
+  // Original view for professors
   const [substitucions, setSubstitucions] = useState<Substitucion[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user, userRole } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const fetchDailySubstitutions = async () => {

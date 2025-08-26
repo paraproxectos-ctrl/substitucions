@@ -295,8 +295,17 @@ export const CalendarView: React.FC = () => {
 
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
+    const daySubstitutions = getSubstitutionsForDate(date);
+    
     if (userRole?.role === 'admin') {
-      openCreateDialog(date);
+      if (daySubstitutions.length > 0) {
+        // Si hay sustituciones existentes, mostrar diálogo para ver y añadir
+        setViewDayDate(date);
+        setShowViewDayDialog(true);
+      } else {
+        // Si no hay sustituciones, crear nueva directamente
+        openCreateDialog(date);
+      }
     } else {
       // Para profesores, mostrar las sustituciones del día
       setViewDayDate(date);
@@ -1011,9 +1020,23 @@ export const CalendarView: React.FC = () => {
       <Dialog open={showViewDayDialog} onOpenChange={setShowViewDayDialog}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              Substitucións do {viewDayDate && format(viewDayDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: gl })}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>
+                Substitucións do {viewDayDate && format(viewDayDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: gl })}
+              </DialogTitle>
+              {userRole?.role === 'admin' && viewDayDate && (
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setShowViewDayDialog(false);
+                    openCreateDialog(viewDayDate);
+                  }}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Nova substitución
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           
           {viewDayDate && (() => {

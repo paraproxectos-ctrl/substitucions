@@ -278,10 +278,10 @@ export const SubstitutionManagement: React.FC = () => {
       return;
     }
 
-    if (!formData.data || !formData.hora_inicio || !formData.hora_fin || !formData.grupo_id || !formData.profesor_ausente_id || !formData.profesor_asignado_id) {
+    if (!formData.data || !formData.hora_inicio || !formData.hora_fin) {
       toast({
         title: "Error",
-        description: "Todos os campos obrigatorios deben estar relleados",
+        description: "Data, hora de inicio e hora de fin son obrigatorios",
         variant: "destructive",
       });
       return;
@@ -295,8 +295,8 @@ export const SubstitutionManagement: React.FC = () => {
           data: formData.data,
           hora_inicio: formData.hora_inicio,
           hora_fin: formData.hora_fin,
-          grupo_id: formData.grupo_id,
-          profesor_ausente_id: formData.profesor_ausente_id,
+          grupo_id: formData.grupo_id || null,
+          profesor_ausente_id: formData.profesor_ausente_id || null,
           profesor_asignado_id: formData.profesor_asignado_id,
           motivo: formData.motivo as any,
           motivo_outro: formData.motivo === 'outro' ? formData.motivo_outro : null,
@@ -367,7 +367,7 @@ export const SubstitutionManagement: React.FC = () => {
     if (!editingSubstitution || !formData.data || !formData.hora_inicio || !formData.hora_fin) {
       toast({
         title: "Error",
-        description: "Todos os campos obrigatorios deben estar relleados",
+        description: "Data, hora de inicio e hora de fin son obrigatorios",
         variant: "destructive",
       });
       return;
@@ -381,7 +381,7 @@ export const SubstitutionManagement: React.FC = () => {
           data: formData.data,
           hora_inicio: formData.hora_inicio,
           hora_fin: formData.hora_fin,
-          grupo_id: formData.grupo_id,
+          grupo_id: formData.grupo_id || null,
           profesor_asignado_id: formData.profesor_asignado_id,
           motivo: formData.motivo as any,
           motivo_outro: formData.motivo === 'outro' ? formData.motivo_outro : null,
