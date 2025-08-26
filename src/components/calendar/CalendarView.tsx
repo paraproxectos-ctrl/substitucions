@@ -84,14 +84,17 @@ export const CalendarView: React.FC = () => {
   const getDateRange = () => {
     switch (view) {
       case 'month':
+        // For month view, get full weeks that contain the month
+        const monthStart = startOfMonth(selectedDate);
+        const monthEnd = endOfMonth(selectedDate);
         return {
-          start: startOfMonth(selectedDate),
-          end: endOfMonth(selectedDate)
+          start: startOfWeek(monthStart, { weekStartsOn: 1 }),
+          end: endOfWeek(monthEnd, { weekStartsOn: 1 })
         };
       case 'week':
         return {
-          start: startOfWeek(selectedDate, { locale: gl }),
-          end: endOfWeek(selectedDate, { locale: gl })
+          start: startOfWeek(selectedDate, { weekStartsOn: 1 }),
+          end: endOfWeek(selectedDate, { weekStartsOn: 1 })
         };
       case 'day':
         return {
