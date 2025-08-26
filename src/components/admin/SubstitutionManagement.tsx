@@ -666,12 +666,13 @@ export const SubstitutionManagement: React.FC = () => {
               
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="grupo">Grupo</Label>
+                  <Label htmlFor="grupo">Grupo (opcional)</Label>
                   <Select value={formData.grupo_id} onValueChange={(value) => setFormData({...formData, grupo_id: value})}>
                     <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Selecciona un grupo" />
+                      <SelectValue placeholder="Selecciona un grupo (opcional)" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border border-border z-50">
+                      <SelectItem value="">Sen grupo asignado</SelectItem>
                       {groups.map((group) => (
                         <SelectItem key={group.id} value={group.id}>
                           {group.nome} - {group.nivel}

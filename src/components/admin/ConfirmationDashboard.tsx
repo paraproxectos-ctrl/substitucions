@@ -83,19 +83,15 @@ export const ConfirmationDashboard: React.FC = () => {
   }, [autoRefresh, selectedDate]);
 
   const getStatusColor = (confirmada: boolean, vista: boolean) => {
-    if (confirmada) {
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    } else if (vista) {
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+    if (confirmada || vista) {
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
     } else {
       return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
     }
   };
 
   const getStatusIcon = (confirmada: boolean, vista: boolean) => {
-    if (confirmada) {
-      return <CheckCircle className="h-4 w-4" />;
-    } else if (vista) {
+    if (confirmada || vista) {
       return <Eye className="h-4 w-4" />;
     } else {
       return <XCircle className="h-4 w-4" />;
@@ -103,8 +99,7 @@ export const ConfirmationDashboard: React.FC = () => {
   };
 
   const getStatusText = (confirmada: boolean, vista: boolean) => {
-    if (confirmada) return 'Confirmada';
-    if (vista) return 'Vista';
+    if (confirmada || vista) return 'Vista';
     return 'Pendente';
   };
 
@@ -176,26 +171,14 @@ export const ConfirmationDashboard: React.FC = () => {
       </Card>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-5 w-5 text-green-600" />
+              <Eye className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-2xl font-bold text-green-600">{confirmedCount}</p>
-                <p className="text-sm text-muted-foreground">Confirmadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Eye className="h-5 w-5 text-yellow-600" />
-              <div>
-                <p className="text-2xl font-bold text-yellow-600">{viewedCount}</p>
-                <p className="text-sm text-muted-foreground">Vistas sen confirmar</p>
+                <p className="text-2xl font-bold text-blue-600">{viewedCount + confirmedCount}</p>
+                <p className="text-sm text-muted-foreground">Vistas</p>
               </div>
             </div>
           </CardContent>

@@ -887,15 +887,16 @@ export const CalendarView: React.FC = () => {
             )}
             
             <div className="space-y-2">
-              <Label htmlFor="grupo_id">Grupo</Label>
+              <Label htmlFor="grupo_id">Grupo (opcional)</Label>
               <Select 
                 value={createFormData.grupo_id} 
                 onValueChange={(value) => setCreateFormData(prev => ({ ...prev, grupo_id: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona grupo" />
+                  <SelectValue placeholder="Selecciona grupo (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Sen grupo asignado</SelectItem>
                   {grupos.map((grupo) => (
                     <SelectItem key={grupo.id} value={grupo.id}>
                       {grupo.nivel} - {grupo.nome}

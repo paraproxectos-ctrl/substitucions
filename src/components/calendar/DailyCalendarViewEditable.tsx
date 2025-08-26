@@ -587,7 +587,7 @@ export const DailyCalendarViewEditable: React.FC<EditableViewProps> = ({ selecte
               <Label htmlFor="edit-grupo">Grupo (opcional)</Label>
               <Select value={formData.grupo_id} onValueChange={(value) => setFormData(prev => ({ ...prev, grupo_id: value }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona o grupo" />
+                  <SelectValue placeholder="Selecciona o grupo (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Sen asignar</SelectItem>
