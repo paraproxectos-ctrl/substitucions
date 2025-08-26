@@ -1157,13 +1157,13 @@ export const CalendarView: React.FC = () => {
                     <p className="text-sm text-muted-foreground">
                       Desfruta do teu día normal de clases!
                     </p>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
+                   </div>
+                 )}
+               </div>
+             );
+           })()}
+         </DialogContent>
+       </Dialog>
+     </div>
+   );
+ };

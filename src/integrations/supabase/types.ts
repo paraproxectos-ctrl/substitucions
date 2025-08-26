@@ -487,6 +487,10 @@ export type Database = {
         Args: { teacher_id: string }
         Returns: undefined
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       reset_weekly_counters: {
         Args: Record<PropertyKey, never>
         Returns: undefined
