@@ -294,26 +294,36 @@ export const CalendarView: React.FC = () => {
   };
 
   const handleDayClick = (date: Date) => {
+    console.log('handleDayClick called with date:', date);
     setSelectedDate(date);
     const daySubstitutions = getSubstitutionsForDate(date);
+    console.log('daySubstitutions:', daySubstitutions);
+    console.log('userRole:', userRole);
     
     if (userRole?.role === 'admin') {
       if (daySubstitutions.length > 0) {
         // Si hay sustituciones existentes, mostrar diálogo para ver y añadir
+        console.log('Opening view day dialog');
         setViewDayDate(date);
         setShowViewDayDialog(true);
       } else {
         // Si no hay sustituciones, crear nueva directamente
+        console.log('Opening create dialog directly');
         openCreateDialog(date);
       }
     } else {
       // Para profesores, mostrar las sustituciones del día
+      console.log('Opening view day dialog for professor');
       setViewDayDate(date);
       setShowViewDayDialog(true);
     }
   };
 
   const openCreateDialog = async (date: Date) => {
+    console.log('openCreateDialog called with date:', date);
+    console.log('profiles available:', profiles.length);
+    console.log('grupos available:', grupos.length);
+    
     setCreateFormDate(date);
     setCreateFormData({
       hora_inicio: '',
@@ -337,39 +347,38 @@ export const CalendarView: React.FC = () => {
       
       if (error) {
         console.error('Error getting proportional teacher:', error);
-        return;
-      }
-      
-      if (!data) {
+        setRecommendedTeacher(null);
+      } else if (!data) {
         setRecommendedTeacher(null);
         toast({
           title: "Non hai profesorado dispoñíbel",
           description: "Non hai profesorado dispoñíbel dentro do cupo semanal",
           variant: "destructive",
         });
-        return;
-      }
-      
-      // Find the teacher profile
-      const teacher = profiles.find(p => p.user_id === data);
-      if (teacher) {
-        setRecommendedTeacher(teacher);
-        setCreateFormData(prev => ({
-          ...prev,
-          profesor_asignado_id: data
-        }));
       } else {
-        setRecommendedTeacher(null);
-        toast({
-          title: "Error",
-          description: "Non se puido cargar a información do profesor recomendado",
-          variant: "destructive",
-        });
+        // Find the teacher profile
+        const teacher = profiles.find(p => p.user_id === data);
+        if (teacher) {
+          setRecommendedTeacher(teacher);
+          setCreateFormData(prev => ({
+            ...prev,
+            profesor_asignado_id: data
+          }));
+        } else {
+          setRecommendedTeacher(null);
+          toast({
+            title: "Error",
+            description: "Non se puido cargar a información do profesor recomendado",
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error in getRecommendedTeacher:', error);
+      setRecommendedTeacher(null);
     }
     
+    console.log('Setting showCreateDialog to true');
     setShowCreateDialog(true);
   };
 
