@@ -38,6 +38,14 @@ const ACCEPTED_FILE_TYPES = {
   'application/msword': ['.doc'],
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
   'application/vnd.oasis.opendocument.text': ['.odt'],
+  'application/vnd.ms-excel': ['.xls'],
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+  'application/vnd.ms-powerpoint': ['.ppt'],
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+  'text/plain': ['.txt'],
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'image/gif': ['.gif'],
 };
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -287,7 +295,7 @@ export const UploadArquivosDialog: React.FC<UploadArquivosDialogProps> = ({
 
           {/* File Upload Area */}
           <div className="space-y-2">
-            <Label>Arquivos * (PDF, DOC, DOCX, ODT - máx. 10MB cada un)</Label>
+            <Label>Arquivos * (PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, imaxes - máx. 10MB cada un)</Label>
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
