@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -38,6 +39,7 @@ export const ReportsAndStatistics: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   const { userRole } = useAuth();
+  const { toast } = useToast();
 
   // Fetch teacher statistics
   const fetchTeacherStats = async () => {
@@ -157,10 +159,77 @@ export const ReportsAndStatistics: React.FC = () => {
   // Reset weekly counters manually
   const resetWeeklyCounters = async () => {
     try {
-      await supabase.rpc('reset_weekly_counters');
+      // Reset weekly substitution counters for all professors
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          sustitucions_realizadas_semana: 0,
+          ultima_semana_reset: new Date().toISOString().slice(0, 10)
+        })
+        .not('user_id', 'is', null);
+      
+      if (error) throw error;
+      
       await refreshData();
+      toast({
+        title: "Reset semanal realizado",
+        description: "Os contadores semanais de substitucións foron restablecidos",
+      });
     } catch (error) {
       console.error('Error resetting weekly counters:', error);
+      toast({
+        title: "Erro no reset semanal",
+        description: "Non se puido restablecer os contadores semanais",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Total reset - delete all substitutions and files
+  const totalReset = async () => {
+    if (!window.confirm('¿Estás seguro de que queres facer un reset total? Isto eliminará TODAS as substitucións e arquivos. Esta acción non se pode desfacer.')) {
+      return;
+    }
+
+    try {
+      // Delete all files from storage
+      const { data: files } = await supabase.storage
+        .from('arquivos-substitucions')
+        .list();
+      
+      if (files && files.length > 0) {
+        const filePaths = files.map(file => file.name);
+        await supabase.storage
+          .from('arquivos-substitucions')
+          .remove(filePaths);
+      }
+
+      // Delete all records from tables
+      await supabase.from('arquivos_calendario').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('arquivos_audit_log').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      await supabase.from('substitucions').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      
+      // Reset all professor counters
+      await supabase
+        .from('profiles')
+        .update({ 
+          sustitucions_realizadas_semana: 0,
+          ultima_semana_reset: null
+        })
+        .not('user_id', 'is', null);
+
+      await refreshData();
+      toast({
+        title: "Reset total realizado",
+        description: "Todos os datos foron eliminados e os contadores restablecidos",
+      });
+    } catch (error) {
+      console.error('Error in total reset:', error);
+      toast({
+        title: "Erro no reset total",
+        description: "Non se puido completar o reset total",
+        variant: "destructive",
+      });
     }
   };
 
@@ -204,6 +273,14 @@ export const ReportsAndStatistics: React.FC = () => {
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             Reset semanal
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={totalReset}
+            size="sm"
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Reset total
           </Button>
           <Button
             variant="outline"

@@ -184,15 +184,20 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
 
       if (dbError) throw dbError;
 
-      // 3) Log
-      await supabase
-        .from('arquivos_audit_log')
-        .insert({
-          action: 'delete',
-          file_id: file.id,
-          owner_uid: file.owner_uid,
-          by_uid: user?.id || '',
-        });
+      // 3) Log - Handle potential RLS issues
+      try {
+        await supabase
+          .from('arquivos_audit_log')
+          .insert({
+            action: 'delete',
+            file_id: file.id,
+            owner_uid: file.owner_uid,
+            by_uid: user?.id || '',
+          });
+      } catch (auditError) {
+        // Continue even if audit log fails
+        console.warn('Could not insert audit log:', auditError);
+      }
 
       // 4) Actualiza la UI inmediatamente
       setList(prev => prev.filter(f => f.id !== file.id));
