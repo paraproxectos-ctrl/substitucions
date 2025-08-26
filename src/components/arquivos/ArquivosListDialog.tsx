@@ -152,10 +152,27 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
   // BORRADO REAL: Storage + BD + auditoría + actualización de UI local
   const handleDelete = async (file: ArquivoCalendario) => {
     try {
-      // 1) Borra del Storage (ruta completa en storage_path)
+      // Normalize storage path - handle different formats from legacy data
+      let normalizedPath = file.storage_path;
+      
+      // Remove full URL if present
+      if (normalizedPath.includes('supabase.co/storage/v1/object/public/')) {
+        const urlParts = normalizedPath.split('/');
+        const bucketIndex = urlParts.findIndex(part => part === 'arquivos-substitucions');
+        if (bucketIndex >= 0) {
+          normalizedPath = urlParts.slice(bucketIndex + 1).join('/');
+        }
+      }
+      
+      // Remove bucket prefix if present
+      if (normalizedPath.startsWith('arquivos-substitucions/')) {
+        normalizedPath = normalizedPath.replace('arquivos-substitucions/', '');
+      }
+
+      // 1) Borra del Storage usando la ruta normalizada
       const { error: storageError } = await supabase.storage
         .from('arquivos-substitucions')
-        .remove([file.storage_path]);
+        .remove([normalizedPath]);
 
       if (storageError) throw storageError;
 

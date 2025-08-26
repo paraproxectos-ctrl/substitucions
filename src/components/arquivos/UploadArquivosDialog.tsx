@@ -143,6 +143,7 @@ export const UploadArquivosDialog: React.FC<UploadArquivosDialogProps> = ({
       const fileExtension = fileUpload.file.name.split('.').pop();
       const filename = `${user.id}-${timestamp}-${fileUpload.file.name}`;
       // Use class ID instead of name to avoid invalid characters in storage path
+      // Store only relative path (no bucket prefix or full URL)
       const storagePath = `${dateStr}/${selectedGrupoData.id}/${filename}`;
 
       // Update status to uploading

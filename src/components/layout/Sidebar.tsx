@@ -106,13 +106,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onCl
 
       {/* User Info */}
       <div className="p-2 md:p-4 border-b border-border">
-        <div className="space-y-1">
-          <p className="font-medium text-xs md:text-sm text-foreground truncate">
-            {profile?.nome} {profile?.apelidos}
-          </p>
-          <p className="text-xs text-muted-foreground capitalize">
-            {userRole?.role === 'admin' ? 'Admin' : 'Profesor/a'}
-          </p>
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <p className="font-medium text-xs md:text-sm text-foreground truncate">
+              {profile?.nome} {profile?.apelidos}
+            </p>
+            <p className="text-xs text-muted-foreground capitalize">
+              {userRole?.role === 'admin' ? 'Admin' : 'Profesor/a'}
+            </p>
+          </div>
+          {/* Logout Button - moved here for better visibility */}
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 text-xs md:text-sm h-7 md:h-8"
+            onClick={signOut}
+          >
+            <LogOut className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+            <span className="truncate">Saír</span>
+          </Button>
         </div>
       </div>
 
@@ -142,17 +153,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onCl
           })}
       </nav>
 
-      {/* Profile and Logout */}
-      <div className="p-2 md:p-4 border-t border-border space-y-1 md:space-y-2">
+      {/* Profile */}
+      <div className="p-2 md:p-4 border-t border-border">
         <UserProfile />
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 text-xs md:text-sm h-8 md:h-9"
-          onClick={signOut}
-        >
-          <LogOut className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-          <span className="truncate">Saír</span>
-        </Button>
       </div>
     </div>
   );
