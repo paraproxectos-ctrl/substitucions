@@ -294,28 +294,33 @@ export const CalendarView: React.FC = () => {
   };
 
   const handleDayClick = (date: Date) => {
-    console.log('handleDayClick called with date:', date);
-    setSelectedDate(date);
-    const daySubstitutions = getSubstitutionsForDate(date);
-    console.log('daySubstitutions:', daySubstitutions);
-    console.log('userRole:', userRole);
-    
-    if (userRole?.role === 'admin') {
-      if (daySubstitutions.length > 0) {
-        // Si hay sustituciones existentes, mostrar diálogo para ver y añadir
-        console.log('Opening view day dialog');
+    // Prevent any default behavior and stop propagation
+    try {
+      console.log('handleDayClick called with date:', date);
+      setSelectedDate(date);
+      const daySubstitutions = getSubstitutionsForDate(date);
+      console.log('daySubstitutions:', daySubstitutions);
+      console.log('userRole:', userRole);
+      
+      if (userRole?.role === 'admin') {
+        if (daySubstitutions.length > 0) {
+          // Si hay sustituciones existentes, mostrar diálogo para ver y añadir
+          console.log('Opening view day dialog');
+          setViewDayDate(date);
+          setShowViewDayDialog(true);
+        } else {
+          // Si no hay sustituciones, crear nueva directamente
+          console.log('Opening create dialog directly');
+          openCreateDialog(date);
+        }
+      } else {
+        // Para profesores, mostrar las sustituciones del día
+        console.log('Opening view day dialog for professor');
         setViewDayDate(date);
         setShowViewDayDialog(true);
-      } else {
-        // Si no hay sustituciones, crear nueva directamente
-        console.log('Opening create dialog directly');
-        openCreateDialog(date);
       }
-    } else {
-      // Para profesores, mostrar las sustituciones del día
-      console.log('Opening view day dialog for professor');
-      setViewDayDate(date);
-      setShowViewDayDialog(true);
+    } catch (error) {
+      console.error('Error in handleDayClick:', error);
     }
   };
 
@@ -540,7 +545,11 @@ export const CalendarView: React.FC = () => {
               className={`min-h-[100px] p-1 border border-border/50 cursor-pointer hover:bg-accent/20 ${
                 !isCurrentMonth ? 'bg-muted/30 text-muted-foreground' : ''
               } ${isSelected ? 'ring-2 ring-primary' : ''} ${isDayToday ? 'bg-primary/5' : ''}`}
-              onClick={() => handleDayClick(day)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDayClick(day);
+              }}
             >
               <div className={`text-sm font-medium mb-1 ${isDayToday ? 'text-primary' : ''}`}>
                 {format(day, 'd')}
@@ -584,7 +593,11 @@ export const CalendarView: React.FC = () => {
               className={`cursor-pointer hover:shadow-md transition-shadow ${
                 isSelected ? 'ring-2 ring-primary' : ''
               } ${isDayToday ? 'border-primary' : ''}`}
-              onClick={() => handleDayClick(day)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDayClick(day);
+              }}
             >
               <CardHeader className="pb-2">
                 <CardTitle className={`text-center text-lg ${isDayToday ? 'text-primary' : ''}`}>
