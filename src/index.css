@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -48,19 +49,12 @@ All colors MUST be HSL.
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -74,7 +68,7 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -101,6 +95,19 @@ All colors MUST be HSL.
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* High contrast mode */
+  .high-contrast {
+    --border: 0 0% 0%;
+    --ring: 220 100% 50%;
+    --input: 0 0% 90%;
+  }
+
+  .high-contrast.dark {
+    --border: 0 0% 100%;
+    --ring: 217.2 91.2% 70%;
+    --input: 0 0% 20%;
+  }
 }
 
 @layer base {
@@ -111,4 +118,82 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Enhanced focus styles for high contrast mode */
+  .high-contrast *:focus-visible {
+    @apply ring-4 ring-ring ring-offset-2;
+  }
+
+  /* Improved button contrast in high contrast mode */
+  .high-contrast .bg-primary {
+    @apply border-2 border-foreground;
+  }
+
+  .high-contrast .bg-secondary {
+    @apply border-2 border-muted-foreground;
+  }
+}
+
+/* Calendar specific styles */
+.calendar-header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  background: hsl(var(--background) / 0.95);
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.calendar-cell-focus:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.calendar-cell-hover:hover {
+  background: hsl(var(--accent) / 0.5);
+}
+
+.calendar-cell-selected {
+  background: hsl(var(--primary) / 0.1);
+  border: 2px solid hsl(var(--primary));
+}
+
+/* Accessibility improvements */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus management for better accessibility */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* High contrast improvements */
+.high-contrast button,
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+  border-width: 2px;
+}
+
+.high-contrast .border {
+  border-width: 2px;
 }
