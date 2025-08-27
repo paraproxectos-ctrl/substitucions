@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { School, Mail, Lock, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -23,7 +22,6 @@ const Auth: React.FC = () => {
   const { t } = useLanguage();
   const capsLock = useCapsLock();
 
-  // Si ya hay sesión, redirigir
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -35,14 +33,10 @@ const Auth: React.FC = () => {
   const cleanupAuthState = () => {
     try {
       Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-          localStorage.removeItem(key);
-        }
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) localStorage.removeItem(key);
       });
       Object.keys(sessionStorage || {}).forEach((key) => {
-        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-          sessionStorage.removeItem(key);
-        }
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) sessionStorage.removeItem(key);
       });
     } catch {}
   };
@@ -82,7 +76,6 @@ const Auth: React.FC = () => {
 
       if (data.user) {
         toast({ title: t('success.welcome'), description: t('success.loginSuccess') });
-        // recarga dura para hidratar providers/roles
         window.location.href = '/';
       }
     } catch (err) {
@@ -101,25 +94,24 @@ const Auth: React.FC = () => {
 
   const isFormValid = !!(loginForm.email.trim() && loginForm.password);
 
+  // Marca visible y log para verificar deploy
+  console.log('AUTH_MARKER >>>', import.meta.env.VITE_BUILD_TAG ?? 'dev', new Date().toISOString());
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 flex items-center justify-center p-4">
       <main className="w-full max-w-md" aria-labelledby="auth-title">
-        {/* Controles */}
         <div className="flex justify-between items-center mb-6">
           <LanguageToggle />
           <ThemeToggle />
         </div>
 
-        {/* Cabecera */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-primary/10 p-3 rounded-full">
               <School className="h-8 w-8 text-primary" aria-hidden="true" />
             </div>
           </div>
-          <h1 id="auth-title" className="text-3xl font-bold text-foreground mb-2">
-            {t('auth.title')}
-          </h1>
+          <h1 id="auth-title" className="text-3xl font-bold text-foreground mb-2">{t('auth.title')}</h1>
           <p className="text-muted-foreground">{t('auth.subtitle')}</p>
         </div>
 
@@ -162,9 +154,7 @@ const Auth: React.FC = () => {
                     {errors.email}
                   </div>
                 ) : (
-                  <div id="email-help" className="sr-only">
-                    {t('auth.enterSubmit')}
-                  </div>
+                  <div id="email-help" className="sr-only">{t('auth.enterSubmit')}</div>
                 )}
               </div>
 
@@ -221,12 +211,10 @@ const Auth: React.FC = () => {
                   </div>
                 )}
 
-                <div id="password-help" className="sr-only">
-                  {t('auth.enterSubmit')}
-                </div>
+                <div id="password-help" className="sr-only">{t('auth.enterSubmit')}</div>
               </div>
 
-              {/* Botón de acceso */}
+              {/* Botón */}
               <Button
                 type="submit"
                 className="w-full h-11 text-base font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -244,23 +232,26 @@ const Auth: React.FC = () => {
               </Button>
             </form>
 
-            {/* Error general */}
+            {/* Error general (sin <Alert>) */}
             {errors.general && (
-              <Alert variant="destructive" role="alert" aria-live="polite">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{errors.general}</AlertDescription>
-              </Alert>
+              <div
+                role="alert"
+                aria-live="polite"
+                className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-2 text-sm"
+              >
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" aria-hidden="true" />
+                  <span>{errors.general}</span>
+                </div>
+              </div>
             )}
 
-            {/* Info */}
-            <Alert className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-sm">{t('auth.info')}</AlertDescription>
-            </Alert>
-
-            {/* Sello de build */}
+            {/* Sello de build + marca visible */}
             <p className="text-center text-xs text-muted-foreground mt-3">
               Build: {import.meta.env.VITE_BUILD_TAG ?? 'dev'}
+            </p>
+            <p className="mt-1 text-center text-[10px] text-muted-foreground">
+              TEST AUTH: <span data-auth-stamp>🧪 27-08 16:00 v2</span>
             </p>
           </CardContent>
         </Card>
