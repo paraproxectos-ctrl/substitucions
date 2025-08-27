@@ -55,6 +55,10 @@ interface Substitucion {
 type CalendarView = 'month' | 'week' | 'day';
 
 export const CalendarView: React.FC = () => {
+  console.log('=== CalendarView COMPONENT RENDERING ===');
+  console.log('Current URL:', window.location.href);
+  
+  const { user, userRole } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>('month');
   const [substitucions, setSubstitucions] = useState<Substitucion[]>([]);
@@ -78,7 +82,6 @@ export const CalendarView: React.FC = () => {
   const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
   const [showViewDayDialog, setShowViewDayDialog] = useState(false);
   const [viewDayDate, setViewDayDate] = useState<Date | null>(null);
-  const { user, userRole } = useAuth();
   const { toast } = useToast();
 
   const getDateRange = () => {
