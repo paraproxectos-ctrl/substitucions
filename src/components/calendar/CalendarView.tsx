@@ -296,29 +296,35 @@ export const CalendarView: React.FC = () => {
   const handleDayClick = (date: Date) => {
     // Prevent any default behavior and stop propagation
     try {
-      console.log('handleDayClick called with date:', date);
+      console.log('=== HANDLE DAY CLICK ===');
+      console.log('Date clicked:', date);
+      console.log('Current URL:', window.location.href);
+      console.log('User role:', userRole?.role);
+      console.log('User ID:', user?.id);
+      
       setSelectedDate(date);
       const daySubstitutions = getSubstitutionsForDate(date);
-      console.log('daySubstitutions:', daySubstitutions);
-      console.log('userRole:', userRole);
+      console.log('Found substitutions for this day:', daySubstitutions.length);
       
       if (userRole?.role === 'admin') {
         if (daySubstitutions.length > 0) {
           // Si hay sustituciones existentes, mostrar diálogo para ver y añadir
-          console.log('Opening view day dialog');
+          console.log('Admin: Opening view day dialog (has substitutions)');
           setViewDayDate(date);
           setShowViewDayDialog(true);
         } else {
           // Si no hay sustituciones, crear nueva directamente
-          console.log('Opening create dialog directly');
+          console.log('Admin: Opening create dialog directly (no substitutions)');
           openCreateDialog(date);
         }
       } else {
         // Para profesores, mostrar las sustituciones del día
-        console.log('Opening view day dialog for professor');
+        console.log('Professor: Opening view day dialog');
         setViewDayDate(date);
         setShowViewDayDialog(true);
       }
+      
+      console.log('=== END HANDLE DAY CLICK ===');
     } catch (error) {
       console.error('Error in handleDayClick:', error);
     }
@@ -787,23 +793,38 @@ export const CalendarView: React.FC = () => {
         {/* View selector */}
         <div className="flex items-center space-x-2">
           <Button
+            type="button"
             variant={view === 'month' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setView('month')}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setView('month');
+            }}
           >
             Mes
           </Button>
           <Button
+            type="button"
             variant={view === 'week' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setView('week')}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setView('week');
+            }}
           >
             Semana
           </Button>
           <Button
+            type="button"
             variant={view === 'day' ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setView('day')}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setView('day');
+            }}
           >
             Día
           </Button>
@@ -815,9 +836,14 @@ export const CalendarView: React.FC = () => {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <Button
+              type="button"
               variant="outline"
               size="sm"
-              onClick={() => navigateDate('prev')}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigateDate('prev');
+              }}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -828,17 +854,27 @@ export const CalendarView: React.FC = () => {
             
             <div className="flex items-center space-x-2">
               <Button
+                type="button"
                 variant={isToday(selectedDate) ? "default" : "outline"}
                 size="sm"
-                onClick={() => setSelectedDate(new Date())}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setSelectedDate(new Date());
+                }}
               >
                 Hoxe
               </Button>
               
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => navigateDate('next')}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigateDate('next');
+                }}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
