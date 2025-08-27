@@ -503,9 +503,14 @@ export const CalendarView: React.FC = () => {
               </Badge>
             ) : (
               <Button
+                type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => markAsViewed(sub.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  markAsViewed(sub.id);
+                }}
                 className="text-xs h-6"
               >
                 <EyeOff className="h-3 w-3 mr-1" />
@@ -548,6 +553,7 @@ export const CalendarView: React.FC = () => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('Month view day clicked:', day);
                 handleDayClick(day);
               }}
             >
@@ -596,6 +602,7 @@ export const CalendarView: React.FC = () => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                console.log('Week view day clicked:', day);
                 handleDayClick(day);
               }}
             >
@@ -687,11 +694,16 @@ export const CalendarView: React.FC = () => {
                         <span>Vista</span>
                       </Badge>
                     ) : (
-                      <Button
-                        size="sm"
-                        onClick={() => markAsViewed(sub.id)}
-                        className="flex items-center space-x-1"
-                      >
+                       <Button
+                         type="button"
+                         size="sm"
+                         onClick={(e) => {
+                           e.preventDefault();
+                           e.stopPropagation();
+                           markAsViewed(sub.id);
+                         }}
+                         className="flex items-center space-x-1"
+                       >
                         <EyeOff className="h-3 w-3" />
                         <span>Marcar como vista</span>
                       </Button>
@@ -1029,10 +1041,17 @@ export const CalendarView: React.FC = () => {
           </div>
           
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowCreateDialog(false)}
+            >
               Cancelar
             </Button>
-            <Button onClick={handleCreateSubstitution}>
+            <Button 
+              type="button" 
+              onClick={handleCreateSubstitution}
+            >
               Crear substitución
             </Button>
           </div>
