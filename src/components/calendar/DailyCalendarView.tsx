@@ -30,6 +30,11 @@ interface Substitucion {
     apelidos: string;
   } | null;
   profesor_asignado_id: string;
+  profesor_ausente_id?: string;
+  profesor_ausente_profile?: {
+    nome: string;
+    apelidos: string;
+  } | null;
 }
 
 export const DailyCalendarView: React.FC = () => {
@@ -73,11 +78,13 @@ export const DailyCalendarView: React.FC = () => {
 
       if (substitutionsData && substitutionsData.length > 0) {
         const professorIds = substitutionsData.map(sub => sub.profesor_asignado_id);
+        const professorAusenteIds = substitutionsData.map(sub => sub.profesor_ausente_id).filter(Boolean);
+        const allProfessorIds = [...new Set([...professorIds, ...professorAusenteIds])];
         
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('user_id, nome, apelidos')
-          .in('user_id', professorIds);
+          .in('user_id', allProfessorIds);
 
         if (profilesError) {
           console.error('Error fetching profiles:', profilesError);
@@ -85,7 +92,10 @@ export const DailyCalendarView: React.FC = () => {
 
         const enrichedSubstitutions = substitutionsData.map(sub => ({
           ...sub,
-          profiles: profilesData?.find(profile => profile.user_id === sub.profesor_asignado_id) || null
+          profiles: profilesData?.find(profile => profile.user_id === sub.profesor_asignado_id) || null,
+          profesor_ausente_profile: sub.profesor_ausente_id 
+            ? profilesData?.find(profile => profile.user_id === sub.profesor_ausente_id) || null 
+            : null
         }));
 
         setSubstitucions(enrichedSubstitutions as any);
@@ -223,6 +233,13 @@ export const DailyCalendarView: React.FC = () => {
             <div className="text-sm text-muted-foreground">
               <strong>Grupo:</strong> {sub.grupos_educativos?.nome || '–'}
             </div>
+            
+            {isMySubstitution && sub.profesor_ausente_profile && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <User className="h-4 w-4 mr-1" />
+                <strong>Substitúe a:</strong> {sub.profesor_ausente_profile.nome} {sub.profesor_ausente_profile.apelidos}
+              </div>
+            )}
             
             {sub.observacions && (
               <div className="text-sm text-muted-foreground">
