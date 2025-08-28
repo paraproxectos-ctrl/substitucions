@@ -64,15 +64,16 @@ export const CalendarView: React.FC = () => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createFormDate, setCreateFormDate] = useState<Date | null>(null);
   const [createFormData, setCreateFormData] = useState({
+    data: '',
     hora_inicio: '',
     hora_fin: '',
-    motivo: '' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro' | '',
+    grupo_id: '',
+    profesor_ausente_id: '',
+    profesor_asignado_id: '',
+    motivo: 'ausencia_imprevista' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
     motivo_outro: '',
     observacions: '',
-    grupo_id: '',
-    profesor_asignado_id: '',
-    profesor_ausente_id: 'none',
-    sesion: 'none' as 'primeira' | 'segunda' | 'terceira' | 'cuarta' | 'quinta' | 'recreo' | 'hora_lectura' | 'none',
+    sesion: '',
     guardia_transporte: 'ningun' as 'ningun' | 'entrada' | 'saida'
   });
   const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
@@ -112,7 +113,7 @@ export const CalendarView: React.FC = () => {
         .from('substitucions')
         .select(`
           *,
-          grupos_educativos (nome, nivel)
+          grupos_educativos!grupo_id (nome, nivel)
         `)
         .gte('data', format(start, 'yyyy-MM-dd'))
         .lte('data', format(end, 'yyyy-MM-dd'))
@@ -362,16 +363,17 @@ export const CalendarView: React.FC = () => {
     
     setCreateFormDate(date);
     setCreateFormData({
+      data: format(date, 'yyyy-MM-dd'),
       hora_inicio: '',
       hora_fin: '',
-      motivo: '' as typeof createFormData.motivo,
+      grupo_id: '',
+      profesor_ausente_id: '',
+      profesor_asignado_id: '',
+      motivo: 'ausencia_imprevista',
       motivo_outro: '',
       observacions: '',
-      grupo_id: '',
-      profesor_asignado_id: '',
-      profesor_ausente_id: 'none',
-      sesion: 'none' as typeof createFormData.sesion,
-      guardia_transporte: 'ningun' as typeof createFormData.guardia_transporte
+      sesion: '',
+      guardia_transporte: 'ningun'
     });
     
     // Get recommended teacher with proportional assignment
@@ -424,23 +426,23 @@ export const CalendarView: React.FC = () => {
     try {
       const substitutionData = {
         data: format(createFormDate, 'yyyy-MM-dd'),
-        hora_inicio: createFormData.hora_inicio || '08:00', // Default time if empty
-        hora_fin: createFormData.hora_fin || '09:00', // Default time if empty
-        motivo: createFormData.motivo || 'outro' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
-        motivo_outro: createFormData.motivo_outro || null,
+        hora_inicio: createFormData.hora_inicio || '08:00',
+        hora_fin: createFormData.hora_fin || '09:00',
+        motivo: createFormData.motivo,
+        motivo_outro: createFormData.motivo === 'outro' ? createFormData.motivo_outro : null,
         observacions: createFormData.observacions || null,
-        grupo_id: createFormData.grupo_id || null,
+        grupo_id: createFormData.grupo_id === 'none' ? null : createFormData.grupo_id || null,
         profesor_asignado_id: createFormData.profesor_asignado_id || null,
         profesor_ausente_id: createFormData.profesor_ausente_id === 'none' ? null : createFormData.profesor_ausente_id || null,
-        sesion: createFormData.sesion === 'none' ? null : createFormData.sesion || null,
-        guardia_transporte: createFormData.guardia_transporte as 'ningun' | 'entrada' | 'saida',
+        sesion: createFormData.sesion === '' ? null : createFormData.sesion as any,
+        guardia_transporte: createFormData.guardia_transporte,
         created_by: user?.id,
         vista: false
       };
 
       const { error: insertError } = await supabase
         .from('substitucions')
-        .insert([substitutionData]);
+        .insert(substitutionData);
 
       if (insertError) {
         console.error('Error creating substitution:', insertError);
@@ -470,16 +472,17 @@ export const CalendarView: React.FC = () => {
 
       setShowCreateDialog(false);
       setCreateFormData({
+        data: '',
         hora_inicio: '',
         hora_fin: '',
-        motivo: '' as typeof createFormData.motivo,
+        grupo_id: '',
+        profesor_ausente_id: '',
+        profesor_asignado_id: '',
+        motivo: 'ausencia_imprevista',
         motivo_outro: '',
         observacions: '',
-        grupo_id: '',
-        profesor_asignado_id: '',
-        profesor_ausente_id: 'none',
-        sesion: 'none' as typeof createFormData.sesion,
-        guardia_transporte: 'ningun' as typeof createFormData.guardia_transporte
+        sesion: '',
+        guardia_transporte: 'ningun'
       });
       setRecommendedTeacher(null);
       await fetchSubstitucions();
@@ -926,14 +929,8 @@ export const CalendarView: React.FC = () => {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         title={createFormDate ? `Crear substitución para ${format(createFormDate, "d 'de' MMMM 'de' yyyy", { locale: gl })}` : "Crear substitución"}
-        formData={{...createFormData, data: createFormDate ? format(createFormDate, 'yyyy-MM-dd') : ''}}
-        setFormData={(data) => {
-          if (typeof data === 'function') {
-            setCreateFormData(prev => data({...prev, data: createFormDate ? format(createFormDate, 'yyyy-MM-dd') : ''}));
-          } else {
-            setCreateFormData(data);
-          }
-        }}
+        formData={createFormData}
+        setFormData={setCreateFormData}
         teachers={profiles}
         groups={grupos}
         onSubmit={handleCreateSubstitution}
