@@ -67,7 +67,7 @@ export const TeacherManagement: React.FC = () => {
     horas_libres_semanais: 0
   });
   const [submitting, setSubmitting] = useState(false);
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
   const { toast } = useToast();
 
   // Verificar que é administrador
@@ -319,51 +319,74 @@ export const TeacherManagement: React.FC = () => {
     }
   };
 
-  // Eliminar profesor completamente
+  // Eliminar profesor completamente (borrado real del sistema)
   const deleteTeacher = async (teacher: Teacher) => {
+    // Verificar que no se está intentando auto-borrar
+    if (teacher.user_id === user?.id) {
+      toast({
+        title: "Error",
+        description: "Non podes eliminar a túa propia conta",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Primera confirmación
     if (!confirm(`¿Estás seguro de que queres eliminar PERMANENTEMENTE a ${teacher.nome} ${teacher.apelidos}? Esta acción non se pode desfacer.`)) {
       return;
     }
 
-    try {
-      // Eliminar rol
-      await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', teacher.user_id);
+    // Segunda confirmación para borrado real
+    if (!confirm(`ATENCIÓN: Isto eliminará ao usuario COMPLETAMENTE do sistema, incluíndo todos os seus datos, arquivos e historial. ¿Confirmas o borrado REAL de ${teacher.nome} ${teacher.apelidos}?`)) {
+      return;
+    }
 
-      // Eliminar perfil
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('user_id', teacher.user_id);
+    setLoading(true);
+
+    try {
+      // Llamar a la edge function para borrado real
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId: teacher.user_id }
+      });
 
       if (error) {
-        console.error('Error deleting teacher:', error);
+        console.error('Error calling delete-user function:', error);
         toast({
           title: "Error",
-          description: "Non se puido eliminar o profesor",
+          description: "Non se puido eliminar o usuario do sistema",
           variant: "destructive",
         });
+        setLoading(false);
         return;
       }
 
-      // Eliminar usuario de auth (para seguranza completa)
-      try {
-        await supabase.auth.admin.deleteUser(teacher.user_id);
-      } catch (authError) {
-        console.warn('Could not delete auth user:', authError);
+      if (!data.ok) {
+        console.error('Delete user function returned error:', data.error);
+        toast({
+          title: "Error",
+          description: data.error || "Non se puido eliminar o usuario",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
       }
 
       toast({
         title: "Éxito",
-        description: "Profesor eliminado completamente",
+        description: "Usuario eliminado completamente do sistema",
       });
 
       await fetchTeachers();
+      setLoading(false);
 
     } catch (error) {
       console.error('Error in deleteTeacher:', error);
+      toast({
+        title: "Error",
+        description: "Erro interno ao eliminar usuario",
+        variant: "destructive",
+      });
+      setLoading(false);
     }
   };
 
