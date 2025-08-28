@@ -448,6 +448,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      execute_admin_sql: {
+        Args: { sql_query: string }
+        Returns: undefined
+      }
       get_current_iso_week: {
         Args: Record<PropertyKey, never>
         Returns: string

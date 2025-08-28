@@ -56,53 +56,52 @@ serve(async (req) => {
     console.log('Admin verification passed, proceeding with reset...');
 
     // Delete all data in reverse dependency order
-    const deleteOperations = [
-      // Delete files from storage
-      { table: 'storage.objects', condition: `bucket_id = 'arquivos-substitucions'` },
-      
+    const deleteQueries = [
       // Delete application data
-      { table: 'arquivos_audit_log', condition: 'true' },
-      { table: 'arquivos_calendario', condition: 'true' },
-      { table: 'mensaxes', condition: 'true' },
-      { table: 'conversacion_participantes', condition: 'true' },
-      { table: 'conversacions', condition: 'true' },
-      { table: 'substitucions', condition: 'true' },
-      { table: 'user_telegram', condition: 'true' },
+      "DELETE FROM arquivos_audit_log",
+      "DELETE FROM arquivos_calendario", 
+      "DELETE FROM mensaxes",
+      "DELETE FROM conversacion_participantes",
+      "DELETE FROM conversacions",
+      "DELETE FROM substitucions",
+      "DELETE FROM user_telegram",
       
       // Keep current admin, delete all other user roles and profiles
-      { table: 'user_roles', condition: `user_id != '${user.user.id}'` },
-      { table: 'profiles', condition: `user_id != '${user.user.id}'` },
+      `DELETE FROM user_roles WHERE user_id != '${user.user.id}'`,
+      `DELETE FROM profiles WHERE user_id != '${user.user.id}'`,
     ];
 
-    // Execute deletions
-    for (const operation of deleteOperations) {
+    // Delete storage files first
+    try {
+      console.log('Deleting storage files...');
+      const { data: files } = await supabaseAdmin.storage
+        .from('arquivos-substitucions')
+        .list();
+      
+      if (files && files.length > 0) {
+        const filePaths = files.map(file => file.name);
+        await supabaseAdmin.storage
+          .from('arquivos-substitucions')
+          .remove(filePaths);
+      }
+    } catch (error) {
+      console.error('Error deleting storage files:', error);
+    }
+
+    // Execute database deletions
+    for (const query of deleteQueries) {
       try {
-        console.log(`Deleting from ${operation.table}...`);
+        console.log(`Executing: ${query}`);
         
-        if (operation.table === 'storage.objects') {
-          // Delete storage objects
-          const { data: files } = await supabaseAdmin.storage
-            .from('arquivos-substitucions')
-            .list();
-          
-          if (files && files.length > 0) {
-            const filePaths = files.map(file => file.name);
-            await supabaseAdmin.storage
-              .from('arquivos-substitucions')
-              .remove(filePaths);
-          }
-        } else {
-          // For regular tables, use SQL delete
-          const { error } = await supabaseAdmin.rpc('execute_sql', {
-            query: `DELETE FROM ${operation.table} WHERE ${operation.condition}`
-          });
-          
-          if (error) {
-            console.error(`Error deleting from ${operation.table}:`, error);
-          }
+        const { error } = await supabaseAdmin.rpc('execute_admin_sql', {
+          sql_query: query
+        });
+        
+        if (error) {
+          console.error(`Error executing query "${query}":`, error);
         }
       } catch (error) {
-        console.error(`Error processing ${operation.table}:`, error);
+        console.error(`Error processing query "${query}":`, error);
       }
     }
 
