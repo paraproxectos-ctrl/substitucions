@@ -275,7 +275,7 @@ export const DailyCalendarViewEditable: React.FC<EditableViewProps> = ({ selecte
           data: formData.data,
           hora_inicio: formData.hora_inicio,
           hora_fin: formData.hora_fin,
-          grupo_id: formData.grupo_id || null,
+          grupo_id: formData.grupo_id && formData.grupo_id !== "" ? formData.grupo_id : null,
           profesor_asignado_id: formData.profesor_asignado_id,
           motivo: formData.motivo as any,
           motivo_outro: formData.motivo === 'outro' ? formData.motivo_outro : null,
@@ -346,7 +346,7 @@ export const DailyCalendarViewEditable: React.FC<EditableViewProps> = ({ selecte
             </div>
             
             <div className="text-sm text-muted-foreground">
-              <strong>Grupo:</strong> {sub.grupos_educativos?.nome || 'Sen asignar'}
+              <strong>Grupo:</strong> {sub.grupos_educativos?.nome || '–'}
             </div>
             
             {sub.observacions && (
@@ -585,7 +585,7 @@ export const DailyCalendarViewEditable: React.FC<EditableViewProps> = ({ selecte
 
             <div className="space-y-2">
               <Label htmlFor="edit-grupo">Grupo (opcional)</Label>
-              <Select value={formData.grupo_id} onValueChange={(value) => setFormData(prev => ({ ...prev, grupo_id: value }))}>
+              <Select value={formData.grupo_id || "none"} onValueChange={(value) => setFormData(prev => ({ ...prev, grupo_id: value === "none" ? "" : value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona o grupo (opcional)" />
                 </SelectTrigger>

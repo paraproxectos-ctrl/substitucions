@@ -221,7 +221,7 @@ export const DailyCalendarView: React.FC = () => {
             </div>
             
             <div className="text-sm text-muted-foreground">
-              <strong>Grupo:</strong> {sub.grupos_educativos?.nome || 'Sen asignar'}
+              <strong>Grupo:</strong> {sub.grupos_educativos?.nome || '–'}
             </div>
             
             {sub.observacions && (

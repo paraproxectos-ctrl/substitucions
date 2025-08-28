@@ -47,6 +47,7 @@ interface Substitution {
   motivo_outro?: string;
   observacions?: string;
   vista: boolean;
+  grupo_id?: string;
   grupos_educativos: {
     nome: string;
     nivel: string;
@@ -286,7 +287,7 @@ export const SubstitutionManagement: React.FC = () => {
           data: formData.data,
           hora_inicio: formData.hora_inicio,
           hora_fin: formData.hora_fin,
-          grupo_id: formData.grupo_id || null,
+          grupo_id: formData.grupo_id && formData.grupo_id !== "" ? formData.grupo_id : null,
           profesor_ausente_id: formData.profesor_ausente_id || null,
           profesor_asignado_id: formData.profesor_asignado_id,
           motivo: formData.motivo as any,
@@ -372,7 +373,7 @@ export const SubstitutionManagement: React.FC = () => {
           data: formData.data,
           hora_inicio: formData.hora_inicio,
           hora_fin: formData.hora_fin,
-          grupo_id: formData.grupo_id || null,
+          grupo_id: formData.grupo_id && formData.grupo_id !== "" ? formData.grupo_id : null,
           profesor_asignado_id: formData.profesor_asignado_id,
           motivo: formData.motivo as any,
           motivo_outro: formData.motivo === 'outro' ? formData.motivo_outro : null,
@@ -455,11 +456,13 @@ export const SubstitutionManagement: React.FC = () => {
   // Iniciar edición
   const startEdit = (substitution: Substitution) => {
     setEditingSubstitution(substitution);
+    // Buscar el grupo_id original desde la base de datos
+    const originalGroupId = groups.find(g => g.nome === substitution.grupos_educativos?.nome)?.id || '';
     setFormData({
       data: substitution.data,
       hora_inicio: substitution.hora_inicio,
       hora_fin: substitution.hora_fin,
-      grupo_id: substitution.grupos_educativos?.nome || '',
+      grupo_id: substitution.grupo_id || '',
       profesor_ausente_id: '',
       profesor_asignado_id: substitution.profesor_asignado_id,
       motivo: substitution.motivo as typeof formData.motivo,

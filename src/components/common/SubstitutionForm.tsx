@@ -153,8 +153,8 @@ export const SubstitutionForm: React.FC<SubstitutionFormProps> = ({
           <div className="space-y-2">
             <Label htmlFor="grupo_id">Grupo (opcional)</Label>
             <Select 
-              value={formData.grupo_id} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, grupo_id: value }))}
+              value={formData.grupo_id || "none"} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, grupo_id: value === "none" ? "" : value }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecciona un grupo (opcional)" />
