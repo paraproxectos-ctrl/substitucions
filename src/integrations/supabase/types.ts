@@ -428,7 +428,52 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_substitucions_docente: {
+        Row: {
+          assigned_to: string | null
+          confirmada_professor: boolean | null
+          data: string | null
+          grupo_id: string | null
+          grupo_nome: string | null
+          guardia_transporte:
+            | Database["public"]["Enums"]["guardia_transporte_tipo"]
+            | null
+          hora_fin: string | null
+          hora_inicio: string | null
+          id: string | null
+          motivo: Database["public"]["Enums"]["motivo_sustitucion"] | null
+          motivo_outro: string | null
+          observacions: string | null
+          sesion: Database["public"]["Enums"]["sesion_tipo"] | null
+          substituto_nome: string | null
+          titular_id: string | null
+          titular_nome: string | null
+          vista: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_substitucions_profesor_asignado"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "fk_substitucions_profesor_ausente"
+            columns: ["titular_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "substitucions_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos_educativos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       create_admin_user: {
@@ -468,6 +513,28 @@ export type Database = {
           nome: string
           sustitucions_realizadas_semana: number
           user_id: string
+        }[]
+      }
+      get_substitucions_docente: {
+        Args: { p_day: string; p_user: string }
+        Returns: {
+          assigned_to: string
+          confirmada_professor: boolean
+          data: string
+          grupo_id: string
+          grupo_nome: string
+          guardia_transporte: Database["public"]["Enums"]["guardia_transporte_tipo"]
+          hora_fin: string
+          hora_inicio: string
+          id: string
+          motivo: Database["public"]["Enums"]["motivo_sustitucion"]
+          motivo_outro: string
+          observacions: string
+          sesion: Database["public"]["Enums"]["sesion_tipo"]
+          substituto_nome: string
+          titular_id: string
+          titular_nome: string
+          vista: boolean
         }[]
       }
       get_substitution_confirmations: {
