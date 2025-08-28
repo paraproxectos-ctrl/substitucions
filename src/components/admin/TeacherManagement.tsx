@@ -295,7 +295,7 @@ export const TeacherManagement: React.FC = () => {
       const { error } = await supabase
         .from('profiles')
         .update({ is_active: !teacher.is_active })
-        .eq('id', teacher.id);
+        .eq('user_id', teacher.user_id);
 
       if (error) {
         console.error('Error toggling teacher status:', error);
@@ -336,7 +336,7 @@ export const TeacherManagement: React.FC = () => {
       const { error } = await supabase
         .from('profiles')
         .delete()
-        .eq('id', teacher.id);
+        .eq('user_id', teacher.user_id);
 
       if (error) {
         console.error('Error deleting teacher:', error);
