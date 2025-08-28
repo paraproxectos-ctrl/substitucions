@@ -44,8 +44,6 @@ interface FormData {
   motivo: 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro';
   motivo_outro: string;
   observacions: string;
-  sesion: string;
-  guardia_transporte: 'ningun' | 'entrada' | 'saida';
 }
 
 interface SubstitutionFormProps {
@@ -229,45 +227,6 @@ export const SubstitutionForm: React.FC<SubstitutionFormProps> = ({
                     )}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="sesion">Sesión (opcional)</Label>
-            <Select 
-              value={formData.sesion} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, sesion: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona sesión" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sen especificar</SelectItem>
-                <SelectItem value="primeira">Primeira</SelectItem>
-                <SelectItem value="segunda">Segunda</SelectItem>
-                <SelectItem value="terceira">Terceira</SelectItem>
-                <SelectItem value="cuarta">Cuarta</SelectItem>
-                <SelectItem value="quinta">Quinta</SelectItem>
-                <SelectItem value="recreo">Recreo</SelectItem>
-                <SelectItem value="hora_lectura">Hora de lectura</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="guardia_transporte">Guardia de transporte</Label>
-            <Select 
-              value={formData.guardia_transporte} 
-              onValueChange={(value: typeof formData.guardia_transporte) => setFormData(prev => ({ ...prev, guardia_transporte: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona guardia" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ningun">Ningún</SelectItem>
-                <SelectItem value="entrada">Entrada</SelectItem>
-                <SelectItem value="saida">Saída</SelectItem>
               </SelectContent>
             </Select>
           </div>

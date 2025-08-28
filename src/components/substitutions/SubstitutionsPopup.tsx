@@ -21,8 +21,6 @@ interface Substitution {
   titular_nome?: string;
   assigned_to: string;
   substituto_nome?: string;
-  sesion?: string;
-  guardia_transporte?: string;
   observacions?: string;
   vista: boolean;
   confirmada_professor?: boolean;
@@ -176,28 +174,6 @@ export const SubstitutionsPopup: React.FC = () => {
                     <span className="font-medium">Substituto/a:</span> {substitution.substituto_nome ?? '—'}
                   </span>
                 </div>
-                
-                {(substitution.sesion || substitution.guardia_transporte) && (
-                  <>
-                    {substitution.sesion && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          <span className="font-medium">Sesión:</span> {substitution.sesion}
-                        </span>
-                      </div>
-                    )}
-                    
-                    {substitution.guardia_transporte && substitution.guardia_transporte !== 'ningun' && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Car className="h-4 w-4 text-muted-foreground" />
-                        <span>
-                          <span className="font-medium">Garda de transporte:</span> {substitution.guardia_transporte}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )}
                 
                 <div className="text-sm">
                   <span className="font-medium">Observacións:</span> {substitution.observacions ?? '—'}

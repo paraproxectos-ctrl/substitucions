@@ -36,8 +36,6 @@ interface Substitucion {
   } | null;
   profesor_asignado_id: string;
   profesor_ausente_id?: string;
-  sesion?: string;
-  guardia_transporte?: string;
 }
 
 interface EditableViewProps {
@@ -61,9 +59,7 @@ export const DailyCalendarViewEditable: React.FC<EditableViewProps> = ({ selecte
     profesor_asignado_id: '',
     motivo: 'ausencia_imprevista' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
     motivo_outro: '',
-    observacions: '',
-    sesion: '',
-    guardia_transporte: 'ningun' as 'ningun' | 'entrada' | 'saida'
+    observacions: ''
   });
   const { user, userRole } = useAuth();
   const { toast } = useToast();
@@ -251,9 +247,7 @@ export const DailyCalendarViewEditable: React.FC<EditableViewProps> = ({ selecte
       profesor_asignado_id: substitution.profesor_asignado_id,
       motivo: substitution.motivo as typeof formData.motivo,
       motivo_outro: substitution.motivo_outro || '',
-      observacions: substitution.observacions || '',
-      sesion: substitution.sesion || '',
-      guardia_transporte: (substitution.guardia_transporte as typeof formData.guardia_transporte) || 'ningun'
+      observacions: substitution.observacions || ''
     });
     setShowEditDialog(true);
   };

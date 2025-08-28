@@ -91,9 +91,7 @@ export const SubstitutionManagement: React.FC = () => {
     profesor_asignado_id: '',
     motivo: 'ausencia_imprevista' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
     motivo_outro: '',
-    observacions: '',
-    sesion: '',
-    guardia_transporte: 'ningun' as 'ningun' | 'entrada' | 'saida'
+    observacions: ''
   });
   const [submitting, setSubmitting] = useState(false);
   const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
@@ -293,8 +291,6 @@ export const SubstitutionManagement: React.FC = () => {
           motivo: formData.motivo as any,
           motivo_outro: formData.motivo === 'outro' ? formData.motivo_outro : null,
           observacions: formData.observacions || null,
-          sesion: formData.sesion ? formData.sesion as any : null,
-          guardia_transporte: formData.guardia_transporte as any,
           created_by: user?.id
         });
 
@@ -335,10 +331,8 @@ export const SubstitutionManagement: React.FC = () => {
         profesor_asignado_id: '',
         motivo: 'ausencia_imprevista',
         motivo_outro: '',
-        observacions: '',
-        sesion: '',
-        guardia_transporte: 'ningun'
-      });
+      observacions: ''
+    });
       setShowAddDialog(false);
       await fetchData();
 
@@ -406,9 +400,7 @@ export const SubstitutionManagement: React.FC = () => {
         profesor_asignado_id: '',
         motivo: 'ausencia_imprevista',
         motivo_outro: '',
-        observacions: '',
-        sesion: '',
-        guardia_transporte: 'ningun'
+        observacions: ''
       });
       await fetchData();
 
@@ -467,9 +459,7 @@ export const SubstitutionManagement: React.FC = () => {
       profesor_asignado_id: substitution.profesor_asignado_id,
       motivo: substitution.motivo as typeof formData.motivo,
       motivo_outro: substitution.motivo_outro || '',
-      observacions: substitution.observacions || '',
-      sesion: '',
-      guardia_transporte: 'ningun'
+      observacions: substitution.observacions || ''
     });
   };
 

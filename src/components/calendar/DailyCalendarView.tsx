@@ -24,8 +24,6 @@ interface Substitucion {
   titular_nome?: string;
   assigned_to: string;
   substituto_nome?: string;
-  sesion?: string;
-  guardia_transporte?: string;
   observacions?: string;
   vista: boolean;
   confirmada_professor?: boolean;
@@ -210,20 +208,6 @@ export const DailyCalendarView: React.FC = () => {
               <div className="flex items-center text-sm text-muted-foreground">
                 <User className="h-4 w-4 mr-1" />
                 <strong>Substitúe a:</strong> {sub.titular_nome}
-              </div>
-            )}
-            
-            {sub.sesion && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <BookOpen className="h-4 w-4 mr-1" />
-                <strong>Sesión:</strong> {sub.sesion}
-              </div>
-            )}
-            
-            {sub.guardia_transporte && sub.guardia_transporte !== 'ningun' && (
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Car className="h-4 w-4 mr-1" />
-                <strong>Garda de transporte:</strong> {sub.guardia_transporte}
               </div>
             )}
             

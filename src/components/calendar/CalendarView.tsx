@@ -72,9 +72,7 @@ export const CalendarView: React.FC = () => {
     profesor_asignado_id: '',
     motivo: 'ausencia_imprevista' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
     motivo_outro: '',
-    observacions: '',
-    sesion: '',
-    guardia_transporte: 'ningun' as 'ningun' | 'entrada' | 'saida'
+    observacions: ''
   });
   const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
   const [showViewDayDialog, setShowViewDayDialog] = useState(false);
@@ -371,9 +369,7 @@ export const CalendarView: React.FC = () => {
       profesor_asignado_id: '',
       motivo: 'ausencia_imprevista',
       motivo_outro: '',
-      observacions: '',
-      sesion: '',
-      guardia_transporte: 'ningun'
+      observacions: ''
     });
     
     // Get recommended teacher with proportional assignment
@@ -434,8 +430,6 @@ export const CalendarView: React.FC = () => {
         grupo_id: createFormData.grupo_id === 'none' ? null : createFormData.grupo_id || null,
         profesor_asignado_id: createFormData.profesor_asignado_id || null,
         profesor_ausente_id: createFormData.profesor_ausente_id === 'none' ? null : createFormData.profesor_ausente_id || null,
-        sesion: createFormData.sesion === '' ? null : createFormData.sesion as any,
-        guardia_transporte: createFormData.guardia_transporte,
         created_by: user?.id,
         vista: false
       };
@@ -480,9 +474,7 @@ export const CalendarView: React.FC = () => {
         profesor_asignado_id: '',
         motivo: 'ausencia_imprevista',
         motivo_outro: '',
-        observacions: '',
-        sesion: '',
-        guardia_transporte: 'ningun'
+        observacions: ''
       });
       setRecommendedTeacher(null);
       await fetchSubstitucions();
