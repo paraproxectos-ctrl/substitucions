@@ -113,53 +113,51 @@ serve(async (req) => {
       // Continue with user deletion even if file deletion fails
     }
 
-    // Delete data in reverse dependency order
-    const deleteQueries = [
-      // Delete audit logs
-      `DELETE FROM arquivos_audit_log WHERE owner_uid = '${userId}' OR by_uid = '${userId}'`,
-      
-      // Delete user's files
-      `DELETE FROM arquivos_calendario WHERE owner_uid = '${userId}'`,
-      
-      // Delete user's messages
-      `DELETE FROM mensaxes WHERE remitente_id = '${userId}' OR destinatario_id = '${userId}'`,
-      
-      // Delete conversation participations
-      `DELETE FROM conversacion_participantes WHERE user_id = '${userId}'`,
-      
-      // Delete conversations created by user (if no other participants)
-      `DELETE FROM conversacions WHERE created_by = '${userId}' AND id NOT IN (
-        SELECT DISTINCT conversacion_id FROM conversacion_participantes WHERE user_id != '${userId}'
-      )`,
-      
-      // Delete substitutions
-      `DELETE FROM substitucions WHERE profesor_ausente_id = '${userId}' OR profesor_asignado_id = '${userId}' OR created_by = '${userId}'`,
-      
-      // Delete telegram connection
-      `DELETE FROM user_telegram WHERE user_id = '${userId}'`,
-      
-      // Delete user role
-      `DELETE FROM user_roles WHERE user_id = '${userId}'`,
-      
-      // Delete profile
-      `DELETE FROM profiles WHERE user_id = '${userId}'`,
-    ];
+    // Delete data in reverse dependency order using Supabase client operations
+    console.log('Starting database deletions...');
 
-    // Execute database deletions
-    for (const query of deleteQueries) {
-      try {
-        console.log(`Executing: ${query}`);
-        
-        const { error } = await supabaseAdmin.rpc('execute_admin_sql', {
-          sql_query: query
-        });
-        
-        if (error) {
-          console.error(`Error executing query "${query}":`, error);
-        }
-      } catch (error) {
-        console.error(`Error processing query "${query}":`, error);
-      }
+    try {
+      // Delete audit logs
+      console.log('Deleting audit logs...');
+      await supabaseAdmin.from('arquivos_audit_log').delete().or(`owner_uid.eq.${userId},by_uid.eq.${userId}`);
+
+      // Delete user's files
+      console.log('Deleting arquivos_calendario...');
+      await supabaseAdmin.from('arquivos_calendario').delete().eq('owner_uid', userId);
+
+      // Delete user's messages
+      console.log('Deleting mensaxes...');
+      await supabaseAdmin.from('mensaxes').delete().or(`remitente_id.eq.${userId},destinatario_id.eq.${userId}`);
+
+      // Delete conversation participations
+      console.log('Deleting conversacion_participantes...');
+      await supabaseAdmin.from('conversacion_participantes').delete().eq('user_id', userId);
+
+      // Delete conversations created by user (simple approach - delete all created by user)
+      console.log('Deleting conversacions...');
+      await supabaseAdmin.from('conversacions').delete().eq('created_by', userId);
+
+      // Delete substitutions
+      console.log('Deleting substitucions...');
+      await supabaseAdmin.from('substitucions').delete().or(`profesor_ausente_id.eq.${userId},profesor_asignado_id.eq.${userId},created_by.eq.${userId}`);
+
+      // Delete telegram connection
+      console.log('Deleting user_telegram...');
+      await supabaseAdmin.from('user_telegram').delete().eq('user_id', userId);
+
+      // Delete user role
+      console.log('Deleting user_roles...');
+      await supabaseAdmin.from('user_roles').delete().eq('user_id', userId);
+
+      // Delete profile
+      console.log('Deleting profiles...');
+      await supabaseAdmin.from('profiles').delete().eq('user_id', userId);
+
+      console.log('Database deletions completed successfully');
+
+    } catch (error) {
+      console.error('Error during database deletions:', error);
+      // Continue with auth deletion even if some database operations fail
     }
 
     // Delete from auth.users last
