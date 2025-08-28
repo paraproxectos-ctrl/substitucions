@@ -969,7 +969,7 @@ export const CalendarView: React.FC = () => {
                   <SelectValue placeholder="Selecciona grupo (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sen grupo asignado</SelectItem>
+                  <SelectItem value="none">Sen grupo asignado</SelectItem>
                   {grupos.map((grupo) => (
                     <SelectItem key={grupo.id} value={grupo.id}>
                       {grupo.nivel} - {grupo.nome}

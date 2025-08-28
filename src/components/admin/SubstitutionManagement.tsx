@@ -672,7 +672,7 @@ export const SubstitutionManagement: React.FC = () => {
                       <SelectValue placeholder="Selecciona un grupo (opcional)" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border border-border z-50">
-                      <SelectItem value="">Sen grupo asignado</SelectItem>
+                      <SelectItem value="none">Sen grupo asignado</SelectItem>
                       {groups.map((group) => (
                         <SelectItem key={group.id} value={group.id}>
                           {group.nome} - {group.nivel}

@@ -590,7 +590,7 @@ export const DailyCalendarViewEditable: React.FC<EditableViewProps> = ({ selecte
                   <SelectValue placeholder="Selecciona o grupo (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sen asignar</SelectItem>
+                  <SelectItem value="none">Sen asignar</SelectItem>
                   {grupos.map((grupo) => (
                     <SelectItem key={grupo.id} value={grupo.id}>
                       {grupo.nome} - {grupo.nivel}
