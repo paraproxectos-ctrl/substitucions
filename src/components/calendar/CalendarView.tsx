@@ -4,14 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar } from '@/components/ui/calendar';
+import { SubstitutionForm } from '@/components/common/SubstitutionForm';
 import { 
   format, 
   parseISO, 
@@ -161,17 +157,43 @@ export const CalendarView: React.FC = () => {
     }
   };
 
-  const fetchProfiles = async () => {
+  const fetchTeachers = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('user_id, nome, apelidos, email, horas_libres_semanais, sustitucions_realizadas_semana')
-        .order('nome');
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'profesor');
 
-      if (error) throw error;
-      setProfiles(data || []);
+      if (roleError) {
+        console.error('Error fetching teacher roles:', roleError);
+        setProfiles([]);
+      } else if (roleData && roleData.length > 0) {
+        const userIds = roleData.map(role => role.user_id);
+        const { data: teachersData, error: teachersError } = await supabase
+          .from('profiles')
+          .select('user_id, nome, apelidos, email, horas_libres_semanais, sustitucions_realizadas_semana')
+          .in('user_id', userIds)
+          .neq('nome', '') // Filtrar perfiles sin nombre
+          .neq('apelidos', '') // Filtrar perfiles sin apellidos
+          .order('nome');
+
+        if (teachersError) {
+          console.error('Error fetching teachers:', teachersError);
+          setProfiles([]);
+        } else {
+          // Solo incluir profesores con nombre y apellidos válidos
+          const validTeachers = teachersData?.filter(teacher => 
+            teacher.nome && teacher.nome.trim() !== '' && 
+            teacher.apelidos && teacher.apelidos.trim() !== ''
+          ) || [];
+          setProfiles(validTeachers);
+        }
+      } else {
+        console.log('No teacher roles found');
+        setProfiles([]);
+      }
     } catch (error: any) {
-      console.error('Error fetching profiles:', error);
+      console.error('Error fetching teachers:', error);
     }
   };
 
@@ -193,7 +215,7 @@ export const CalendarView: React.FC = () => {
   useEffect(() => {
     fetchSubstitucions();
     if (userRole?.role === 'admin') {
-      fetchProfiles();
+      fetchTeachers();
       fetchGrupos();
     }
   }, [selectedDate, view, userRole]);
@@ -899,203 +921,27 @@ export const CalendarView: React.FC = () => {
         </div>
       )}
 
-      {/* Create Substitution Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              Crear substitución para {createFormDate && format(createFormDate, "d 'de' MMMM 'de' yyyy", { locale: gl })}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="hora_inicio">Hora inicio</Label>
-              <Input
-                id="hora_inicio"
-                type="time"
-                value={createFormData.hora_inicio}
-                onChange={(e) => setCreateFormData(prev => ({ ...prev, hora_inicio: e.target.value }))}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="hora_fin">Hora fin</Label>
-              <Input
-                id="hora_fin"
-                type="time"
-                value={createFormData.hora_fin}
-                onChange={(e) => setCreateFormData(prev => ({ ...prev, hora_fin: e.target.value }))}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="motivo">Motivo</Label>
-              <Select 
-                value={createFormData.motivo} 
-                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, motivo: value as typeof prev.motivo }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona motivo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ausencia_imprevista">Ausencia imprevista</SelectItem>
-                  <SelectItem value="enfermidade">Enfermidade</SelectItem>
-                  <SelectItem value="asuntos_propios">Asuntos propios</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {createFormData.motivo === 'outro' && (
-              <div className="space-y-2">
-                <Label htmlFor="motivo_outro">Especificar motivo</Label>
-                <Input
-                  id="motivo_outro"
-                  value={createFormData.motivo_outro}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, motivo_outro: e.target.value }))}
-                  placeholder="Describe o motivo"
-                />
-              </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="grupo_id">Grupo (opcional)</Label>
-              <Select 
-                value={createFormData.grupo_id} 
-                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, grupo_id: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona grupo (opcional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sen grupo asignado</SelectItem>
-                  {grupos.map((grupo) => (
-                    <SelectItem key={grupo.id} value={grupo.id}>
-                      {grupo.nivel} - {grupo.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="profesor_asignado_id">
-                Profesor asignado
-                {recommendedTeacher && (
-                  <span className="text-sm text-muted-foreground ml-2">
-                    (Recomendado: {recommendedTeacher.nome} {recommendedTeacher.apelidos})
-                  </span>
-                )}
-              </Label>
-              <Select 
-                value={createFormData.profesor_asignado_id} 
-                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, profesor_asignado_id: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona profesor" />
-                </SelectTrigger>
-                <SelectContent>
-                  {profiles.map((profile) => (
-                    <SelectItem key={profile.user_id} value={profile.user_id}>
-                      {profile.nome} {profile.apelidos}
-                      <span className="text-xs text-muted-foreground ml-2">
-                        ({profile.sustitucions_realizadas_semana}/{profile.horas_libres_semanais})
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="profesor_ausente_id">Profesor ausente (opcional)</Label>
-              <Select 
-                value={createFormData.profesor_ausente_id} 
-                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, profesor_ausente_id: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona profesor ausente" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sen especificar</SelectItem>
-                  {profiles.map((profile) => (
-                    <SelectItem key={profile.user_id} value={profile.user_id}>
-                      {profile.nome} {profile.apelidos}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="sesion">Sesión (opcional)</Label>
-              <Select 
-                value={createFormData.sesion} 
-                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, sesion: value as typeof prev.sesion }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona sesión" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sen especificar</SelectItem>
-                  <SelectItem value="primeira">Primeira</SelectItem>
-                  <SelectItem value="segunda">Segunda</SelectItem>
-                  <SelectItem value="terceira">Terceira</SelectItem>
-                  <SelectItem value="cuarta">Cuarta</SelectItem>
-                  <SelectItem value="quinta">Quinta</SelectItem>
-                  <SelectItem value="recreo">Recreo</SelectItem>
-                  <SelectItem value="hora_lectura">Hora de lectura</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="guardia_transporte">Guardia transporte (opcional)</Label>
-              <Select 
-                value={createFormData.guardia_transporte} 
-                onValueChange={(value) => setCreateFormData(prev => ({ ...prev, guardia_transporte: value as typeof prev.guardia_transporte }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecciona guardia" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ningun">Ningún</SelectItem>
-                  <SelectItem value="entrada">Entrada</SelectItem>
-                  <SelectItem value="saida">Saída</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="col-span-2 space-y-2">
-              <Label htmlFor="observacions">Observacións (opcional)</Label>
-              <Textarea
-                id="observacions"
-                value={createFormData.observacions}
-                onChange={(e) => setCreateFormData(prev => ({ ...prev, observacions: e.target.value }))}
-                placeholder="Observacións adicionais..."
-                rows={3}
-              />
-            </div>
-          </div>
-          
-          <div className="flex justify-end space-x-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => setShowCreateDialog(false)}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="button" 
-              onClick={handleCreateSubstitution}
-            >
-              Crear substitución
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Create Substitution Dialog using unified form */}
+      <SubstitutionForm
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        title={createFormDate ? `Crear substitución para ${format(createFormDate, "d 'de' MMMM 'de' yyyy", { locale: gl })}` : "Crear substitución"}
+        formData={{...createFormData, data: createFormDate ? format(createFormDate, 'yyyy-MM-dd') : ''}}
+        setFormData={(data) => {
+          if (typeof data === 'function') {
+            setCreateFormData(prev => data({...prev, data: createFormDate ? format(createFormDate, 'yyyy-MM-dd') : ''}));
+          } else {
+            setCreateFormData(data);
+          }
+        }}
+        teachers={profiles}
+        groups={grupos}
+        onSubmit={handleCreateSubstitution}
+        submitting={false}
+        recommendedTeacher={recommendedTeacher}
+        onGetRecommendedTeacher={undefined}
+        submitButtonText="Crear substitución"
+      />
       
       {/* View Day Substitutions Dialog */}
       <Dialog open={showViewDayDialog} onOpenChange={setShowViewDayDialog}>

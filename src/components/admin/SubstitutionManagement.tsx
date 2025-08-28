@@ -2,24 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { 
   Dialog, 
   DialogContent, 
-  DialogDescription, 
   DialogHeader, 
   DialogTitle, 
   DialogTrigger 
@@ -41,13 +30,13 @@ import {
   Clock,
   User,
   School,
-  Save,
   X,
   Eye,
   EyeOff
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { gl } from 'date-fns/locale';
+import { SubstitutionForm } from '@/components/common/SubstitutionForm';
 
 interface Substitution {
   id: string;
@@ -74,6 +63,8 @@ interface Teacher {
   nome: string;
   apelidos: string;
   email: string;
+  horas_libres_semanais?: number;
+  sustitucions_realizadas_semana?: number;
 }
 
 interface Group {
@@ -95,13 +86,13 @@ export const SubstitutionManagement: React.FC = () => {
     hora_inicio: '',
     hora_fin: '',
     grupo_id: '',
-    profesor_ausente_id: '',    // Profesor que está ausente
-    profesor_asignado_id: '',   // Profesor que cubre la sustitución
-    motivo: 'ausencia_imprevista',
+    profesor_ausente_id: '',
+    profesor_asignado_id: '',
+    motivo: 'ausencia_imprevista' as 'ausencia_imprevista' | 'enfermidade' | 'asuntos_propios' | 'outro',
     motivo_outro: '',
     observacions: '',
     sesion: '',
-    guardia_transporte: 'ningun'
+    guardia_transporte: 'ningun' as 'ningun' | 'entrada' | 'saida'
   });
   const [submitting, setSubmitting] = useState(false);
   const [recommendedTeacher, setRecommendedTeacher] = useState<any>(null);
@@ -129,7 +120,7 @@ export const SubstitutionManagement: React.FC = () => {
         .from('substitucions')
         .select(`
           *,
-          grupos_educativos (nome, nivel)
+          grupos_educativos!grupo_id (nome, nivel)
         `)
         .order('data', { ascending: false })
         .order('hora_inicio');
@@ -469,9 +460,9 @@ export const SubstitutionManagement: React.FC = () => {
       hora_inicio: substitution.hora_inicio,
       hora_fin: substitution.hora_fin,
       grupo_id: substitution.grupos_educativos?.nome || '',
-      profesor_ausente_id: '', // Este campo será agregado más tarde
+      profesor_ausente_id: '',
       profesor_asignado_id: substitution.profesor_asignado_id,
-      motivo: substitution.motivo,
+      motivo: substitution.motivo as typeof formData.motivo,
       motivo_outro: substitution.motivo_outro || '',
       observacions: substitution.observacions || '',
       sesion: '',
@@ -541,36 +532,15 @@ export const SubstitutionManagement: React.FC = () => {
     }
   };
 
-  // Opcións de motivos
-  const motivoOptions = [
-    { value: 'ausencia_imprevista', label: 'Ausencia imprevista' },
-    { value: 'enfermidade', label: 'Enfermidade' },
-    { value: 'asuntos_propios', label: 'Asuntos propios' },
-    { value: 'outro', label: 'Outro' }
-  ];
-
-  // Opcións de sesión
-  const sesionOptions = [
-    { value: 'primeira', label: '1ª sesión' },
-    { value: 'segunda', label: '2ª sesión' },
-    { value: 'terceira', label: '3ª sesión' },
-    { value: 'cuarta', label: '4ª sesión' },
-    { value: 'quinta', label: '5ª sesión' },
-    { value: 'recreo', label: 'Recreo' },
-    { value: 'hora_lectura', label: 'Hora de lectura' }
-  ];
-
-  // Opcións de guardia de transporte
-  const guardiaTransporteOptions = [
-    { value: 'ningun', label: 'Ningún' },
-    { value: 'entrada', label: 'Guardia de transporte de entrada' },
-    { value: 'saida', label: 'Guardia de transporte de saída' }
-  ];
-
   // Obter etiqueta do motivo
   const getMotivoLabel = (motivo: string, motivoOutro?: string) => {
-    const option = motivoOptions.find(opt => opt.value === motivo);
-    return motivo === 'outro' ? (motivoOutro || 'Outro') : (option?.label || motivo);
+    const motivoLabels: Record<string, string> = {
+      'ausencia_imprevista': 'Ausencia imprevista',
+      'enfermidade': 'Enfermidade',
+      'asuntos_propios': 'Asuntos propios',
+      'outro': motivoOutro || 'Outro'
+    };
+    return motivoLabels[motivo] || motivo;
   };
 
   // Obter cor do motivo
@@ -614,205 +584,32 @@ export const SubstitutionManagement: React.FC = () => {
           
           <Dialog open={showAddDialog} onOpenChange={(open) => {
             if (open) {
-              // Get recommended teacher when opening dialog
               getRecommendedTeacher();
             }
             setShowAddDialog(open);
           }}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Nova Substitución
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Nova Substitución</DialogTitle>
-              <DialogDescription>
-                Introduce os datos da nova substitución
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="data">Data</Label>
-                  <Input
-                    id="data"
-                    type="date"
-                    value={formData.data}
-                    onChange={(e) => setFormData({...formData, data: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hora_inicio">Hora inicio</Label>
-                  <Input
-                    id="hora_inicio"
-                    type="time"
-                    value={formData.hora_inicio}
-                    onChange={(e) => setFormData({...formData, hora_inicio: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hora_fin">Hora fin</Label>
-                  <Input
-                    id="hora_fin"
-                    type="time"
-                    value={formData.hora_fin}
-                    onChange={(e) => setFormData({...formData, hora_fin: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="grupo">Grupo (opcional)</Label>
-                  <Select value={formData.grupo_id} onValueChange={(value) => setFormData({...formData, grupo_id: value})}>
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Selecciona un grupo (opcional)" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border border-border z-50">
-                      <SelectItem value="none">Sen grupo asignado</SelectItem>
-                      {groups.map((group) => (
-                        <SelectItem key={group.id} value={group.id}>
-                          {group.nome} - {group.nivel}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="profesor_ausente">Profesor/a ausente</Label>
-                  <Select value={formData.profesor_ausente_id} onValueChange={(value) => setFormData({...formData, profesor_ausente_id: value})}>
-                    <SelectTrigger className="bg-background border-border">
-                      <SelectValue placeholder="Profesor/a que falta" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border border-border z-50 max-h-60">
-                      {teachers.map((teacher) => (
-                        <SelectItem key={`ausente-${teacher.user_id}`} value={teacher.user_id}>
-                          {teacher.nome} {teacher.apelidos}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="profesor_sustituto">Profesor/a sustituto/a</Label>
-                  {recommendedTeacher && (
-                    <div className="text-xs text-green-600 mb-1">
-                      💡 Recomendado: {recommendedTeacher.nome} {recommendedTeacher.apelidos} 
-                      ({recommendedTeacher.sustitucions_realizadas_semana}/{recommendedTeacher.horas_libres_semanais} substitucións/semana)
-                    </div>
-                  )}
-                  <Select value={formData.profesor_asignado_id} onValueChange={(value) => setFormData({...formData, profesor_asignado_id: value})}>
-                    <SelectTrigger className="bg-background border-border">
-                      <SelectValue placeholder="Profesor/a que cubre" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border border-border z-50 max-h-60">
-                      {teachers.map((teacher) => (
-                        <SelectItem key={`sustituto-${teacher.user_id}`} value={teacher.user_id}>
-                          {teacher.nome} {teacher.apelidos}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="motivo">Motivo</Label>
-                <Select value={formData.motivo} onValueChange={(value: any) => setFormData({...formData, motivo: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un motivo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {motivoOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {formData.motivo === 'outro' && (
-                <div className="space-y-2">
-                  <Label htmlFor="motivo_outro">Especificar motivo</Label>
-                  <Input
-                    id="motivo_outro"
-                    value={formData.motivo_outro}
-                    onChange={(e) => setFormData({...formData, motivo_outro: e.target.value})}
-                    placeholder="Describe o motivo..."
-                  />
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="observacions">Observacións</Label>
-                <Textarea
-                  id="observacions"
-                  value={formData.observacions}
-                  onChange={(e) => setFormData({...formData, observacions: e.target.value})}
-                  placeholder="Observacións adicionais..."
-                  rows={3}
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="sesion">Sesión</Label>
-                  <Select value={formData.sesion} onValueChange={(value) => setFormData({...formData, sesion: value})}>
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Selecciona unha sesión" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border border-border z-50">
-                      {sesionOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="guardia_transporte">Guardia de transporte</Label>
-                  <Select value={formData.guardia_transporte} onValueChange={(value) => setFormData({...formData, guardia_transporte: value})}>
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Selecciona guardia" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background border border-border z-50">
-                      {guardiaTransporteOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowAddDialog(false)}
-                disabled={submitting}
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancelar
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Nova Substitución
               </Button>
-              <Button onClick={createSubstitution} disabled={submitting}>
-                <Save className="mr-2 h-4 w-4" />
-                {submitting ? 'Gardando...' : 'Gardar'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+          </Dialog>
+
+          <SubstitutionForm
+            open={showAddDialog}
+            onOpenChange={setShowAddDialog}
+            title="Nova Substitución"
+            description="Introduce os datos da nova substitución"
+            formData={formData}
+            setFormData={setFormData}
+            teachers={teachers}
+            groups={groups}
+            onSubmit={createSubstitution}
+            submitting={submitting}
+            recommendedTeacher={recommendedTeacher}
+            onGetRecommendedTeacher={getRecommendedTeacher}
+          />
         </div>
       </div>
 
@@ -878,7 +675,7 @@ export const SubstitutionManagement: React.FC = () => {
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <School className="h-4 w-4 text-muted-foreground" />
-                        <span>{substitution.grupos_educativos?.nome}</span>
+                        <span>{substitution.grupos_educativos?.nome || 'Sen asignar'}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -934,140 +731,22 @@ export const SubstitutionManagement: React.FC = () => {
         </CardContent>
       </Card>
       
-      {/* Dialog de edición - similar ao de creación pero con datos prellenados */}
-      {editingSubstitution && (
-        <Dialog open={!!editingSubstitution} onOpenChange={() => setEditingSubstitution(null)}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Editar Substitución</DialogTitle>
-              <DialogDescription>
-                Modifica os datos da substitución
-              </DialogDescription>
-            </DialogHeader>
-            
-            {/* ... resto do contido igual ao formulario de creación ... */}
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-data">Data</Label>
-                  <Input
-                    id="edit-data"
-                    type="date"
-                    value={formData.data}
-                    onChange={(e) => setFormData({...formData, data: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-hora_inicio">Hora inicio</Label>
-                  <Input
-                    id="edit-hora_inicio"
-                    type="time"
-                    value={formData.hora_inicio}
-                    onChange={(e) => setFormData({...formData, hora_inicio: e.target.value})}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-hora_fin">Hora fin</Label>
-                  <Input
-                    id="edit-hora_fin"
-                    type="time"
-                    value={formData.hora_fin}
-                    onChange={(e) => setFormData({...formData, hora_fin: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-grupo">Grupo</Label>
-                  <Select value={formData.grupo_id} onValueChange={(value) => setFormData({...formData, grupo_id: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un grupo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {groups.map((group) => (
-                        <SelectItem key={group.id} value={group.id}>
-                          {group.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="edit-profesor">Profesor/a</Label>
-                  <Select value={formData.profesor_asignado_id} onValueChange={(value) => setFormData({...formData, profesor_asignado_id: value})}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un profesor/a" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {teachers.map((teacher) => (
-                        <SelectItem key={teacher.user_id} value={teacher.user_id}>
-                          {teacher.nome} {teacher.apelidos}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-motivo">Motivo</Label>
-                <Select value={formData.motivo} onValueChange={(value: any) => setFormData({...formData, motivo: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un motivo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {motivoOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {formData.motivo === 'outro' && (
-                <div className="space-y-2">
-                  <Label htmlFor="edit-motivo_outro">Especificar motivo</Label>
-                  <Input
-                    id="edit-motivo_outro"
-                    value={formData.motivo_outro}
-                    onChange={(e) => setFormData({...formData, motivo_outro: e.target.value})}
-                    placeholder="Describe o motivo..."
-                  />
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <Label htmlFor="edit-observacions">Observacións</Label>
-                <Textarea
-                  id="edit-observacions"
-                  value={formData.observacions}
-                  onChange={(e) => setFormData({...formData, observacions: e.target.value})}
-                  placeholder="Observacións adicionais..."
-                  rows={3}
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setEditingSubstitution(null)}
-                disabled={submitting}
-              >
-                <X className="mr-2 h-4 w-4" />
-                Cancelar
-              </Button>
-              <Button onClick={updateSubstitution} disabled={submitting}>
-                <Save className="mr-2 h-4 w-4" />
-                {submitting ? 'Gardando...' : 'Actualizar'}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      {/* Edit Dialog */}
+      <SubstitutionForm
+        open={!!editingSubstitution}
+        onOpenChange={(open) => {
+          if (!open) setEditingSubstitution(null);
+        }}
+        title="Editar Substitución"
+        description="Modifica os datos da substitución"
+        formData={formData}
+        setFormData={setFormData}
+        teachers={teachers}
+        groups={groups}
+        onSubmit={updateSubstitution}
+        submitting={submitting}
+        submitButtonText="Actualizar"
+      />
     </div>
   );
 };
