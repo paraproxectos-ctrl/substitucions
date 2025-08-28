@@ -236,6 +236,7 @@ export type Database = {
           email: string
           horas_libres_semanais: number
           id: string
+          is_active: boolean
           nome: string
           sustitucions_realizadas_semana: number
           telefono: string | null
@@ -249,6 +250,7 @@ export type Database = {
           email: string
           horas_libres_semanais?: number
           id?: string
+          is_active?: boolean
           nome: string
           sustitucions_realizadas_semana?: number
           telefono?: string | null
@@ -262,6 +264,7 @@ export type Database = {
           email?: string
           horas_libres_semanais?: number
           id?: string
+          is_active?: boolean
           nome?: string
           sustitucions_realizadas_semana?: number
           telefono?: string | null
@@ -277,7 +280,7 @@ export type Database = {
           created_at: string
           created_by: string
           data: string
-          grupo_id: string
+          grupo_id: string | null
           guardia_transporte:
             | Database["public"]["Enums"]["guardia_transporte_tipo"]
             | null
@@ -298,7 +301,7 @@ export type Database = {
           created_at?: string
           created_by: string
           data: string
-          grupo_id: string
+          grupo_id?: string | null
           guardia_transporte?:
             | Database["public"]["Enums"]["guardia_transporte_tipo"]
             | null
@@ -319,7 +322,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           data?: string
-          grupo_id?: string
+          grupo_id?: string | null
           guardia_transporte?:
             | Database["public"]["Enums"]["guardia_transporte_tipo"]
             | null
@@ -488,6 +491,10 @@ export type Database = {
         Returns: undefined
       }
       is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_current_user_active: {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }

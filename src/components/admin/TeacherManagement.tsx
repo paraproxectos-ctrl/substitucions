@@ -33,7 +33,9 @@ import {
   Mail,
   Phone,
   Save,
-  X
+  X,
+  UserX,
+  UserCheck
 } from 'lucide-react';
 
 interface Teacher {
@@ -47,6 +49,7 @@ interface Teacher {
   sustitucions_realizadas_semana: number;
   ultima_semana_reset?: string;
   created_at: string;
+  is_active: boolean;
 }
 
 export const TeacherManagement: React.FC = () => {
@@ -107,7 +110,7 @@ export const TeacherManagement: React.FC = () => {
       const userIds = roleData.map(role => role.user_id);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_id, nome, apelidos, email, telefono, horas_libres_semanais, sustitucions_realizadas_semana, ultima_semana_reset, created_at')
+        .select('id, user_id, nome, apelidos, email, telefono, horas_libres_semanais, sustitucions_realizadas_semana, ultima_semana_reset, created_at, is_active')
         .in('user_id', userIds)
         .neq('nome', '') // Filtrar perfiles sin nombre
         .neq('apelidos', '') // Filtrar perfiles sin apellidos
@@ -281,9 +284,44 @@ export const TeacherManagement: React.FC = () => {
     }
   };
 
-  // Eliminar profesor
+  // Suspender/Activar profesor
+  const toggleTeacherActive = async (teacher: Teacher) => {
+    const action = teacher.is_active ? 'suspender' : 'reactivar';
+    if (!confirm(`¿Estás seguro de que queres ${action} a ${teacher.nome} ${teacher.apelidos}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ is_active: !teacher.is_active })
+        .eq('id', teacher.id);
+
+      if (error) {
+        console.error('Error toggling teacher status:', error);
+        toast({
+          title: "Error",
+          description: `Non se puido ${action} o profesor`,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Éxito",
+        description: `Profesor ${teacher.is_active ? 'suspendido' : 'reactivado'} correctamente`,
+      });
+
+      await fetchTeachers();
+
+    } catch (error) {
+      console.error('Error in toggleTeacherActive:', error);
+    }
+  };
+
+  // Eliminar profesor completamente
   const deleteTeacher = async (teacher: Teacher) => {
-    if (!confirm(`¿Estás seguro de que queres eliminar a ${teacher.nome} ${teacher.apelidos}?`)) {
+    if (!confirm(`¿Estás seguro de que queres eliminar PERMANENTEMENTE a ${teacher.nome} ${teacher.apelidos}? Esta acción non se pode desfacer.`)) {
       return;
     }
 
@@ -310,7 +348,7 @@ export const TeacherManagement: React.FC = () => {
         return;
       }
 
-      // Eliminar usuario de auth (opcional, pode dar erro de permisos)
+      // Eliminar usuario de auth (para seguranza completa)
       try {
         await supabase.auth.admin.deleteUser(teacher.user_id);
       } catch (authError) {
@@ -319,7 +357,7 @@ export const TeacherManagement: React.FC = () => {
 
       toast({
         title: "Éxito",
-        description: "Profesor eliminado correctamente",
+        description: "Profesor eliminado completamente",
       });
 
       await fetchTeachers();
@@ -617,7 +655,9 @@ export const TeacherManagement: React.FC = () => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">Activo</Badge>
+                      <Badge variant={teacher.is_active ? "default" : "destructive"}>
+                        {teacher.is_active ? "Activo" : "Suspendido"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
@@ -627,6 +667,14 @@ export const TeacherManagement: React.FC = () => {
                           onClick={() => startEdit(teacher)}
                         >
                           <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => toggleTeacherActive(teacher)}
+                          className={teacher.is_active ? "text-orange-600 hover:text-orange-700" : "text-green-600 hover:text-green-700"}
+                        >
+                          {teacher.is_active ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                         </Button>
                         <Button
                           variant="outline"
