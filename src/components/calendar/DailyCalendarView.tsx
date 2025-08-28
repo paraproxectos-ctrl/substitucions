@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, User, CheckCircle, Eye, EyeOff, Bell, BellRing } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, User, CheckCircle, Eye, EyeOff, Bell, BellRing, BookOpen, Car } from 'lucide-react';
 import { DailyCalendarViewEditable } from './DailyCalendarViewEditable';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -18,23 +18,17 @@ interface Substitucion {
   hora_fin: string;
   motivo: string;
   motivo_outro?: string;
+  grupo_id?: string;
+  grupo_nome?: string;
+  titular_id?: string;
+  titular_nome?: string;
+  assigned_to: string;
+  substituto_nome?: string;
+  sesion?: string;
+  guardia_transporte?: string;
   observacions?: string;
   vista: boolean;
-  confirmada_professor: boolean;
-  grupos_educativos: {
-    nome: string;
-    nivel: string;
-  } | null;
-  profiles: {
-    nome: string;
-    apelidos: string;
-  } | null;
-  profesor_asignado_id: string;
-  profesor_ausente_id?: string;
-  profesor_ausente_profile?: {
-    nome: string;
-    apelidos: string;
-  } | null;
+  confirmada_professor?: boolean;
 }
 
 export const DailyCalendarView: React.FC = () => {
@@ -57,53 +51,27 @@ export const DailyCalendarView: React.FC = () => {
       setLoading(true);
       const targetDate = format(selectedDate, 'yyyy-MM-dd');
 
-      const { data: substitutionsData, error: substitutionsError } = await supabase
-        .from('substitucions')
-        .select(`
-          *,
-          grupos_educativos!grupo_id (nome, nivel)
-        `)
+      // Get all substitutions for the day from view for display
+      const { data: allDaySubstitutions, error: viewError } = await supabase
+        .from('vw_substitucions_docente')
+        .select('*')
         .eq('data', targetDate)
         .order('hora_inicio');
-
-      if (substitutionsError) {
-        console.error('Error fetching substitutions:', substitutionsError);
+        
+      if (viewError) {
+        console.error('Error fetching from view:', viewError);
         toast({
           title: "Error",
           description: "Non se puideron cargar as substitucións",
           variant: "destructive",
         });
-        return;
-      }
-
-      if (substitutionsData && substitutionsData.length > 0) {
-        const professorIds = substitutionsData.map(sub => sub.profesor_asignado_id);
-        const professorAusenteIds = substitutionsData.map(sub => sub.profesor_ausente_id).filter(Boolean);
-        const allProfessorIds = [...new Set([...professorIds, ...professorAusenteIds])];
-        
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, nome, apelidos')
-          .in('user_id', allProfessorIds);
-
-        if (profilesError) {
-          console.error('Error fetching profiles:', profilesError);
-        }
-
-        const enrichedSubstitutions = substitutionsData.map(sub => ({
-          ...sub,
-          profiles: profilesData?.find(profile => profile.user_id === sub.profesor_asignado_id) || null,
-          profesor_ausente_profile: sub.profesor_ausente_id 
-            ? profilesData?.find(profile => profile.user_id === sub.profesor_ausente_id) || null 
-            : null
-        }));
-
-        setSubstitucions(enrichedSubstitutions as any);
-      } else {
         setSubstitucions([]);
+      } else {
+        setSubstitucions(allDaySubstitutions || []);
       }
     } catch (error) {
       console.error('Error in fetchDailySubstitutions:', error);
+      setSubstitucions([]);
     } finally {
       setLoading(false);
     }
@@ -196,6 +164,8 @@ export const DailyCalendarView: React.FC = () => {
       'ausencia_imprevista': 'Ausencia imprevista',
       'enfermidade': 'Enfermidade',
       'asuntos_propios': 'Asuntos propios',
+      'formacion': 'Formación',
+      'reunion': 'Reunión',
       'outro': motivoOutro || 'Outro'
     };
     return motivoLabels[motivo] || motivo;
@@ -206,13 +176,15 @@ export const DailyCalendarView: React.FC = () => {
       'ausencia_imprevista': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
       'enfermidade': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
       'asuntos_propios': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-      'outro': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      'formacion': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+      'reunion': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      'outro': 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
     };
     return colors[motivo] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
   };
 
-  const mySubstitutions = substitucions.filter(sub => sub.profesor_asignado_id === user?.id);
-  const otherSubstitutions = substitucions.filter(sub => sub.profesor_asignado_id !== user?.id);
+  const mySubstitutions = substitucions.filter(sub => sub.assigned_to === user?.id);
+  const otherSubstitutions = substitucions.filter(sub => sub.assigned_to !== user?.id);
   const unconfirmedCount = mySubstitutions.filter(sub => !sub.confirmada_professor).length;
 
   const renderSubstitutionCard = (sub: Substitucion, isMySubstitution: boolean = false) => (
@@ -231,13 +203,27 @@ export const DailyCalendarView: React.FC = () => {
             </div>
             
             <div className="text-sm text-muted-foreground">
-              <strong>Grupo:</strong> {sub.grupos_educativos?.nome || '–'}
+              <strong>Grupo:</strong> {sub.grupo_nome || '–'}
             </div>
             
-            {isMySubstitution && sub.profesor_ausente_profile && (
+            {isMySubstitution && sub.titular_nome && (
               <div className="flex items-center text-sm text-muted-foreground">
                 <User className="h-4 w-4 mr-1" />
-                <strong>Substitúe a:</strong> {sub.profesor_ausente_profile.nome} {sub.profesor_ausente_profile.apelidos}
+                <strong>Substitúe a:</strong> {sub.titular_nome}
+              </div>
+            )}
+            
+            {sub.sesion && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <BookOpen className="h-4 w-4 mr-1" />
+                <strong>Sesión:</strong> {sub.sesion}
+              </div>
+            )}
+            
+            {sub.guardia_transporte && sub.guardia_transporte !== 'ningun' && (
+              <div className="flex items-center text-sm text-muted-foreground">
+                <Car className="h-4 w-4 mr-1" />
+                <strong>Garda de transporte:</strong> {sub.guardia_transporte}
               </div>
             )}
             
@@ -250,7 +236,7 @@ export const DailyCalendarView: React.FC = () => {
             {!isMySubstitution && (
               <div className="flex items-center text-sm text-muted-foreground">
                 <User className="h-4 w-4 mr-1" />
-                <strong>Prof:</strong> {sub.profiles?.nome} {sub.profiles?.apelidos}
+                <strong>Prof:</strong> {sub.substituto_nome}
               </div>
             )}
           </div>
