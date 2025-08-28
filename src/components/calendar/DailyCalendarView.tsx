@@ -56,7 +56,7 @@ export const DailyCalendarView: React.FC = () => {
         .from('substitucions')
         .select(`
           *,
-          grupos_educativos (nome, nivel)
+          grupos_educativos!grupo_id (nome, nivel)
         `)
         .eq('data', targetDate)
         .order('hora_inicio');
