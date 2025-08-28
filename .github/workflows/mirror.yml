@@ -3,16 +3,17 @@ name: Mirror A -> B (SSH)
 on:
   push:
     branches:
-      - main
+      - main   # si tu rama es 'main', lo dejamos así
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout full history
+      - name: Checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0   # <--- muy importante: clona todo el historial
+
+      - name: Remove workflows from B
+        run: rm -rf .github/workflows
 
       - name: Set up SSH
         run: |
@@ -24,4 +25,4 @@ jobs:
       - name: Push to substitucions
         run: |
           git remote add mirror git@github.com:paraproxectos-ctrl/substitucions.git || true
-          git push --force --tags mirror main   # <-- añadimos --tags para llevar todo
+          git push --force mirror main
