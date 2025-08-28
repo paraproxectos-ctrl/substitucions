@@ -3,7 +3,7 @@ name: Mirror A -> B (SSH)
 on:
   push:
     branches:
-      - main   # si tu rama es 'main', lo dejamos así
+      - main
 
 jobs:
   sync:
@@ -12,8 +12,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Remove workflows from B
-        run: rm -rf .github/workflows
+      - name: Remove workflows directory (so it won’t exist in B)
+        run: |
+          rm -rf .github/workflows
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git rm -r --cached .github/workflows || true
+          git commit -m "Remove workflows from mirror" || true
 
       - name: Set up SSH
         run: |
