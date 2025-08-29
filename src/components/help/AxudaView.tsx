@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ManualPDF } from '@/components/manual/ManualPDF';
 import { 
   Calendar, 
   Users, 
@@ -20,7 +21,8 @@ import {
   FolderOpen,
   Upload,
   Trash2,
-  FileText
+  FileText,
+  Download
 } from 'lucide-react';
 
 export const AxudaView: React.FC = () => {
@@ -47,6 +49,21 @@ export const AxudaView: React.FC = () => {
         </TabsList>
 
         <TabsContent value="introduccion" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Download className="h-5 w-5 text-primary" />
+                Manual Completo en PDF
+              </CardTitle>
+              <CardDescription>
+                Descarga el manual completo con toda la información detallada sobre el uso de la aplicación
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ManualPDF />
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

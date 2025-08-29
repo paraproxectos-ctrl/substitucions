@@ -190,17 +190,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onViewChange, onCl
             <span className="truncate">Saír</span>
           </Button>
           
-          {/* Reset App Button - Only for admins */}
-          {isAdmin && (
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-orange-600 hover:text-orange-700 hover:bg-orange-50 text-xs md:text-sm h-7 md:h-8"
-              onClick={handleResetApp}
-            >
-              <RotateCcw className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-              <span className="truncate">Resetear App</span>
-            </Button>
-          )}
         </div>
       </div>
 
