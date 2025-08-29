@@ -30,7 +30,7 @@ interface ArquivoCalendario {
   original_filename: string;
   mime_type: string;
   file_size: number;
-  storage_path: string;  // clave relativa dentro del bucket
+  storage_path: string;  // clave relativa dentro do bucket
   owner_uid: string;
   owner_name: string;
   notes?: string;
@@ -57,7 +57,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
   const [ownerFilter, setOwnerFilter] = useState('all');
   const [downloading, setDownloading] = useState<string | null>(null);
 
-  // 👇 estado local de la lista + sincronización con la prop files
+  // estado local da lista + sincronización coa prop files
   const [list, setList] = useState<ArquivoCalendario[]>([]);
   useEffect(() => {
     setList(files);
@@ -88,7 +88,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
     return user && (file.owner_uid === user.id || userRole?.role === 'admin');
   };
 
-  // 👇 ahora calculamos a partir de list (no de files)
+  // agora calculamos a partir de list (non de files)
   const uniqueClasses = [...new Set(list.map(f => f.class_name))].sort();
   const uniqueOwners = [...new Set(list.map(f => f.owner_name))].sort();
 
@@ -104,41 +104,52 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
     return matchesSearch && matchesClass && matchesOwner;
   });
 
+  // ⬇️⬇️ CAMBIO CLAVE: forzar descarga para CUALQUIER tipo de arquivo
   const handleDownload = async (file: ArquivoCalendario) => {
     try {
       setDownloading(file.id);
 
-      // URL firmada (1 hora)
+      // 1) URL firmada (válida 1 hora)
       const { data, error } = await supabase.storage
         .from('arquivos-substitucions')
         .createSignedUrl(file.storage_path, 3600);
 
       if (error) throw error;
 
-      // Auditoría
-      await supabase
-        .from('arquivos_audit_log')
-        .insert({
-          action: 'download',
-          file_id: file.id,
-          owner_uid: file.owner_uid,
-          by_uid: user?.id || '',
-        });
+      // 2) Añadimos ?download=<nome> para forzar Content-Disposition: attachment
+      const signed = data.signedUrl || '';
+      const sep = signed.includes('?') ? '&' : '?';
+      const forcedDownloadUrl = `${signed}${sep}download=${encodeURIComponent(file.original_filename || 'arquivo')}`;
 
-      // Descargar
-      const link = document.createElement('a');
-      link.href = data.signedUrl;
-      link.download = file.original_filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // 3) Auditoría (opcional)
+      try {
+        await supabase
+          .from('arquivos_audit_log')
+          .insert({
+            action: 'download',
+            file_id: file.id,
+            owner_uid: file.owner_uid,
+            by_uid: user?.id || '',
+          });
+      } catch {
+        // se falla auditoría non bloqueamos a descarga
+      }
+
+      // 4) Disparar descarga nativa do navegador
+      const a = document.createElement('a');
+      a.href = forcedDownloadUrl;
+      a.setAttribute('download', file.original_filename || 'arquivo');
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
 
       toast({
         title: "Descarga iniciada",
         description: `Descargando ${file.original_filename}`,
       });
-    } catch (error) {
-      console.error('Error downloading file:', error);
+    } catch (err) {
+      console.error('Error downloading file:', err);
       toast({
         title: "Erro na descarga",
         description: "Non se puido descargar o arquivo",
@@ -148,35 +159,32 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
       setDownloading(null);
     }
   };
+  // ⬆️⬆️ FIN DO CAMBIO
 
   // BORRADO REAL: Storage + BD + auditoría + actualización de UI local
   const handleDelete = async (file: ArquivoCalendario) => {
     try {
-      // Normalize storage path - handle different formats from legacy data
+      // normalizar ruta en Storage (por se vén con URL completa)
       let normalizedPath = file.storage_path;
-      
-      // Remove full URL if present
+
       if (normalizedPath.includes('supabase.co/storage/v1/object/public/')) {
-        const urlParts = normalizedPath.split('/');
-        const bucketIndex = urlParts.findIndex(part => part === 'arquivos-substitucions');
-        if (bucketIndex >= 0) {
-          normalizedPath = urlParts.slice(bucketIndex + 1).join('/');
-        }
+        const parts = normalizedPath.split('/');
+        const idx = parts.findIndex(p => p === 'arquivos-substitucions');
+        if (idx >= 0) normalizedPath = parts.slice(idx + 1).join('/');
       }
-      
-      // Remove bucket prefix if present
+
       if (normalizedPath.startsWith('arquivos-substitucions/')) {
         normalizedPath = normalizedPath.replace('arquivos-substitucions/', '');
       }
 
-      // 1) Borra del Storage usando la ruta normalizada
+      // 1) borrar de Storage
       const { error: storageError } = await supabase.storage
         .from('arquivos-substitucions')
         .remove([normalizedPath]);
 
       if (storageError) throw storageError;
 
-      // 2) Borra de la base de datos
+      // 2) borrar de BD
       const { error: dbError } = await supabase
         .from('arquivos_calendario')
         .delete()
@@ -184,7 +192,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
 
       if (dbError) throw dbError;
 
-      // 3) Log - Handle potential RLS issues
+      // 3) log (non bloqueante)
       try {
         await supabase
           .from('arquivos_audit_log')
@@ -194,15 +202,10 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
             owner_uid: file.owner_uid,
             by_uid: user?.id || '',
           });
-      } catch (auditError) {
-        // Continue even if audit log fails
-        console.warn('Could not insert audit log:', auditError);
-      }
+      } catch {}
 
-      // 4) Actualiza la UI inmediatamente
+      // 4) actualizar UI
       setList(prev => prev.filter(f => f.id !== file.id));
-
-      // (opcional) si el padre quiere recargar, lo mantenemos
       onDeleteSuccess();
 
       toast({
@@ -235,7 +238,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Filters */}
+          {/* Filtros */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="search">Buscar</Label>
@@ -293,7 +296,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
             <span>Clases: {uniqueClasses.length}</span>
           </div>
 
-          {/* Files List */}
+          {/* Lista */}
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {filteredFiles.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
@@ -390,7 +393,7 @@ export const ArquivosListDialog: React.FC<ArquivosListDialogProps> = ({
             <Button
               onClick={() => {
                 onOpenChange(false);
-                // aquí podrías abrir el diálogo de subida desde el componente padre
+                // aquí poderías abrir o diálogo de subida dende o compoñente pai
               }}
             >
               <Upload className="h-4 w-4 mr-2" />
