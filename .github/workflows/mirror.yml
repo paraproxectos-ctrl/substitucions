@@ -13,7 +13,7 @@ jobs:
       - name: Checkout A (full history)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # importante: NO shallow, evita 'index-pack failed'
+          fetch-depth: 0   # evita errores de 'index-pack failed'
 
       - name: Add github.com to known_hosts
         run: |
@@ -36,7 +36,5 @@ jobs:
       - name: Push mirror (force main + tags)
         run: |
           git gc --prune=now
-          # Empuja el estado actual de A/main a B/main
           git push --force mirror HEAD:refs/heads/main
-          # (Opcional) empuja también las etiquetas
           git push --force --tags mirror
