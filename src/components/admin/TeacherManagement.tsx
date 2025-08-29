@@ -353,14 +353,15 @@ export const TeacherManagement: React.FC = () => {
         console.error('Error calling delete-user function:', error);
         toast({
           title: "Error",
-          description: "Non se puido eliminar o usuario do sistema",
+          description: error.message || "Non se puido eliminar o usuario do sistema",
           variant: "destructive",
         });
         setLoading(false);
         return;
       }
 
-      if (!data.ok) {
+      // Check if the response indicates an error
+      if (data && !data.ok) {
         console.error('Delete user function returned error:', data.error);
         toast({
           title: "Error",
