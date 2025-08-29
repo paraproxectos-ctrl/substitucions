@@ -1,11 +1,4 @@
 # Welcome to your Lovable project
-Borra esta linea
-Boora esta tambien
-y esta otra
-la ultima
-y ya
-la def
-y ya que si
 ## Project info
 
 **URL**: https://lovable.dev/projects/6a7dfc4d-23b2-4fba-bdd3-545699d7e962
